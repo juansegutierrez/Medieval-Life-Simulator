@@ -203,6 +203,7 @@
         <h2 class="text-3xl font-medieval mb-2 font-bold" style="font-family: 'MedievalSharp';">Birth of a Legend</h2>
         
         <div class="mb-4">
+            <p class="text-sm italic mb-2">Choose your identity and hone your skills.</p>
             <input type="text" id="char-name" placeholder="Enter First Name..." class="creation-input text-center">
             <div class="flex justify-center gap-2 mt-2">
                 <button id="gender-m" class="gender-btn active" onclick="setGender('Male')">Male</button>
@@ -211,16 +212,11 @@
             </div>
         </div>
 
-        <div id="origin-box" class="mb-4 p-2 bg-white/30 border border-leather/20 rounded">
-            <p class="text-sm italic">Click to Roll for Lineage</p>
-            <button onclick="rollOrigin()" class="mt-1 bg-amber-800 text-sm h-8 py-0">Roll for Status</button>
-            <div id="origin-display" class="mt-2 font-bold text-lg hidden"></div>
-        </div>
-
         <div id="allocators" class="mb-4"></div>
         
         <div class="mt-2">
             <h3 class="text-lg font-bold">Points Remaining: <span id="points-left">20</span></h3>
+            <p class="text-xs italic mt-2 opacity-70">Lineage and Social Status will be determined upon start.</p>
             <button id="start-btn" class="mt-4" disabled onclick="startGame()">Begin Your Chronicle</button>
         </div>
     </div>
@@ -238,7 +234,7 @@
         <div class="stat-box"><span>WIS</span><span id="stat-wis" class="stat-val">10</span></div>
         <div class="stat-box"><span>CHA</span><span id="stat-cha" class="stat-val">10</span></div>
         <div class="stat-box"><span>Gold</span><span id="stat-gold" class="stat-val">0</span></div>
-        <div class="stat-box"><span>Status</span><span id="stat-status" class="stat-val">Peasant</span></div>
+        <div class="stat-box"><span>Status</span><span id="stat-status" class="stat-val">???</span></div>
         <div class="stat-box"><span>Age</span><span id="stat-age" class="stat-val">16</span></div>
     </div>
 
@@ -254,15 +250,15 @@
      * NAME GEN & DATA
      */
     const Surnames = {
-        Peasant: ["Miller", "Smith", "Cooper", "Thatcher", "Baker", "Carter"],
-        Merchant: ["Sterling", "Goldbloom", "Mercator", "Vane", "Silkworth"],
-        Noble: ["de Clermont", "Lannister", "Plantagenet", "valois", "von Hapsburg"]
+        Peasant: ["Miller", "Smith", "Cooper", "Thatcher", "Baker", "Carter", "Wood", "Fisher"],
+        Merchant: ["Sterling", "Goldbloom", "Mercator", "Vane", "Silkworth", "Coiner"],
+        Noble: ["de Clermont", "Lannister", "Plantagenet", "Valois", "von Hapsburg", "Tudor"]
     };
 
     const FirstNames = {
-        Male: ["Alaric", "Cedric", "Godwin", "Osric", "Theobald", "Wulfric"],
-        Female: ["Adelaide", "Beatrix", "Elowen", "Gisela", "Isolde", "Rowena"],
-        Other: ["Skye", "Bryn", "Robin", "Puck", "Avery"]
+        Male: ["Alaric", "Cedric", "Godwin", "Osric", "Theobald", "Wulfric", "Edmund", "Geoffrey"],
+        Female: ["Adelaide", "Beatrix", "Elowen", "Gisela", "Isolde", "Rowena", "Eleanor", "Maud"],
+        Other: ["Skye", "Bryn", "Robin", "Puck", "Avery", "Sage"]
     };
 
     /**
@@ -280,8 +276,9 @@
             str: 8, dex: 8, con: 8,
             int: 8, wis: 8, cha: 8
         },
-        gold: 20,
+        gold: 0,
         status: '',
+        rarity: '',
         family: [],
         log: []
     };
@@ -353,7 +350,7 @@
                 },
                 {
                     text: "Send gold to solve the problem (20 Gold)",
-                    check: 'gold', dc: 0, // Manual check
+                    check: 'gold', dc: 0, 
                     success: "Gold solves all. Your family is happy, but your purse is light.",
                     fail: "You don't have enough gold!",
                     onSuccess: { gold: -20, stats: { cha: 2 } },
@@ -381,45 +378,51 @@
             `;
             container.appendChild(div);
         }
+        
+        // Listener for name input to enable start button
+        document.getElementById('char-name').addEventListener('input', checkStartReady);
     }
 
     window.setGender = function(g) {
         gameState.gender = g;
         document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(`gender-${g === 'Male' ? 'm' : g === 'Female' ? 'f' : 'o'}`).classList.add('active');
+        const btnId = g === 'Male' ? 'gender-m' : g === 'Female' ? 'gender-f' : 'gender-o';
+        document.getElementById(btnId).classList.add('active');
         
-        // Auto-fill name if empty
         const nameInput = document.getElementById('char-name');
         if (!nameInput.value) {
             const list = FirstNames[g];
             nameInput.value = list[Math.floor(Math.random() * list.length)];
         }
+        checkStartReady();
     };
 
-    window.rollOrigin = function() {
+    function determineOrigin() {
         const roll = Dice.roll(100);
         let status = 'Peasant';
         let rarity = 'Common';
         
-        if (roll > 95) { status = 'Noble'; rarity = 'Legendary'; }
-        else if (roll > 75) { status = 'Merchant'; rarity = 'Rare'; }
+        if (roll > 95) { 
+            status = 'Noble'; 
+            rarity = 'Legendary'; 
+        } else if (roll > 75) { 
+            status = 'Merchant'; 
+            rarity = 'Rare'; 
+        }
         
         gameState.status = status;
+        gameState.rarity = rarity;
         const surnames = Surnames[status];
         gameState.lastName = surnames[Math.floor(Math.random() * surnames.length)];
         gameState.gold = status === 'Noble' ? 100 : status === 'Merchant' ? 50 : 10;
-
-        const display = document.getElementById('origin-display');
-        display.classList.remove('hidden');
-        display.innerHTML = `<span class="text-xs uppercase tracking-widest block">${rarity} Origin</span> ${status} ${gameState.lastName}`;
-        checkStartReady();
-    };
+    }
 
     function generateFamily() {
         const statuses = ['Alive', 'Deceased', 'Ailing'];
+        // Parents share the same randomly generated last name
         gameState.family = [
-            { relation: 'Father', name: FirstNames.Male[Math.floor(Math.random() * 5)], status: statuses[Math.floor(Math.random() * 3)] },
-            { relation: 'Mother', name: FirstNames.Female[Math.floor(Math.random() * 5)], status: statuses[Math.floor(Math.random() * 3)] }
+            { relation: 'Father', name: FirstNames.Male[Math.floor(Math.random() * FirstNames.Male.length)], status: statuses[Math.floor(Math.random() * 3)] },
+            { relation: 'Mother', name: FirstNames.Female[Math.floor(Math.random() * FirstNames.Female.length)], status: statuses[Math.floor(Math.random() * 3)] }
         ];
         
         const siblingCount = Math.floor(Math.random() * 4);
@@ -427,16 +430,16 @@
             const gender = Math.random() > 0.5 ? 'Male' : 'Female';
             gameState.family.push({
                 relation: 'Sibling',
-                name: FirstNames[gender][Math.floor(Math.random() * 5)],
+                name: FirstNames[gender][Math.floor(Math.random() * FirstNames[gender].length)],
                 status: 'Alive'
             });
         }
     }
 
     function checkStartReady() {
-        const name = document.getElementById('char-name').value;
+        const name = document.getElementById('char-name').value.trim();
         const startBtn = document.getElementById('start-btn');
-        startBtn.disabled = !(name && gameState.status && gameState.points === 0);
+        startBtn.disabled = !(name && gameState.points === 0);
     }
 
     window.changeStat = function(stat, amt) {
@@ -456,13 +459,16 @@
      * GAMEPLAY
      */
     function startGame() {
-        gameState.firstName = document.getElementById('char-name').value;
+        gameState.firstName = document.getElementById('char-name').value.trim();
+        
+        // Determine status and lineage upon clicking start
+        determineOrigin();
         generateFamily();
         
         document.getElementById('creation-screen').style.display = 'none';
         document.getElementById('display-full-name').innerText = `${gameState.firstName} ${gameState.lastName}`;
         
-        addLogEntry("Chronicle Begins", `Born to a ${gameState.status} family, you embark on your life.`);
+        addLogEntry("Chronicle Begins", `The threads of fate have woven your birth. You are born as a <strong>${gameState.status}</strong> (${gameState.rarity}) into the House of <strong>${gameState.lastName}</strong>.`);
         
         let familyDesc = gameState.family.map(f => `${f.relation} ${f.name} (${f.status})`).join(", ");
         addLogEntry("Your Kin", `You are surrounded by family: ${familyDesc}.`);
