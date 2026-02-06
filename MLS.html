@@ -172,6 +172,11 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-thumb { background: var(--leather); border-radius: 10px; }
+        
+        .gender-btn.active {
+            background: #b8860b !important;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
@@ -183,12 +188,15 @@
             <p class="italic mb-4">The Norns begin to spin your thread. Choose your name and nature.</p>
             <input type="text" id="char-name" placeholder="First Name" class="p-2 border border-black bg-white/50 text-center mb-4 w-64">
             <div class="flex justify-center gap-4">
-                <button id="gender-m" class="bg-brown-600 active" onclick="setGender('Male')">Male</button>
-                <button id="gender-f" onclick="setGender('Female')">Female</button>
-                <button id="gender-o" onclick="setGender('Other')">Other</button>
+                <button id="gender-m" class="gender-btn active" onclick="setGender('Male')">Male</button>
+                <button id="gender-f" class="gender-btn" onclick="setGender('Female')">Female</button>
+                <button id="gender-o" class="gender-btn" onclick="setGender('Other')">Other</button>
             </div>
         </div>
-        <div id="allocators" class="max-w-md mx-auto w-full mb-6"></div>
+        <div id="allocators" class="max-w-md mx-auto w-full mb-2"></div>
+        <div class="mb-4">
+            <button onclick="randomizePoints()" class="text-sm bg-amber-800">Randomize Points</button>
+        </div>
         <div>
             <h3 class="text-xl font-bold">Remaining Potential: <span id="points-left">20</span></h3>
             <p class="text-sm opacity-70 mt-2">Lineage and Status are randomized at birth (Age 0).</p>
@@ -329,15 +337,48 @@
         } else if (amt < 0 && gameState.stats[stat] > 8) {
             gameState.stats[stat]--; gameState.points++;
         }
-        document.getElementById(`alloc-${stat}`).innerText = gameState.stats[stat];
+        updateAllocationUI();
+        checkStartReady();
+    };
+    
+    function updateAllocationUI() {
+        for (let s in gameState.stats) {
+            document.getElementById(`alloc-${s}`).innerText = gameState.stats[s];
+        }
         document.getElementById('points-left').innerText = gameState.points;
+    }
+
+    window.randomizePoints = function() {
+        // Reset to base 8
+        gameState.points = 20;
+        for (let s in gameState.stats) {
+            gameState.stats[s] = 8;
+        }
+        
+        // Distribute 20 points randomly
+        const keys = Object.keys(gameState.stats);
+        while (gameState.points > 0) {
+            const stat = keys[Math.floor(Math.random() * keys.length)];
+            if (gameState.stats[stat] < 18) {
+                gameState.stats[stat]++;
+                gameState.points--;
+            }
+        }
+        updateAllocationUI();
         checkStartReady();
     };
 
     window.setGender = (g) => {
         gameState.gender = g;
-        document.querySelectorAll('#creation-screen button').forEach(b => b.classList.remove('active', 'bg-brown-600'));
-        event.target.classList.add('active', 'bg-brown-600');
+        // Clean active state from all gender buttons
+        document.querySelectorAll('.gender-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        // Set active on the clicked one (via event source or ID)
+        if (g === 'Male') document.getElementById('gender-m').classList.add('active');
+        else if (g === 'Female') document.getElementById('gender-f').classList.add('active');
+        else document.getElementById('gender-o').classList.add('active');
+        
         checkStartReady();
     };
 
@@ -397,7 +438,12 @@
         document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`${tab}-tab`).classList.remove('hidden');
-        event.target.classList.add('active');
+        
+        // Ensure the clicked element gets the active state
+        const target = event.currentTarget;
+        if (target && target.classList.contains('tab-btn')) {
+            target.classList.add('active');
+        }
     }
 
     function addLogEntry(title, text) {
