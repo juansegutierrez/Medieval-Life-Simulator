@@ -377,26 +377,13 @@
     <div id="lore-modal" class="modal-overlay hidden">
         <div class="modal-box">
             <h2 class="text-4xl font-medieval mb-4 text-amber-900">The Kingdom of Chep</h2>
-            <div class="text-left space-y-4 mb-6 text-sm max-h-60 overflow-y-auto pr-2">
-                <p>In the <strong>Age of Ash</strong>, the sky wept soot. For four hundred years, the sun was but a pale ghost behind a shroud of burning cities. Brother slew brother for a scrap of bread, and Warlords built thrones upon mounds of bone. Hope was a word forgotten by the living.</p>
-                
-                <p>Then, the heavens opened. A star fell to earth, shattering the eternal twilight—a meteor of pure, singing starlight. From the crater rose <strong>Hero Ren</strong>, not a king, but a savior. He forged the fallen star into <strong>Lumina</strong>, the Blade of Dawn.</p>
-                
-                <p>At the foot of Dread Peak, Ren stood alone against the seven greatest Warlords. With a single swing, he did not strike them, but clove the mountain itself in twain. The earth shook, and the Warlords, witnessing power beyond mortal ken, fell to their knees in silence.</p>
-                
-                <p>There, amidst the dust, the <strong>Oath of Unity</strong> was sworn in blood and starlight. Ren became the first King of <strong>House Chep</strong>, the anchor of the realm. The Warlords rose not as tyrants, but as the <strong>Seven Greater Houses</strong>—guardians of the peace they once sought to destroy.</p>
-                
-                <ul class="list-disc pl-5 mt-2 mb-2 italic opacity-80">
-                    <li><strong>Valdoria:</strong> Masters of coin and trade in the golden west.</li>
-                    <li><strong>Thalor:</strong> Wardens of the stormy seas and the leviathans beneath.</li>
-                    <li><strong>Grimward:</strong> Sentinels of the frozen north against the darkness.</li>
-                    <li><strong>Sunstrider:</strong> Keepers of the deep forests and ancient magic.</li>
-                    <li><strong>Ironheart:</strong> Forgers of steel and stone in the industrial heart.</li>
-                    <li><strong>Moonshadow:</strong> Scholars of the arcane arts built upon ruins.</li>
-                    <li><strong>Stormbreaker:</strong> Watchers of the high peaks, touching the clouds.</li>
-                </ul>
-                
-                <p>You are a child of this fragile peace. But the starlight is fading, and in the shadows, the old thirst for blood begins to wake.</p>
+            <div class="text-left space-y-4 mb-6 text-sm max-h-60 overflow-y-auto pr-2" style="font-family: 'Spectral', serif;">
+                <p>Once upon a time, long before the walls of Chep rose white and gold against the sun, there was only the <strong>Age of Ash</strong>.</p>
+                <p>For four hundred years, the sky wept soot. Brother slew brother for a scrap of bread, and Warlords built thrones upon mounds of bone. The gods were silent, and hope was a ghost.</p>
+                <p>Then, a star fell to earth. Not a stone of fire, but a shard of pure, singing light. From the crater walked <strong>Ren</strong>—no king, but a hero. He forged the star into <strong>Lumina</strong>, the Blade of Dawn.</p>
+                <p>Ren marched to Dread Peak, where the Seven Warlords gathered to divide the world. He did not strike them. Instead, he swung Lumina at the mountain itself, cleaving the peak in twain. The earth shook, and the Warlords, seeing true power, fell to their knees.</p>
+                <p>There, in the dust, the <strong>Oath of Unity</strong> was sworn. Ren became the first King of <strong>House Chep</strong>. The Warlords became the <strong>Seven Greater Houses</strong>, sworn to protect the peace they once destroyed.</p>
+                <p>And so the Kingdom of Chep was born. But fairytales end, and history bleeds. The starlight is fading, traveler. What will you do in the dark?</p>
             </div>
             <button onclick="enterWorld()" class="choice-btn text-center justify-center font-bold text-lg">Enter the World</button>
         </div>
@@ -405,7 +392,7 @@
     <!-- Character Creation Overlay -->
     <div id="creation-screen" class="creation-screen">
         <h2 class="text-5xl font-bold mb-2 text-amber-900" style="font-family: 'MedievalSharp';">A Medieval Life</h2>
-        <p class="italic mb-8 text-lg opacity-70">By Juanse Gutierrez</p>
+        <p class="italic mb-8 text-lg opacity-70">5th Edition Mechanics Edition</p>
         
         <div class="max-w-xl mx-auto w-full bg-white/40 p-6 rounded-lg border-2 border-[#5d4037] shadow-xl">
             <h3 class="text-xl font-bold mb-4">Forge Your Destiny</h3>
@@ -573,6 +560,7 @@
 
     // 1. D&D 5e MECHANICS
     const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+    const ALIGNMENTS = ['Lawful Good', 'Neutral Good', 'Chaotic Good', 'Lawful Neutral', 'True Neutral', 'Chaotic Neutral', 'Lawful Evil', 'Neutral Evil', 'Chaotic Evil'];
     
     function getModifier(score) {
         return Math.floor((score - 10) / 2);
@@ -684,13 +672,24 @@
 
     // 4. DATA: HOUSE & CITY SYSTEM
     const TIER_DATA = {
-        royal: { name: 'Royal House', sigils: ['🦁', '👑'], prob: 0.01 },
-        greater: { name: 'Greater House', sigils: ['🦅', '🐺', '🐉', '🦌', '🦑', '🌹', '☀️'], prob: 0.10 },
+        royal: { name: 'Royal House', prob: 0.01 },
+        greater: { name: 'Greater House', prob: 0.10 },
         lesser: { name: 'Lesser House', sigils: ['🌲', '🐍', '🏰', '🐗', '🗡️', '🛡️', '🔔'], prob: 0.89 }
     };
     
     const HOUSE_RANKS = ["Lord/Lady", "Heir", "Younger Child", "House Member", "Sworn Sword", "Servant"];
     
+    const GREATER_HOUSES_INFO = {
+        "Chep": { motto: "Unity in Starlight", desc: "The Royal line, descended from Hero Ren.", heirloom: "Lumina, the Star-Blade", sigil: "🦁👑" },
+        "Valdoria": { motto: "Gold is Power", desc: "Masters of coin and trade in the golden west.", heirloom: "The Gilded Scepter", sigil: "🦅" },
+        "Thalor": { motto: "Tides Bow to None", desc: "Wardens of the stormy seas and the leviathans beneath.", heirloom: "The Abyssal Trident", sigil: "🦑" },
+        "Grimward": { motto: "Winter is our Anvil", desc: "Sentinels of the frozen north against the darkness.", heirloom: "Frostfang (Greataxe)", sigil: "🐺" },
+        "Sunstrider": { motto: "Light Pierces All", desc: "Keepers of the deep forests and ancient magic.", heirloom: "The Verdant Bow", sigil: "🌹" },
+        "Ironheart": { motto: "Steel Endures", desc: "Forgers of steel and stone in the industrial heart.", heirloom: "The Black Hammer", sigil: "🐉" },
+        "Moonshadow": { motto: "Secrets in Silence", desc: "Scholars of the arcane arts built upon ruins.", heirloom: "The Crystal Orb", sigil: "🌙" },
+        "Stormbreaker": { motto: "Above the Clouds", desc: "Watchers of the high peaks, touching the clouds.", heirloom: "Sky-Splitter (Spear)", sigil: "⚡" }
+    };
+
     const HOUSE_NAMES = {
         royal: ["Chep"],
         greater: ["Valdoria", "Thalor", "Grimward", "Sunstrider", "Ironheart", "Moonshadow", "Stormbreaker"],
@@ -724,7 +723,7 @@
                 { text: 'Sleep', type: 'flavor', effect: () => log("You ignore the prophecy.") }
             ]),
             createEvent('inf_lucky', 'Shiny Pebble', 'You find a perfectly round stone in the crib.', [
-                { text: 'Keep it', type: 'flavor', effect: () => { addItem('Lucky Stone', 'Common', 'A smooth river stone.'); log("It feels lucky."); } },
+                { text: 'Keep it', type: 'flavor', effect: () => { addItem('Lucky Stone', 'Common', 'A smooth river stone.', 1); log("It feels lucky."); } },
                 { text: 'Eat it', type: 'flavor', effect: () => { state.health -= 1; log("It chokes you slightly. (-1 HP)"); } },
                 { text: 'Throw it', type: 'flavor', effect: () => { state.stats.dex++; log("Good aim! (+1 DEX)"); } }
             ]),
@@ -745,7 +744,7 @@
                 { text: 'Give Lunch', type: 'flavor', effect: () => { modRep('honor', -1); log("You go hungry."); } }
             ]),
             createEvent('child_find', 'Lost Heirloom', 'Digging in the mud, you hit metal.', [
-                { text: 'Clean it off', type: 'check', stat: 'int', dc: 10, success: 'It is a silver locket!', fail: 'Just rusty scrap.', onSuccess: () => addItem('Rusted Locket', 'Common', 'Once held a portrait.'), onFail: () => {} },
+                { text: 'Clean it off', type: 'check', stat: 'int', dc: 10, success: 'It is a silver locket!', fail: 'Just rusty scrap.', onSuccess: () => addItem('Rusted Locket', 'Common', 'Once held a portrait.', 5), onFail: () => {} },
                 { text: 'Bury it', type: 'flavor', effect: () => log("Some secrets should stay buried.") },
                 { text: 'Show parent', type: 'flavor', effect: () => { if(getParent()) { modRel(getParent().id, 5); log("They pat your head."); } else log("You have no one to show."); } }
             ]),
@@ -766,7 +765,7 @@
                 { text: 'Ignore them', type: 'flavor', effect: () => { state.stats.wis++; log("Focus on studies. (+1 WIS)"); } }
             ]),
             createEvent('teen_loot', 'Old Battlefield', 'You scavenge an old skirmish site.', [
-                { text: 'Search bodies', type: 'check', stat: 'wis', dc: 14, success: 'You find a blade!', fail: 'Nothing but bones.', onSuccess: () => addItem('Soldier\'s Dagger', 'Uncommon', 'A serviceable steel blade.'), onFail: () => {} },
+                { text: 'Search bodies', type: 'check', stat: 'wis', dc: 14, success: 'You find a blade!', fail: 'Nothing but bones.', onSuccess: () => addItem('Soldier\'s Dagger', 'Uncommon', 'A serviceable steel blade.', 15), onFail: () => {} },
                 { text: 'Say a prayer', type: 'flavor', effect: () => { modRep('piety', 2); log("Rest in peace."); } },
                 { text: 'Leave', type: 'flavor', effect: () => log("You leave the dead alone.") }
             ]),
@@ -782,12 +781,12 @@
                 { text: 'Pay substitute (20 GP)', type: 'flavor', req: (s) => s.gold >= 20, effect: () => { state.gold -= 20; log("You paid a coward's tax."); modRep('honor', -5); } }
             ]),
             createEvent('adult_magic', 'Arcane Discovery', 'You find a glowing rune.', [
-                { text: 'Touch it', type: 'check', stat: 'int', dc: 16, success: 'It fuses to your hand!', fail: 'It burns you.', onSuccess: () => addItem('Ring of Protection', 'Rare', 'Grants a magical shield.'), onFail: () => takeDamage(10) }
+                { text: 'Touch it', type: 'check', stat: 'int', dc: 16, success: 'It fuses to your hand!', fail: 'It burns you.', onSuccess: () => addItem('Ring of Protection', 'Rare', 'Grants a magical shield.', 100), onFail: () => takeDamage(10) }
             ])
         ],
         Elder: [
              createEvent('elder_legacy', 'Family Vault', 'You decide to open the old vault.', [
-                { text: 'Open it', type: 'check', stat: 'wis', dc: 15, success: 'An ancient relic!', fail: 'Just dust.', onSuccess: () => addItem('Ancient Grimoire', 'VeryRare', 'Contains lost spells.'), onFail: () => {} }
+                { text: 'Open it', type: 'check', stat: 'wis', dc: 15, success: 'An ancient relic!', fail: 'Just dust.', onSuccess: () => addItem('Ancient Grimoire', 'VeryRare', 'Contains lost spells.', 500), onFail: () => {} }
             ])
         ],
         Travel: [
@@ -817,6 +816,20 @@
             ]),
             createEvent('crime_mug', 'Alleyway Mugging', 'A wealthy drunk stumbles by.', [
                 { text: 'Mug him', type: 'check', stat: 'str', dc: 10, success: 'Easy coin. (+10g, +Infamy)', fail: 'He fights back!', onSuccess: () => { state.gold += 10; modRep('infamy', 2); }, onFail: () => takeDamage(5) }
+            ])
+        ],
+        SocialFail: [
+            createEvent('fail_social', 'Empty Streets', 'You wander the market but meet no one of interest.', [
+                { text: 'Go home', type: 'flavor', effect: () => log("A quiet day.") }
+            ]),
+            createEvent('fail_love', 'Cold Shoulder', 'Your attempts at courtship are met with polite refusal.', [
+                { text: 'Try again later', type: 'flavor', effect: () => log("There are other fish in the sea.") }
+            ])
+        ],
+        Interactive: [
+            createEvent('inter_bump', 'A Chance Encounter', 'You bump into a stranger carrying a heavy load.', [
+                { text: 'Help them', type: 'check', stat: 'str', dc: 10, success: 'They thank you profusely. (+Relationship)', fail: 'You drop it. They yell at you.', onSuccess: () => createRandomRel(20), onFail: () => {} },
+                { text: 'Walk away', type: 'flavor', effect: () => log("Not your problem.") }
             ])
         ]
     };
@@ -920,7 +933,18 @@
         const tierData = TIER_DATA[tierKey];
         const names = HOUSE_NAMES[tierKey];
         const houseName = names[Math.floor(Math.random() * names.length)];
-        const sigil = tierData.sigils[Math.floor(Math.random() * tierData.sigils.length)];
+        
+        let houseDetails = {};
+        if (tierKey !== 'lesser' && GREATER_HOUSES_INFO[houseName]) {
+            houseDetails = GREATER_HOUSES_INFO[houseName];
+        } else {
+            houseDetails = {
+                motto: "Honor Above All",
+                desc: "A lesser noble house striving for glory.",
+                heirloom: "Old Shield",
+                sigil: tierData.sigils[Math.floor(Math.random() * tierData.sigils.length)]
+            };
+        }
         
         const rankRoll = Math.random();
         let rank = "House Member";
@@ -930,59 +954,88 @@
         state.house = {
             tier: tierData.name,
             name: houseName,
-            sigil: sigil,
+            sigil: houseDetails.sigil,
+            motto: houseDetails.motto,
+            desc: houseDetails.desc,
+            heirloom: houseDetails.heirloom,
             members: []
         };
         
         state.class = `${rank} of House ${houseName}`;
 
+        // Lord/Lady Logic
         const lordName = getRandomName('Male');
         const ladyName = getRandomName('Female');
         
-        addHouseMember(lordName, "Male", "Lord");
-        addHouseMember(ladyName, "Female", "Lady");
+        // Find ruler city index
+        let rulerCityIndex = Math.floor(Math.random() * CITIES.length);
+        if (tierKey === 'royal' || tierKey === 'greater') {
+            const cityIdx = CITIES.findIndex(c => c.ruler.includes(houseName));
+            if(cityIdx !== -1) rulerCityIndex = cityIdx;
+        }
 
-        // Parents logic for nobles
+        addHouseMember(lordName, "Male", "Lord", rulerCityIndex);
+        addHouseMember(ladyName, "Female", "Lady", rulerCityIndex);
+
+        // Parents logic
         if (rank === "Heir" || rank === "Younger Child") {
             // Parents are the Lord/Lady
-            // Assume Lord/Lady exist (we just added them)
-            // But we need to add them to relationships
-            addRelationship(lordName, "Father", 100, "Male", "Lord");
-            addRelationship(ladyName, "Mother", 100, "Female", "Lady");
+            addRelationship(lordName, "Father", 100, "Male", "Lord", rulerCityIndex);
+            addRelationship(ladyName, "Mother", 100, "Female", "Lady", rulerCityIndex);
         } else {
             // Random parents within house
             const father = tryAddParent("Father", "Male", "House Member");
-            if(father) addHouseMember(father.name, "Male", "House Member");
+            if(father) addHouseMember(father.name, "Male", "House Member", father.locationIndex);
             
             const mother = tryAddParent("Mother", "Female", "House Member");
-            if(mother) addHouseMember(mother.name, "Female", "House Member");
+            if(mother) addHouseMember(mother.name, "Female", "House Member", mother.locationIndex);
         }
 
-        addHouseMember(state.name, state.gender, rank);
-        addHouseMember(getRandomName('Male'), "Male", "Sworn Sword");
-        addHouseMember(getRandomName('Female'), "Female", "Servant");
+        // Add player (Location set in startGame)
+        addHouseMember(state.name, state.gender, rank, null); 
+        
+        // Random members
+        addHouseMember(getRandomName('Male'), "Male", "Sworn Sword", Math.floor(Math.random() * CITIES.length));
+        addHouseMember(getRandomName('Female'), "Female", "Servant", Math.floor(Math.random() * CITIES.length));
     }
 
-    function addHouseMember(name, gender, rank) {
+    function addHouseMember(name, gender, rank, locIndex) {
         state.house.members.push({
-            name, gender, rank, id: Math.random().toString(36).substr(2, 9)
+            name, gender, rank, locationIndex: locIndex, id: Math.random().toString(36).substr(2, 9)
         });
     }
 
-    // New Arg: locationIndex (defaults to current city if null)
     function addRelationship(name, relation, affinity, gender, rank, locIndex = null) {
         const location = locIndex !== null ? locIndex : Math.floor(Math.random() * CITIES.length);
+        const careerKeys = Object.keys(CAREERS);
+        const rndJobKey = careerKeys[Math.floor(Math.random() * careerKeys.length)];
+        const rndJob = CAREERS[rndJobKey].name;
+        
         const person = {
             id: Math.random().toString(36).substr(2, 9),
             name, relation, affinity, gender, rank, locationIndex: location,
+            age: 18 + Math.floor(Math.random()*40),
+            health: "Healthy",
+            occupation: rndJob,
+            alignment: ALIGNMENTS[Math.floor(Math.random() * ALIGNMENTS.length)],
             stats: { 
                 str: 8 + Math.floor(Math.random()*8),
+                dex: 8 + Math.floor(Math.random()*8),
+                con: 8 + Math.floor(Math.random()*8),
                 int: 8 + Math.floor(Math.random()*8),
+                wis: 8 + Math.floor(Math.random()*8),
                 cha: 8 + Math.floor(Math.random()*8)
             }
         };
         state.relationships.push(person);
         return person;
+    }
+
+    function createRandomRel(affinity) {
+        const gender = Math.random() > 0.5 ? 'Male' : 'Female';
+        const name = getRandomName(gender);
+        addRelationship(name, "Acquaintance", affinity, gender, "Commoner", state.location);
+        log(`You met ${name}.`);
     }
 
     function getParent(type) {
@@ -996,8 +1049,14 @@
 
     function startGame() {
         state.name = document.getElementById('char-name').value;
-        generateHouse();
         state.location = Math.floor(Math.random() * CITIES.length);
+        generateHouse(); // Now uses state.location if needed, or assigns correct cities
+        
+        // Update player house member location
+        if(state.house) {
+            const me = state.house.members.find(m => m.name === state.name);
+            if(me) me.locationIndex = state.location;
+        }
         
         const conMod = getModifier(state.stats.con);
         state.maxHealth = 10 + conMod;
@@ -1028,11 +1087,11 @@
         state.age++;
         state.year++;
         state.interactions = {}; 
-        state.activityLog = { love: 0, quest: 0, crime: 0, train: 0 }; // Reset limits
+        state.activityLog = { love: 0, quest: 0, crime: 0, train: 0 }; 
         
         const conMod = getModifier(state.stats.con);
-        // HP Increase: 1d4 + CON (min 1)
-        const hpGain = Math.max(1, Math.floor(Math.random() * 4) + 1 + conMod);
+        // HP Increase: 1 + CON Mod (min 1)
+        const hpGain = Math.max(1, 1 + conMod);
         state.maxHealth += hpGain;
         state.health = Math.min(state.maxHealth, state.health + hpGain);
 
@@ -1067,7 +1126,7 @@
             return;
         }
 
-        const canLove = state.activityLog.love < 3; // Limit 3 per year
+        const canLove = state.activityLog.love < 3; 
         const canQuest = state.activityLog.quest < 1;
         const canCrime = state.activityLog.crime < 1;
         const canTrain = state.activityLog.train < 1;
@@ -1083,12 +1142,11 @@
     }
 
     function actShop() {
-        // Simple shop logic
         const items = ['Healing Potion', 'Rope', 'Torch', 'Bread', 'Dagger'];
         const item = items[Math.floor(Math.random() * items.length)];
         if(state.gold >= 5) {
             state.gold -= 5;
-            addItem(item, 'Common', 'Bought from market.');
+            addItem(item, 'Common', 'Bought from market.', 3);
             log(`Bought ${item} for 5g.`);
         } else {
             log(`You browse the wares but have no coin.`);
@@ -1097,25 +1155,40 @@
     }
 
     function actSocialize() {
-        const gender = Math.random() > 0.5 ? 'Male' : 'Female';
-        const name = getRandomName(gender);
-        // Chance to be a Knight
-        let rank = "Commoner";
-        if (Math.random() > 0.9) rank = gender === 'Male' ? 'Sir' : 'Dame'; // Knight title
-        
-        addRelationship(name, "Acquaintance", 20, gender, rank, state.location);
-        log(`You met ${name} (${rank}) in the city square.`);
-        updateUI();
+        // 40% fail, 40% meet someone, 20% event
+        const roll = Math.random();
+        if (roll < 0.4) {
+            log("You wander the streets but meet no one of interest.");
+        } else if (roll < 0.8) {
+            const gender = Math.random() > 0.5 ? 'Male' : 'Female';
+            const name = getRandomName(gender);
+            let rank = "Commoner";
+            if (Math.random() > 0.9) rank = gender === 'Male' ? 'Sir' : 'Dame';
+            
+            addRelationship(name, "Acquaintance", 20, gender, rank, state.location);
+            log(`You met ${name} (${rank}) in the city square.`);
+            updateUI();
+        } else {
+            const pool = POOLS.Interactive;
+            renderEvent(pool[Math.floor(Math.random() * pool.length)]);
+        }
         switchTab('log');
     }
 
     function actLove() {
         state.activityLog.love++;
-        const gender = Math.random() > 0.5 ? 'Male' : 'Female';
-        const name = getRandomName(gender);
-        addRelationship(name, "Love Interest", 40, gender, "Commoner", state.location);
-        log(`You caught the eye of ${name}.`);
-        updateUI();
+        const roll = Math.random();
+        if (roll < 0.5) {
+            log("Your glances go unnoticed.");
+        } else if (roll < 0.8) {
+            const gender = Math.random() > 0.5 ? 'Male' : 'Female';
+            const name = getRandomName(gender);
+            addRelationship(name, "Love Interest", 40, gender, "Commoner", state.location);
+            log(`You caught the eye of ${name}.`);
+            updateUI();
+        } else {
+            renderEvent(POOLS.SocialFail[1]); // Cold Shoulder
+        }
         switchTab('log');
     }
 
@@ -1147,7 +1220,6 @@
         const container = document.getElementById('map-content');
         const visual = document.getElementById('map-visual');
         
-        // Render Visual Dots
         let visualHtml = '';
         CITIES.forEach((city, index) => {
             const isHere = state.location === index;
@@ -1159,7 +1231,6 @@
         });
         visual.innerHTML = visualHtml;
 
-        // List View
         container.innerHTML = CITIES.map((city, index) => {
             const isHere = state.location === index;
             const extraClass = isHere ? 'current-city' : '';
@@ -1227,12 +1298,31 @@
 
         let html = `
             <h2 class="text-3xl font-medieval mb-1">${r.name}</h2>
-            <div class="text-sm opacity-70 mb-4">${r.rank} • ${r.gender} • ${loc}</div>
+            <div class="flex justify-between items-center mb-4 border-b border-black/10 pb-2">
+                <span class="text-sm font-bold text-amber-900">${r.rank}</span>
+                <span class="text-xs bg-black/10 px-2 py-1 rounded">${r.alignment}</span>
+            </div>
             
-            <div class="grid grid-cols-3 gap-2 mb-4 text-center">
-                <div class="bg-black/5 p-1 rounded"><div class="text-xs font-bold">STR</div><div>${r.stats.str}</div></div>
-                <div class="bg-black/5 p-1 rounded"><div class="text-xs font-bold">INT</div><div>${r.stats.int}</div></div>
-                <div class="bg-black/5 p-1 rounded"><div class="text-xs font-bold">CHA</div><div>${r.stats.cha}</div></div>
+            <div class="grid grid-cols-2 gap-4 text-sm mb-4">
+                <div>
+                    <p><strong>Age:</strong> ${r.age}</p>
+                    <p><strong>City:</strong> ${loc}</p>
+                    <p><strong>Job:</strong> ${r.occupation}</p>
+                </div>
+                <div>
+                    <p><strong>Health:</strong> ${r.health}</p>
+                    <p><strong>Relation:</strong> ${r.relation}</p>
+                </div>
+            </div>
+
+            <h4 class="font-bold text-xs uppercase mb-1 opacity-70">Attributes</h4>
+            <div class="grid grid-cols-6 gap-1 mb-4 text-center">
+                ${Object.keys(r.stats).map(k => `
+                    <div class="bg-black/5 p-1 rounded">
+                        <div class="text-[10px] font-bold uppercase">${k}</div>
+                        <div class="text-sm font-bold">${r.stats[k]}</div>
+                    </div>
+                `).join('')}
             </div>
             
             <div class="mb-4">
@@ -1240,7 +1330,6 @@
                 <div class="w-full h-3 bg-black/10 rounded overflow-hidden"><div class="h-full bg-pink-600" style="width:${r.affinity}%"></div></div>
             </div>
             
-            <p class="text-sm italic mb-4">"${r.relation}"</p>
             ${squireBtn}
         `;
         document.getElementById('npc-content').innerHTML = html;
@@ -1429,11 +1518,13 @@
                     const isMe = m.name === state.name ? " (You)" : "";
                     const isKnown = state.relationships.find(r => r.name === m.name); // Check if known
                     const style = rank.includes("Lord") ? "house-rank-head" : "house-rank-member";
+                    const sameLoc = m.locationIndex === state.location;
                     
                     let action = "";
                     if (!isMe) {
                         if (isKnown) action = `<span class="text-xs text-green-800 float-right">Known</span>`;
-                        else action = `<button onclick="meetHouseMember('${m.name}', '${m.gender}', '${m.rank}')" class="float-right text-[10px] bg-white border border-[#5d4037] px-2 rounded">Meet</button>`;
+                        else if (sameLoc) action = `<button onclick="meetHouseMember('${m.name}', '${m.gender}', '${m.rank}')" class="float-right text-[10px] bg-white border border-[#5d4037] px-2 rounded">Meet</button>`;
+                        else action = `<span class="text-xs text-gray-500 float-right italic">Away</span>`;
                     }
 
                     membersHtml += `<div class="${style} text-sm clearfix">${m.name}${isMe} ${action}</div>`;
@@ -1447,8 +1538,14 @@
         container.innerHTML = `
             <div class="house-crest ${tierClass}">${h.sigil}</div>
             <h2 class="text-4xl font-medieval text-amber-900 mb-1">House ${h.name}</h2>
-            <div class="mb-6">
-                <span class="font-bold text-lg uppercase tracking-widest">${h.tier}</span>
+            <div class="mb-4 text-center">
+                <span class="font-bold text-lg uppercase tracking-widest block">${h.tier}</span>
+                <span class="italic text-sm">"${h.motto}"</span>
+            </div>
+            
+            <div class="bg-white/40 p-4 rounded border border-[#5d4037] mb-4 text-left text-sm">
+                <p class="mb-2"><strong>Description:</strong> ${h.desc}</p>
+                <p><strong>Heirloom:</strong> ${h.heirloom}</p>
             </div>
             
             <div class="bg-white/40 p-4 rounded border border-[#5d4037] mb-4">
@@ -1512,12 +1609,30 @@
     function renderInventory() {
         const list = document.getElementById('inventory-list');
         if (state.inventory.length === 0) { list.innerHTML = `<p class="italic opacity-50">Your satchel is empty.</p>`; return; }
-        list.innerHTML = state.inventory.map(item => `<div class="item-row"><div><div class="item-rarity-${item.rarity}">${item.name}</div><div class="text-xs opacity-70">${item.desc}</div></div><div class="text-[10px] uppercase font-bold opacity-50 border border-black/20 px-1 rounded">${item.rarity}</div></div>`).join('');
+        list.innerHTML = state.inventory.map((item, idx) => `
+            <div class="item-row">
+                <div>
+                    <div class="item-rarity-${item.rarity}">${item.name}</div>
+                    <div class="text-xs opacity-70">${item.desc}</div>
+                </div>
+                <div class="flex flex-col items-end">
+                    <div class="text-[10px] uppercase font-bold opacity-50 border border-black/20 px-1 rounded mb-1">${item.rarity}</div>
+                    <button onclick="sellItem(${idx})" class="text-[10px] bg-[#2c1e16] text-[#f4e4bc] px-2 py-0.5 rounded hover:opacity-80">Sell (${item.value}g)</button>
+                </div>
+            </div>`).join('');
     }
 
-    function addItem(name, rarity, desc) {
-        state.inventory.push({ name, rarity, desc, id: Math.random().toString(36).substr(2, 9) });
+    function addItem(name, rarity, desc, value) {
+        state.inventory.push({ name, rarity, desc, value, id: Math.random().toString(36).substr(2, 9) });
         log(`<strong style="color:var(--gold)">ITEM GET:</strong> Found <span class="item-rarity-${rarity}">${name}</span>!`);
+        updateUI();
+    }
+
+    function sellItem(index) {
+        const item = state.inventory[index];
+        state.gold += item.value;
+        log(`Sold ${item.name} for ${item.value}g.`);
+        state.inventory.splice(index, 1);
         updateUI();
     }
 
