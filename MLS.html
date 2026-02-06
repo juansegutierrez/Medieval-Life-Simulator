@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>A Medieval Life | Arcane Architect</title>
+    <title>A Medieval Life | D20 Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Spectral:ital,wght@0,400;0,700;1,400&display=swap');
@@ -13,10 +13,12 @@
             --ink: #2c1e16;
             --leather: #5d4037;
             --gold: #b8860b;
+            --success: #15803d;
+            --failure: #b91c1c;
         }
 
         body {
-            background-color: #1a1a1a;
+            background-color: #0f0f0f;
             color: var(--ink);
             font-family: 'Spectral', serif;
             display: flex;
@@ -24,6 +26,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            overflow: hidden;
         }
 
         .parchment-container {
@@ -31,10 +34,10 @@
             background-image: url("https://www.transparenttextures.com/patterns/p6-dark.png");
             border: 12px solid var(--leather);
             border-image: linear-gradient(to bottom, #8b4513, #5d4037) 1;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5), inset 0 0 100px rgba(0,0,0,0.1);
-            max-width: 800px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8), inset 0 0 120px rgba(0,0,0,0.2);
+            max-width: 1000px;
             width: 95%;
-            height: 90vh;
+            height: 95vh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -47,411 +50,677 @@
             padding: 1rem;
             text-align: center;
             background: rgba(0,0,0,0.03);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
+        .main-layout {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 240px;
+            border-right: 2px solid rgba(44, 30, 22, 0.1);
+            display: flex;
+            flex-direction: column;
+            background: rgba(0,0,0,0.02);
+            overflow-y: auto;
+        }
+
+        .tab-btn {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(44, 30, 22, 0.05);
+            font-family: 'MedievalSharp', cursive;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover { background: rgba(0,0,0,0.05); }
+        .tab-btn.active { background: rgba(255,255,255,0.4); border-left: 5px solid var(--leather); font-weight: bold; }
+
+        .content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* D&D Stat Block Styling */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
             padding: 1rem;
-            background: rgba(255, 255, 255, 0.3);
-            font-size: 0.9rem;
+            background: rgba(93, 64, 55, 0.05);
+            border-bottom: 1px solid rgba(44,30,22,0.1);
         }
 
         .stat-box {
             text-align: center;
-            border: 1px solid rgba(44, 30, 22, 0.1);
-            padding: 5px;
-            border-radius: 4px;
+            border: 2px solid var(--leather);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.4);
+            position: relative;
+            padding-bottom: 4px;
         }
 
-        .stat-val {
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
             font-weight: bold;
             display: block;
-            font-size: 1.2rem;
+            background: var(--leather);
+            color: #f4e4bc;
+            padding: 2px 0;
+            border-radius: 4px 4px 0 0;
         }
+
+        .stat-val { font-family: 'MedievalSharp'; font-size: 1.2rem; font-weight: bold; display: block; margin-top: 2px; }
+        .stat-mod { font-size: 0.75rem; color: #666; font-weight: bold; position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); background: #f4e4bc; padding: 0 4px; border: 1px solid var(--leather); border-radius: 4px; }
 
         #event-log {
             flex-grow: 1;
             overflow-y: auto;
-            padding: 1.5rem;
+            padding: 1rem;
             display: flex;
             flex-direction: column;
             gap: 1rem;
-            mask-image: linear-gradient(to bottom, transparent, black 5%, black 95%, transparent);
+            scroll-behavior: smooth;
         }
 
         .event-entry {
-            border-left: 3px solid var(--leather);
-            padding-left: 1rem;
+            border-left: 4px solid var(--leather);
+            padding: 10px 16px;
             animation: fadeIn 0.5s ease-out;
-            background: rgba(255,255,255,0.2);
-            padding: 10px;
-            border-radius: 0 4px 4px 0;
+            background: rgba(255,255,255,0.3);
+            border-radius: 0 8px 8px 0;
+            position: relative;
         }
+
+        .event-entry.age-marker {
+            border-left: 4px solid var(--gold);
+            background: rgba(184, 134, 11, 0.1);
+            text-align: center;
+            font-family: 'MedievalSharp';
+            font-size: 1.1rem;
+        }
+
+        .dice-result {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+        .dice-success { background: #dcfce7; color: var(--success); border: 1px solid var(--success); }
+        .dice-failure { background: #fee2e2; color: var(--failure); border: 1px solid var(--failure); }
+        .dice-crit { background: var(--gold); color: white; text-shadow: 0 1px 2px black; border: 1px solid #854d0e; }
 
         .choices-area {
             padding: 1.5rem;
             border-top: 2px solid rgba(44, 30, 22, 0.2);
-            background: rgba(0,0,0,0.02);
+            background: rgba(0,0,0,0.04);
             display: flex;
             flex-direction: column;
             gap: 10px;
-            align-items: center;
         }
 
-        button {
-            background: var(--leather);
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 2px;
+        .choice-btn {
+            background: linear-gradient(to bottom, #5d4037, #3e2723);
+            color: #f4e4bc;
+            padding: 12px 16px;
+            border-radius: 6px;
             font-family: 'MedievalSharp', cursive;
-            transition: all 0.2s;
-            border: 1px solid #3e2723;
-            cursor: pointer;
+            text-align: left;
             width: 100%;
-            max-width: 400px;
-        }
-
-        button:hover:not(:disabled) {
-            background: #795548;
-            transform: translateY(-1px);
-        }
-
-        button:disabled {
-            background: #9e9e9e;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .creation-screen {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--parchment);
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        .point-allocator {
+            transition: all 0.2s;
+            border: 2px solid #2c1e16;
+            cursor: pointer;
+            font-size: 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            max-width: 300px;
-            margin: 10px auto;
-            width: 100%;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
-        .dice-roll {
-            font-style: italic;
-            color: #7f1d1d;
-            font-weight: bold;
+        .choice-btn:hover:not(:disabled) { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            filter: brightness(1.1);
+        }
+        
+        .choice-btn:disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(1); }
+
+        .dc-badge {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            border: 1px solid rgba(255,255,255,0.2);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Utility */
+        .creation-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--parchment); z-index: 50;
+            display: flex; flex-direction: column; padding: 2rem;
+            text-align: center; overflow-y: auto;
         }
-
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--leather); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--leather); border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
 <div class="parchment-container">
-    <!-- Character Creation Screen -->
+    <!-- Character Creation Overlay -->
     <div id="creation-screen" class="creation-screen">
-        <h2 class="text-3xl font-medieval mb-4 font-bold" style="font-family: 'MedievalSharp';">Birth of a Legend</h2>
-        <p class="mb-6 italic">Distribute your 20 points among the six sacred attributes.</p>
-        <div id="allocators"></div>
-        <div class="mt-6">
-            <h3 class="text-xl font-bold">Points Remaining: <span id="points-left">20</span></h3>
-            <button id="start-btn" class="mt-4" disabled onclick="startGame()">Begin Your Chronicle</button>
+        <h2 class="text-5xl font-bold mb-2 text-amber-900" style="font-family: 'MedievalSharp';">A Medieval Life</h2>
+        <p class="italic mb-8 text-lg opacity-70">5th Edition Mechanics Edition</p>
+        
+        <div class="max-w-xl mx-auto w-full bg-white/40 p-6 rounded-lg border-2 border-[#5d4037] shadow-xl">
+            <h3 class="text-xl font-bold mb-4">Forge Your Destiny</h3>
+            <input type="text" id="char-name" placeholder="Enter Name" class="w-full p-3 border-2 border-[#5d4037] bg-[#fdf6e3] text-center text-xl font-bold mb-6 focus:outline-none focus:border-amber-600 rounded">
+            
+            <div class="flex justify-center gap-4 mb-6">
+                <button id="gender-m" class="choice-btn w-32 justify-center" onclick="setGender('Male')">Male</button>
+                <button id="gender-f" class="choice-btn w-32 justify-center opacity-60" onclick="setGender('Female')">Female</button>
+            </div>
+
+            <div class="text-left mb-2 font-bold flex justify-between">
+                <span>Ability Scores</span>
+                <span class="text-xs font-normal italic">Standard Array (15, 14, 13, 12, 10, 8) assigned randomly</span>
+            </div>
+            
+            <div id="creation-stats" class="grid grid-cols-3 gap-2 mb-6">
+                <!-- Stats injected here -->
+            </div>
+
+            <button onclick="rerollStats()" class="text-xs underline text-amber-900 mb-6 cursor-pointer hover:text-amber-700">Reroll Dice</button>
+
+            <button id="start-btn" class="w-full bg-[#8b4513] text-white font-medieval text-2xl py-3 rounded border-2 border-[#2c1e16] hover:bg-[#a0522d] transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled onclick="startGame()">Begin Chronicle</button>
         </div>
     </div>
 
+    <!-- Header -->
     <div class="header">
-        <h1 class="text-3xl">A Medieval Chronicle</h1>
-        <p id="year-display" class="italic">The Year of our Lord, 1200</p>
+        <div class="text-left">
+            <h1 class="text-xl font-bold" id="display-name">Unknown Soul</h1>
+            <p class="text-xs opacity-70" id="display-class">Peasant Commoner</p>
+        </div>
+        <div class="text-right">
+            <h2 class="text-2xl font-bold text-amber-900" id="year-display">Year 0</h2>
+            <p class="text-xs">Age: <span id="age-display">0</span></p>
+        </div>
     </div>
 
-    <div class="stats-grid">
-        <div class="stat-box"><span>STR</span><span id="stat-str" class="stat-val">10</span></div>
-        <div class="stat-box"><span>DEX</span><span id="stat-dex" class="stat-val">10</span></div>
-        <div class="stat-box"><span>CON</span><span id="stat-con" class="stat-val">10</span></div>
-        <div class="stat-box"><span>INT</span><span id="stat-int" class="stat-val">10</span></div>
-        <div class="stat-box"><span>WIS</span><span id="stat-wis" class="stat-val">10</span></div>
-        <div class="stat-box"><span>CHA</span><span id="stat-cha" class="stat-val">10</span></div>
-        <div class="stat-box"><span>Gold</span><span id="stat-gold" class="stat-val">0</span></div>
-        <div class="stat-box"><span>Status</span><span id="stat-status" class="stat-val">Peasant</span></div>
-        <div class="stat-box"><span>Age</span><span id="stat-age" class="stat-val">16</span></div>
-    </div>
+    <!-- Main Game Area -->
+    <div class="main-layout">
+        <div class="sidebar">
+            <div id="tab-log" class="tab-btn active" onclick="switchTab('log')">📜 Chronicle</div>
+            <div id="tab-char" class="tab-btn" onclick="switchTab('char')">👤 Character</div>
+            <div id="tab-inv" class="tab-btn" onclick="switchTab('inv')">🎒 Inventory</div>
+            
+            <div class="mt-auto p-4 border-t border-black/10 text-xs">
+                <div class="font-bold mb-1">Unlocks</div>
+                <ul id="unlock-list" class="list-disc pl-4 space-y-1 opacity-70">
+                    <li class="line-through">Birth</li>
+                </ul>
+            </div>
+        </div>
 
-    <div id="event-log"></div>
+        <div class="content-area">
+            <!-- D&D Stat Block -->
+            <div class="stats-grid">
+                <div class="stat-box"><span class="stat-label">STR</span><span id="stat-str" class="stat-val">10</span><span id="mod-str" class="stat-mod">+0</span></div>
+                <div class="stat-box"><span class="stat-label">DEX</span><span id="stat-dex" class="stat-val">10</span><span id="mod-dex" class="stat-mod">+0</span></div>
+                <div class="stat-box"><span class="stat-label">CON</span><span id="stat-con" class="stat-val">10</span><span id="mod-con" class="stat-mod">+0</span></div>
+                <div class="stat-box"><span class="stat-label">INT</span><span id="stat-int" class="stat-val">10</span><span id="mod-int" class="stat-mod">+0</span></div>
+                <div class="stat-box"><span class="stat-label">WIS</span><span id="stat-wis" class="stat-val">10</span><span id="mod-wis" class="stat-mod">+0</span></div>
+                <div class="stat-box"><span class="stat-label">CHA</span><span id="stat-cha" class="stat-val">10</span><span id="mod-cha" class="stat-mod">+0</span></div>
+            </div>
 
-    <div id="choices-container" class="choices-area">
-        <!-- Buttons will be injected here -->
+            <!-- Tab: Log (Main Gameplay) -->
+            <div id="log-tab" class="tab-content flex-grow flex flex-col overflow-hidden">
+                <div id="event-log"></div>
+                <div id="input-area" class="mt-auto">
+                    <div id="decision-prompt" class="px-6 py-3 bg-amber-900/10 font-bold text-amber-900 border-t border-black/10 font-medieval text-lg">
+                        Fate awaits...
+                    </div>
+                    <div id="choices-container" class="choices-area">
+                        <!-- Buttons injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Character Sheet -->
+            <div id="char-tab" class="tab-content hidden p-6 overflow-y-auto">
+                <h2 class="text-3xl font-medieval mb-4 border-b border-black/20 pb-2">Character Sheet</h2>
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-bold mb-2">Vitals</h3>
+                        <p><strong>Health Status:</strong> <span id="health-status" class="text-green-700">Healthy</span></p>
+                        <p><strong>Gold:</strong> <span id="gold-display">0</span> GP</p>
+                        <p><strong>Social Class:</strong> <span id="social-display">Peasant</span></p>
+                        <p><strong>Alignment:</strong> <span id="align-display">True Neutral</span></p>
+                    </div>
+                    <div>
+                        <h3 class="font-bold mb-2">Traits & Feats</h3>
+                        <div id="traits-list" class="text-sm space-y-1 italic">None yet...</div>
+                    </div>
+                </div>
+            </div>
+            
+             <!-- Tab: Inventory -->
+             <div id="inv-tab" class="tab-content hidden p-6 overflow-y-auto">
+                <h2 class="text-3xl font-medieval mb-4 border-b border-black/20 pb-2">Inventory</h2>
+                <div id="inventory-list" class="grid grid-cols-1 gap-2">
+                    <p class="italic opacity-50">Your satchel is empty.</p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    /**
-     * STATE MANAGEMENT
-     */
-    const gameState = {
+    /* --- ARCANE ARCHITECT'S ENGINE --- */
+
+    // 1. D&D 5e MECHANICS
+    const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+    
+    function getModifier(score) {
+        return Math.floor((score - 10) / 2);
+    }
+
+    function formatMod(mod) {
+        return mod >= 0 ? `+${mod}` : `${mod}`;
+    }
+
+    // Returns { total, roll, mod, isCrit, isFail }
+    function rollD20(mod) {
+        const roll = Math.floor(Math.random() * 20) + 1;
+        return {
+            roll: roll,
+            mod: mod,
+            total: roll + mod,
+            isCrit: roll === 20,
+            isFail: roll === 1
+        };
+    }
+
+    // 2. STATE MANAGEMENT
+    const state = {
+        name: "Unknown",
+        gender: "Male",
+        age: 0,
         year: 1200,
-        age: 16,
-        isAlive: true,
-        points: 20,
-        stats: {
-            str: 8, dex: 8, con: 8,
-            int: 8, wis: 8, cha: 8
-        },
-        gold: 20,
-        status: 'Peasant',
-        log: []
-    };
-
-    const abilityNames = {
-        str: "Strength", dex: "Dexterity", con: "Constitution",
-        int: "Intelligence", wis: "Wisdom", cha: "Charisma"
-    };
-
-    /**
-     * D&D 5E DICE ENGINE
-     */
-    const Dice = {
-        roll: (sides = 20) => Math.floor(Math.random() * sides) + 1,
-        getModifier: (score) => Math.floor((score - 10) / 2),
-        abilityCheck: (abilityScore, dc) => {
-            const roll = Dice.roll(20);
-            const mod = Dice.getModifier(abilityScore);
-            const total = roll + mod;
-            return { success: total >= dc, roll, mod, total };
+        stats: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+        gold: 0,
+        health: 100, // Hidden HP
+        class: "Peasant",
+        traits: [],
+        inventory: [],
+        flags: {
+            literate: false,
+            criminal: false,
+            married: false,
+            employed: false
         }
     };
 
-    /**
-     * EVENT ENGINE (CHOICE-BASED)
-     */
-    const eventPool = [
-        {
-            title: "The Local Festival",
-            description: "A traveling troupe has set up in the village square. How will you spend your day?",
-            choices: [
-                {
-                    text: "Enter the wrestling match (STR)",
-                    check: 'str', dc: 13,
-                    success: "You pinned the blacksmith's son! You win a purse of gold and renown.",
-                    fail: "You were tossed into the mud. Your muscles ache.",
-                    onSuccess: { gold: 10, stats: { str: 1 } },
-                    onFailure: { stats: { con: -1 } }
-                },
-                {
-                    text: "Perform a street song (CHA)",
-                    check: 'cha', dc: 12,
-                    success: "The crowd loves your voice! They shower you with copper coins.",
-                    fail: "They boo you off the stage. How embarrassing.",
-                    onSuccess: { gold: 15, stats: { cha: 1 } },
-                    onFailure: { stats: { cha: -1 } }
-                },
-                {
-                    text: "Study the traveler's maps (INT)",
-                    check: 'int', dc: 14,
-                    success: "You learn of distant lands and hidden routes.",
-                    fail: "The squiggles make no sense to you.",
-                    onSuccess: { stats: { int: 1, wis: 1 } },
-                    onFailure: { stats: { wis: -1 } }
-                }
-            ]
-        },
-        {
-            title: "A Shady Business",
-            description: "A hooded figure offers you a 'guaranteed' investment in a spice ship.",
-            choices: [
-                {
-                    text: "Trust your gut and refuse (WIS)",
-                    check: 'wis', dc: 11,
-                    success: "You realized it was a scam. You saved your hard-earned gold.",
-                    fail: "You let a good opportunity pass... or did you?",
-                    onSuccess: { stats: { wis: 1 } },
-                    onFailure: { stats: { wis: -1 } }
-                },
-                {
-                    text: "Invest 15 Gold (INT)",
-                    check: 'int', dc: 15,
-                    success: "The ship returns! You've tripled your investment.",
-                    fail: "The ship 'sank'. You lost your gold.",
-                    onSuccess: { gold: 30 },
-                    onFailure: { gold: -15 }
-                }
-            ]
-        },
-        {
-            title: "The Guard's Recruitment",
-            description: "The local Baron is looking for new recruits for the border patrol.",
-            choices: [
-                {
-                    text: "Enlist in the infantry (CON)",
-                    check: 'con', dc: 13,
-                    success: "The training is hard but you thrive. You receive a soldier's pay.",
-                    fail: "The marching is too much for your legs. You are dismissed.",
-                    onSuccess: { gold: 20, stats: { str: 1, con: 1 } },
-                    onFailure: { stats: { con: -1 } }
-                },
-                {
-                    text: "Apply for the scouts (DEX)",
-                    check: 'dex', dc: 15,
-                    success: "You are silent as a shadow. The commander is impressed.",
-                    fail: "You tripped over a root during the test.",
-                    onSuccess: { gold: 25, stats: { dex: 1 } },
-                    onFailure: { stats: { dex: -1 } }
-                }
-            ]
-        }
-    ];
+    // 3. EVENT POOLS (The Ages of Man)
+    
+    // Helper to create events
+    // type: 'check' | 'flavor' | 'choice'
+    const createEvent = (id, title, text, choices) => ({ id, title, text, choices });
 
-    /**
-     * CHARACTER CREATION LOGIC
-     */
-    function initCreation() {
-        const container = document.getElementById('allocators');
-        for (let s in gameState.stats) {
-            const div = document.createElement('div');
-            div.className = 'point-allocator';
-            div.innerHTML = `
-                <span class="font-bold w-24 text-left">${abilityNames[s]}</span>
-                <button class="w-8 h-8 flex items-center justify-center bg-gray-400" onclick="changeStat('${s}', -1)">-</button>
-                <span id="alloc-${s}" class="text-xl font-bold w-12 text-center">8</span>
-                <button class="w-8 h-8 flex items-center justify-center bg-gray-400" onclick="changeStat('${s}', 1)">+</button>
+    const POOLS = {
+        Infancy: [ // 0-2
+            createEvent('inf_omen', 'Astrological Omen', 'The village elder casts bones upon your crib.', [
+                { text: 'Smile at the Elder', type: 'flavor', effect: () => { state.stats.cha++; log(`The Elder smiles back. "A charmer," she says. (+1 CHA)`); } },
+                { text: 'Cry loudly', type: 'flavor', effect: () => { state.stats.con++; log(`"Strong lungs," the Elder grunts. (+1 CON)`); } }
+            ]),
+            createEvent('inf_sick', 'The Fever', 'A sweating sickness grips the nursery.', [
+                { text: 'Fight the sickness', type: 'check', stat: 'con', dc: 10, 
+                  success: 'You break the fever naturally. Your immune system hardens. (+1 CON)', 
+                  fail: 'The fever breaks, but leaves you frail. (-1 STR)',
+                  onSuccess: () => state.stats.con++, onFail: () => state.stats.str-- }
+            ]),
+            createEvent('inf_toy', 'The Wooden Horse', 'Your father carves a small toy.', [
+                { text: 'Smash it', type: 'flavor', effect: () => { state.stats.str++; log("Destruction is a form of creation? (+1 STR)"); } },
+                { text: 'Observe it', type: 'flavor', effect: () => { state.stats.int++; log("You study the carving marks. (+1 INT)"); } }
+            ])
+        ],
+        Childhood: [ // 3-11
+            createEvent('child_bully', 'The Village Bully', 'The miller\'s son demands your lunch.', [
+                { text: 'Punch him', type: 'check', stat: 'str', dc: 12, success: 'You bloody his nose!', fail: 'He pummels you into the mud.', onSuccess: () => changeRep('Brave'), onFail: () => changeRep('Meek') },
+                { text: 'Outsmart him', type: 'check', stat: 'int', dc: 13, success: 'You trick him into falling in the creek.', fail: 'He doesn\'t understand your words and hits you.', onSuccess: () => state.stats.int++, onFail: () => state.health -= 5 }
+            ]),
+            createEvent('child_lost', 'Lost in the Woods', 'You wandered too far from the village.', [
+                { text: 'Find your way back', type: 'check', stat: 'wis', dc: 11, success: 'You navigate by moss and sun. (+1 WIS)', fail: 'A search party finds you shivering at midnight.', onSuccess: () => state.stats.wis++, onFail: () => addTrait('Fear of Woods') },
+                { text: 'Climb a tree', type: 'check', stat: 'dex', dc: 12, success: 'You spot the village smoke.', fail: 'You fall and break a wrist. (-1 DEX)', onSuccess: () => state.stats.dex++, onFail: () => state.stats.dex-- }
+            ]),
+            createEvent('child_fest', 'The Harvest Festival', 'Music plays and fires burn.', [
+                { text: 'Dance', type: 'check', stat: 'dex', dc: 10, success: 'You move with grace.', fail: 'You trip over your own feet.', onSuccess: () => state.stats.cha++, onFail: () => {} },
+                { text: 'Pickpocket a drunk', type: 'check', stat: 'dex', dc: 15, req: (s) => s.age >= 8, success: 'You snag a pouch! (+5 GP)', fail: 'You are caught and thrashed.', onSuccess: () => state.gold += 5, onFail: () => { state.health -= 10; addTrait('Marked Thief'); } }
+            ])
+        ],
+        Teen: [ // 12-17
+            createEvent('teen_love', 'First Crush', 'You catch the eye of a peer during market day.', [
+                { text: 'Woo them with poetry', type: 'check', stat: 'cha', dc: 13, success: 'A summer romance blooms.', fail: 'You stutter and shame yourself.', onSuccess: () => state.stats.cha++, onFail: () => state.stats.cha-- },
+                { text: 'Impress with strength', type: 'check', stat: 'str', dc: 12, success: 'They admire your physique.', fail: 'You fail to lift the heavy sack.', onSuccess: () => state.stats.str++, onFail: () => {} }
+            ]),
+            createEvent('teen_job', 'Apprenticeship', 'The local blacksmith is looking for help.', [
+                { text: 'Apply', type: 'check', stat: 'str', dc: 14, success: 'You are accepted as an apprentice.', fail: 'You are deemed too weak.', onSuccess: () => { addTrait('Smith Apprentice'); state.gold += 10; }, onFail: () => {} },
+                { text: 'Ignore', type: 'flavor', effect: () => log("You prefer idleness.") }
+            ]),
+            createEvent('teen_magic', 'The Hedge Wizard', 'You find a scroll dropped by a traveler.', [
+                { text: 'Try to read it', type: 'check', stat: 'int', dc: 16, req: (s) => s.flags.literate, success: 'Arcane energy crackles! (+2 INT)', fail: 'It gives you a headache.', onSuccess: () => state.stats.int += 2, onFail: () => {} },
+                { text: 'Sell it', type: 'flavor', effect: () => { state.gold += 15; log("Sold to the local priest for 15 GP."); } }
+            ])
+        ],
+        Adult: [ // 18-64
+            createEvent('adult_war', 'Call to Arms', ' The Baron demands levies for the border war.', [
+                { text: 'Go to War', type: 'check', stat: 'con', dc: 14, success: 'You survive the campaign and return a veteran. (+50 GP)', fail: 'You return with a limp. (-1 DEX)', onSuccess: () => { state.gold += 50; addTrait('Veteran'); }, onFail: () => state.stats.dex-- },
+                { text: 'Pay substitute (20 GP)', type: 'flavor', req: (s) => s.gold >= 20, effect: () => { state.gold -= 20; log("You paid a coward's tax."); } }
+            ]),
+            createEvent('adult_inv', 'Merchant Venture', 'A ship captain seeks investors.', [
+                { text: 'Invest Risky (50 GP)', type: 'check', stat: 'wis', dc: 15, req: (s) => s.gold >= 50, success: 'The ship returns laden with silk! (+150 GP)', fail: 'The ship sank in a storm. (Lost 50 GP)', onSuccess: () => { state.gold += 100; }, onFail: () => { state.gold -= 50; } },
+                { text: 'Decline', type: 'flavor', effect: () => log("You keep your coin close.") }
+            ])
+        ],
+        Elder: [ // 65+
+            createEvent('elder_sick', 'Winter Chill', 'The cold settles deep in your bones.', [
+                { text: 'Resist', type: 'check', stat: 'con', dc: 12 + (state.age - 60), success: 'You see another spring.', fail: 'Your health fades drastically.', onSuccess: () => {}, onFail: () => state.health -= 30 }
+            ]),
+            createEvent('elder_teach', 'Pass the Torch', 'A youngster asks for your wisdom.', [
+                { text: 'Teach them', type: 'check', stat: 'wis', dc: 10, success: 'Your legacy will live on. (+Renown)', fail: 'You forget what you were saying.', onSuccess: () => addTrait('Village Elder'), onFail: () => {} }
+            ])
+        ]
+    };
+
+    // 4. LOGIC & GAME LOOP
+
+    function init() {
+        rerollStats();
+        // Hide game, show creation
+        document.querySelector('.header').style.opacity = 0;
+        document.querySelector('.main-layout').style.opacity = 0;
+        
+        // Listeners
+        document.getElementById('char-name').addEventListener('input', checkReady);
+    }
+
+    function rerollStats() {
+        const standardArray = [15, 14, 13, 12, 10, 8];
+        // Shuffle array
+        for (let i = standardArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [standardArray[i], standardArray[j]] = [standardArray[j], standardArray[i]];
+        }
+        
+        let i = 0;
+        for (let key in state.stats) {
+            state.stats[key] = standardArray[i++];
+        }
+        renderCreationStats();
+    }
+
+    function renderCreationStats() {
+        const container = document.getElementById('creation-stats');
+        container.innerHTML = '';
+        for (let key in state.stats) {
+            const val = state.stats[key];
+            const mod = getModifier(val);
+            container.innerHTML += `
+                <div class="bg-white/50 p-2 rounded text-center border border-[#5d4037]">
+                    <div class="text-xs uppercase font-bold">${key}</div>
+                    <div class="text-xl font-medieval">${val}</div>
+                    <div class="text-xs text-gray-600">${formatMod(mod)}</div>
+                </div>
             `;
-            container.appendChild(div);
         }
     }
 
-    window.changeStat = function(stat, amt) {
-        if (amt > 0 && gameState.points > 0 && gameState.stats[stat] < 18) {
-            gameState.stats[stat]++;
-            gameState.points--;
-        } else if (amt < 0 && gameState.stats[stat] > 8) {
-            gameState.stats[stat]--;
-            gameState.points++;
-        }
-        document.getElementById(`alloc-${stat}`).innerText = gameState.stats[stat];
-        document.getElementById('points-left').innerText = gameState.points;
-        document.getElementById('start-btn').disabled = gameState.points !== 0;
-    };
+    function setGender(g) {
+        state.gender = g;
+        document.getElementById('gender-m').style.opacity = g === 'Male' ? 1 : 0.6;
+        document.getElementById('gender-f').style.opacity = g === 'Female' ? 1 : 0.6;
+        document.getElementById('gender-m').style.border = g === 'Male' ? '2px solid gold' : '2px solid #2c1e16';
+        document.getElementById('gender-f').style.border = g === 'Female' ? '2px solid gold' : '2px solid #2c1e16';
+        checkReady();
+    }
 
-    /**
-     * UI & GAMEPLAY LOGIC
-     */
+    function checkReady() {
+        const name = document.getElementById('char-name').value;
+        const btn = document.getElementById('start-btn');
+        btn.disabled = name.length === 0;
+    }
+
     function startGame() {
+        state.name = document.getElementById('char-name').value;
         document.getElementById('creation-screen').style.display = 'none';
-        addLogEntry("Your Journey Begins", "You step out into the world with 20 gold and high hopes.");
-        showYearChoices();
+        document.querySelector('.header').style.opacity = 1;
+        document.querySelector('.main-layout').style.opacity = 1;
+        
+        // Initial setup
+        document.getElementById('display-name').innerText = state.name;
         updateUI();
-    }
-
-    function updateUI() {
-        for (let s in gameState.stats) {
-            document.getElementById(`stat-${s}`).innerText = gameState.stats[s];
-        }
-        document.getElementById('stat-gold').innerText = gameState.gold;
-        document.getElementById('stat-age').innerText = gameState.age;
-        document.getElementById('stat-status').innerText = gameState.status;
-        document.getElementById('year-display').innerText = `The Year of our Lord, ${gameState.year}`;
         
-        const log = document.getElementById('event-log');
-        log.scrollTop = log.scrollHeight;
-    }
-
-    function addLogEntry(title, text, rollData = null) {
-        const log = document.getElementById('event-log');
-        const entry = document.createElement('div');
-        entry.className = 'event-entry';
+        log(`<strong>Year ${state.year}:</strong> ${state.name} is born into the world. The dice are cast.`);
         
-        let rollHtml = '';
-        if (rollData) {
-            const color = rollData.success ? 'text-green-700' : 'text-red-800';
-            rollHtml = `<br><span class="dice-roll ${color}">[Roll: ${rollData.roll} + Mod: ${rollData.mod} = ${rollData.total} vs DC ${rollData.dc}]</span>`;
-        }
-
-        entry.innerHTML = `
-            <h3 class="font-bold text-lg text-amber-900">${title}</h3>
-            <p>${text} ${rollHtml}</p>
-        `;
-        log.appendChild(entry);
+        // Start Loop
+        processYear();
     }
 
-    function showYearChoices() {
+    function processYear() {
+        state.age++;
+        state.year++;
+        
+        // Update Displays
+        document.getElementById('year-display').innerText = `Year ${state.year}`;
+        document.getElementById('age-display').innerText = state.age;
+
+        // Visual break
+        const logEl = document.getElementById('event-log');
+        const marker = document.createElement('div');
+        marker.className = 'event-entry age-marker';
+        marker.innerText = `Age ${state.age}`;
+        logEl.prepend(marker);
+
+        // Check Unlocks (Specific Requests)
+        checkUnlocks();
+
+        // Determine Event Pool
+        let pool = POOLS.Infancy;
+        if (state.age >= 3) pool = POOLS.Childhood;
+        if (state.age >= 12) pool = POOLS.Teen;
+        if (state.age >= 18) pool = POOLS.Adult;
+        if (state.age >= 65) pool = POOLS.Elder;
+
+        // Filter pool by requirements
+        const validEvents = pool.filter(e => {
+            // Check if we've seen unique events? (optional)
+            return true;
+        });
+
+        const event = validEvents[Math.floor(Math.random() * validEvents.length)];
+        renderEvent(event);
+    }
+
+    function checkUnlocks() {
+        const ul = document.getElementById('unlock-list');
+        const addUnlock = (txt) => {
+            const li = document.createElement('li');
+            li.innerText = `${txt} (Age ${state.age})`;
+            li.style.color = "var(--ink)";
+            li.style.fontWeight = "bold";
+            ul.prepend(li);
+            log(`<span style="color:var(--gold)">Unlock: ${txt}</span>`);
+        };
+
+        if (state.age === 4) addUnlock("Temple Blessings Available");
+        if (state.age === 6) { addUnlock("Basic Training"); state.flags.literate = true; log("You begin to learn your letters."); }
+        if (state.age === 8) addUnlock("Petty Crime / Mischief");
+        if (state.age === 14) addUnlock("Courtship & Betrothal");
+        if (state.age === 18) { addUnlock("Adulthood: All Paths Open"); state.flags.adult = true; }
+    }
+
+    function renderEvent(event) {
+        log(`<strong>${event.title}:</strong> ${event.text}`);
         const container = document.getElementById('choices-container');
-        container.innerHTML = `<p class="italic mb-2">The year ${gameState.year} unfolds...</p>`;
-        
-        const event = eventPool[Math.floor(Math.random() * eventPool.length)];
-        addLogEntry(event.title, event.description);
+        container.innerHTML = '';
 
         event.choices.forEach(choice => {
+            // Check requirements
+            if (choice.req && !choice.req(state)) return;
+
             const btn = document.createElement('button');
-            btn.innerText = choice.text;
-            btn.onclick = () => handleChoice(choice);
+            btn.className = 'choice-btn';
+            
+            let badge = '';
+            if (choice.type === 'check') {
+                const mod = getModifier(state.stats[choice.stat]);
+                const sign = mod >= 0 ? '+' : '';
+                badge = `<span class="dc-badge" style="color: ${mod >= 0 ? '#86efac' : '#fca5a5'}">${choice.stat.toUpperCase()} ${sign}${mod} (DC ${choice.dc})</span>`;
+            } else if (choice.type === 'flavor') {
+                badge = `<span class="opacity-50 text-xs">Free Action</span>`;
+            }
+
+            btn.innerHTML = `<span>${choice.text}</span> ${badge}`;
+            
+            btn.onclick = () => {
+                // Disable all buttons
+                const allBtns = container.querySelectorAll('button');
+                allBtns.forEach(b => b.disabled = true);
+                
+                resolveChoice(choice);
+            };
+            
             container.appendChild(btn);
         });
     }
 
-    function handleChoice(choice) {
-        const result = Dice.abilityCheck(gameState.stats[choice.check], choice.dc);
-        const outcome = result.success ? choice.onSuccess : choice.onFailure;
-        const resultText = result.success ? choice.success : choice.fail;
+    function resolveChoice(choice) {
+        if (choice.type === 'flavor') {
+            if (choice.effect) choice.effect();
+            nextTurn();
+        } 
+        else if (choice.type === 'check') {
+            const mod = getModifier(state.stats[choice.stat]);
+            const result = rollD20(mod);
+            const passed = result.total >= choice.dc;
 
-        // Apply outcomes
-        if (outcome.gold) gameState.gold = Math.max(0, gameState.gold + outcome.gold);
-        if (outcome.stats) {
-            for (let s in outcome.stats) {
-                gameState.stats[s] = Math.max(1, gameState.stats[s] + outcome.stats[s]);
-            }
-        }
+            // Render Dice Result
+            const resultClass = result.isCrit ? 'dice-crit' : (passed ? 'dice-success' : 'dice-failure');
+            const resultText = result.isCrit ? 'NAT 20!' : (result.isFail ? 'CRIT FAIL!' : (passed ? 'SUCCESS' : 'FAILURE'));
+            
+            log(`
+                <div class="mt-2 mb-2 p-2 bg-black/5 rounded text-sm">
+                    <span class="font-bold">Rolling ${choice.stat.toUpperCase()}:</span> 
+                    d20(${result.roll}) ${formatMod(result.mod)} = <span class="text-lg font-bold">${result.total}</span> vs DC ${choice.dc}
+                    <br>
+                    <span class="${resultClass} dice-result">${resultText}</span>
+                </div>
+            `);
 
-        addLogEntry("Outcome", resultText, { ...result, dc: choice.dc });
-        
-        // Progression Logic
-        gameState.year++;
-        gameState.age++;
-
-        // Status Promotion Check
-        if (gameState.status === 'Peasant' && gameState.gold >= 100) {
-            gameState.status = 'Merchant';
-            addLogEntry("Social Rise!", "With your wealth growing, the town recognizes you as a Merchant.");
-        } else if (gameState.status === 'Merchant' && gameState.gold >= 500) {
-            gameState.status = 'Noble';
-            addLogEntry("Nobility!", "You have purchased a title and land. You are now a member of the landed gentry.");
-        }
-
-        // Mortality Check
-        if (gameState.age > 65) {
-            const deathCheck = Dice.abilityCheck(gameState.stats.con, 5 + (gameState.age - 65));
-            if (!deathCheck.success) {
-                gameState.isAlive = false;
-                addLogEntry("Death Comes", "Your body finally tires. You pass away with a wealth of ${gameState.gold} gold.");
-                document.getElementById('choices-container').innerHTML = `<button onclick="location.reload()">Start A New Life</button>`;
+            setTimeout(() => {
+                if (passed) {
+                    log(choice.success);
+                    if (choice.onSuccess) choice.onSuccess();
+                } else {
+                    log(choice.fail);
+                    if (choice.onFail) choice.onFail();
+                }
                 updateUI();
-                return;
-            }
+                nextTurn();
+            }, 600);
         }
-
-        updateUI();
-        
-        // Brief pause before next year's choices
-        const container = document.getElementById('choices-container');
-        container.innerHTML = `<button onclick="showYearChoices()">Advance to next Year</button>`;
     }
 
-    // Initialize
-    initCreation();
-</script>
+    function nextTurn() {
+        updateUI();
+        // Add a small "Continue" button
+        const container = document.getElementById('choices-container');
+        container.innerHTML = '';
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn justify-center font-bold';
+        btn.innerText = "Advance Year";
+        btn.onclick = processYear;
+        container.appendChild(btn);
 
+        if (state.health <= 0) {
+            death();
+        }
+    }
+
+    function death() {
+        const container = document.getElementById('choices-container');
+        container.innerHTML = '<div class="text-center text-red-800 font-bold text-xl p-4">YOUR WATCH HAS ENDED</div>';
+        log(`<strong style="color:red">DEATH:</strong> At the age of ${state.age}, ${state.name} passes into the void.`);
+        document.getElementById('input-area').style.opacity = 0.5;
+        document.getElementById('input-area').style.pointerEvents = 'none';
+    }
+
+    // UI HELPER
+    function log(html) {
+        const logEl = document.getElementById('event-log');
+        const div = document.createElement('div');
+        div.className = 'event-entry';
+        div.innerHTML = html;
+        logEl.prepend(div);
+    }
+
+    function updateUI() {
+        // Stats
+        for (let key in state.stats) {
+            const val = state.stats[key];
+            const mod = getModifier(val);
+            document.getElementById(`stat-${key}`).innerText = val;
+            document.getElementById(`mod-${key}`).innerText = formatMod(mod);
+        }
+        document.getElementById('gold-display').innerText = state.gold;
+        
+        // Character Tab
+        document.getElementById('social-display').innerText = state.class;
+    }
+
+    function addTrait(trait) {
+        state.traits.push(trait);
+        const list = document.getElementById('traits-list');
+        if (state.traits.length === 1) list.innerHTML = '';
+        const div = document.createElement('div');
+        div.innerText = `• ${trait}`;
+        list.appendChild(div);
+        log(`<strong>New Trait:</strong> ${trait}`);
+    }
+
+    function changeRep(rep) {
+        // Placeholder for reputation system
+        log(`Reputation change: ${rep}`);
+    }
+
+    function switchTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        document.getElementById(`${tab}-tab`).classList.remove('hidden');
+        document.getElementById(`tab-${tab}`).classList.add('active');
+    }
+
+    // Boot
+    init();
+
+</script>
 </body>
 </html>
