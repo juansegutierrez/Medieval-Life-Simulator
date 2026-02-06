@@ -15,6 +15,15 @@
             --gold: #b8860b;
             --success: #15803d;
             --failure: #b91c1c;
+            --stress: #9f1239;
+            
+            /* Item Rarities */
+            --common: #737373;
+            --uncommon: #16a34a;
+            --rare: #2563eb;
+            --very-rare: #9333ea;
+            --legendary: #ea580c;
+            --artifact: #ca8a04;
         }
 
         body {
@@ -208,6 +217,36 @@
             border: 1px solid rgba(255,255,255,0.2);
         }
 
+        /* House System Styling */
+        .house-crest { font-size: 4rem; margin-bottom: 1rem; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; color: white; margin-left: 8px; }
+        .status-rising { background: var(--success); }
+        .status-stable { background: var(--gold); }
+        .status-declining { background: var(--failure); }
+
+        /* Occupation Styling */
+        .bar-container { height: 8px; background: rgba(0,0,0,0.1); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+        .bar-fill { height: 100%; transition: width 0.3s; }
+        .stress-fill { background: var(--stress); }
+        .perf-fill { background: var(--success); }
+        
+        .job-card {
+            border: 2px solid var(--leather);
+            background: rgba(255,255,255,0.4);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        /* Inventory Styling */
+        .item-row { display: flex; align-items: center; justify-content: space-between; padding: 6px; border-bottom: 1px solid rgba(0,0,0,0.1); }
+        .item-rarity-Common { color: var(--common); font-weight: bold; }
+        .item-rarity-Uncommon { color: var(--uncommon); font-weight: bold; }
+        .item-rarity-Rare { color: var(--rare); font-weight: bold; text-shadow: 0 0 1px rgba(37,99,235,0.2); }
+        .item-rarity-VeryRare { color: var(--very-rare); font-weight: bold; text-shadow: 0 0 2px rgba(147,51,234,0.3); }
+        .item-rarity-Legendary { color: var(--legendary); font-weight: bold; text-shadow: 0 0 3px rgba(234,88,12,0.4); }
+        .item-rarity-Artifact { color: var(--artifact); font-weight: bold; text-shadow: 0 0 5px rgba(202,138,4,0.5); }
+
         /* Utility */
         .creation-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -231,7 +270,7 @@
         
         <div class="max-w-xl mx-auto w-full bg-white/40 p-6 rounded-lg border-2 border-[#5d4037] shadow-xl">
             <h3 class="text-xl font-bold mb-4">Forge Your Destiny</h3>
-            <input type="text" id="char-name" placeholder="Enter Name" class="w-full p-3 border-2 border-[#5d4037] bg-[#fdf6e3] text-center text-xl font-bold mb-6 focus:outline-none focus:border-amber-600 rounded">
+            <input type="text" id="char-name" placeholder="Enter First Name" class="w-full p-3 border-2 border-[#5d4037] bg-[#fdf6e3] text-center text-xl font-bold mb-6 focus:outline-none focus:border-amber-600 rounded">
             
             <div class="flex justify-center gap-4 mb-6">
                 <button id="gender-m" class="choice-btn w-32 justify-center" onclick="setGender('Male')">Male</button>
@@ -257,7 +296,7 @@
     <div class="header">
         <div class="text-left">
             <h1 class="text-xl font-bold" id="display-name">Unknown Soul</h1>
-            <p class="text-xs opacity-70" id="display-class">Peasant Commoner</p>
+            <p class="text-xs opacity-70 font-bold text-amber-900" id="display-class">Commoner</p>
         </div>
         <div class="text-right">
             <h2 class="text-2xl font-bold text-amber-900" id="year-display">Year 0</h2>
@@ -270,6 +309,8 @@
         <div class="sidebar">
             <div id="tab-log" class="tab-btn active" onclick="switchTab('log')">📜 Chronicle</div>
             <div id="tab-char" class="tab-btn" onclick="switchTab('char')">👤 Character</div>
+            <div id="tab-house" class="tab-btn" onclick="switchTab('house')">🏰 House</div>
+            <div id="tab-occ" class="tab-btn" onclick="switchTab('occ')">⚒️ Occupation</div>
             <div id="tab-inv" class="tab-btn" onclick="switchTab('inv')">🎒 Inventory</div>
             
             <div class="mt-auto p-4 border-t border-black/10 text-xs">
@@ -314,6 +355,14 @@
                         <p><strong>Gold:</strong> <span id="gold-display">0</span> GP</p>
                         <p><strong>Social Class:</strong> <span id="social-display">Peasant</span></p>
                         <p><strong>Alignment:</strong> <span id="align-display">True Neutral</span></p>
+                        
+                        <h3 class="font-bold mt-4 mb-2 border-t border-black/10 pt-2">Reputation & Fame</h3>
+                        <div class="text-sm">
+                             <div class="flex justify-between"><span>👑 Renown:</span> <span id="rep-renown">0</span></div>
+                             <div class="flex justify-between"><span>⚔️ Honor:</span> <span id="rep-honor">0</span></div>
+                             <div class="flex justify-between"><span>🙏 Piety:</span> <span id="rep-piety">0</span></div>
+                             <div class="flex justify-between text-red-800"><span>☠️ Infamy:</span> <span id="rep-infamy">0</span></div>
+                        </div>
                     </div>
                     <div>
                         <h3 class="font-bold mb-2">Traits & Feats</h3>
@@ -321,11 +370,23 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Tab: House / Lineage -->
+            <div id="house-tab" class="tab-content hidden p-6 overflow-y-auto text-center">
+                <!-- Content injected via JS -->
+                <div id="house-content"></div>
+            </div>
+
+            <!-- Tab: Occupation -->
+            <div id="occ-tab" class="tab-content hidden p-6 overflow-y-auto">
+                <h2 class="text-3xl font-medieval mb-4 border-b border-black/20 pb-2">Occupation & Trade</h2>
+                <div id="occ-content"></div>
+            </div>
             
              <!-- Tab: Inventory -->
              <div id="inv-tab" class="tab-content hidden p-6 overflow-y-auto">
                 <h2 class="text-3xl font-medieval mb-4 border-b border-black/20 pb-2">Inventory</h2>
-                <div id="inventory-list" class="grid grid-cols-1 gap-2">
+                <div id="inventory-list" class="flex flex-col gap-1">
                     <p class="italic opacity-50">Your satchel is empty.</p>
                 </div>
             </div>
@@ -347,7 +408,6 @@
         return mod >= 0 ? `+${mod}` : `${mod}`;
     }
 
-    // Returns { total, roll, mod, isCrit, isFail }
     function rollD20(mod) {
         const roll = Math.floor(Math.random() * 20) + 1;
         return {
@@ -366,9 +426,13 @@
         age: 0,
         year: 1200,
         stats: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+        reputation: { renown: 0, honor: 0, piety: 0, infamy: 0 },
         gold: 0,
-        health: 100, // Hidden HP
+        health: 100, 
         class: "Peasant",
+        house: null, 
+        occupation: null, // { id, rankIndex, performance, stress, workStance }
+        jobHistory: {}, // stores past careers
         traits: [],
         inventory: [],
         flags: {
@@ -379,101 +443,209 @@
         }
     };
 
-    // 3. EVENT POOLS (The Ages of Man)
+    // 3. DATA: OCCUPATIONS
+    const CAREERS = {
+        common: { 
+            name: "Common Labor", 
+            req: {},
+            ranks: [
+                { title: "Errand Runner", wage: 1, stressMod: 1 },
+                { title: "Farmhand", wage: 5, stressMod: 2 },
+                { title: "Foreman", wage: 12, stressMod: 3 }
+            ]
+        },
+        trade: { 
+            name: "Skilled Trade", 
+            req: { age: 10, stat: 'dex', val: 12 },
+            ranks: [
+                { title: "Apprentice", wage: 3, stressMod: 2 },
+                { title: "Journeyman", wage: 15, stressMod: 3 },
+                { title: "Master Artisan", wage: 40, stressMod: 5 }
+            ]
+        },
+        military: { 
+            name: "Military", 
+            req: { age: 14, stat: 'str', val: 11 },
+            ranks: [
+                { title: "Camp Follower", wage: 2, stressMod: 1 },
+                { title: "Foot Soldier", wage: 10, stressMod: 5 },
+                { title: "Veteran Sergeant", wage: 25, stressMod: 6 },
+                { title: "Captain", wage: 60, stressMod: 8 }
+            ]
+        },
+        scholar: {
+            name: "Scholarly",
+            req: { age: 12, stat: 'int', val: 13, flag: 'literate' },
+            ranks: [
+                { title: "Scribe's Assistant", wage: 4, stressMod: 1 },
+                { title: "Junior Scribe", wage: 12, stressMod: 2 },
+                { title: "Court Historian", wage: 45, stressMod: 4 }
+            ]
+        },
+        crime: {
+            name: "Criminal",
+            req: { age: 8, stat: 'dex', val: 10 },
+            ranks: [
+                { title: "Pickpocket", wage: 5, stressMod: 4 },
+                { title: "Burglar", wage: 20, stressMod: 6 },
+                { title: "Crime Boss", wage: 100, stressMod: 10 }
+            ]
+        }
+    };
+
+    // 4. DATA: HOUSE SYSTEM (Standardized Ranks)
+    // Structure: { m: MaleTitle, f: FemaleTitle }
+    const HOUSE_DATA = [
+        { 
+            id: 'great', name: 'Great Noble House', prob: 0.02, 
+            ranks: [
+                { m: 'Duke', f: 'Duchess' }, { m: 'Marquis', f: 'Marchioness' }
+            ], 
+            sigils: ['🦁', '🦅', '🐲'], gold: 500, status: 'Stable' 
+        },
+        { 
+            id: 'lesser', name: 'Lesser Noble House', prob: 0.10, 
+            ranks: [
+                { m: 'Count', f: 'Countess' }, { m: 'Viscount', f: 'Viscountess' }, { m: 'Baron', f: 'Baroness' }
+            ], 
+            sigils: ['🐺', '🐗', '🦌'], gold: 150, status: 'Rising' 
+        },
+        { 
+            id: 'knightly', name: 'Knightly House', prob: 0.15, 
+            ranks: [
+                { m: 'Sir', f: 'Dame' }
+            ], 
+            sigils: ['⚔️', '🛡️', '🐎'], gold: 50, status: 'Loyal' 
+        },
+        { 
+            id: 'merchant', name: 'Merchant House', prob: 0.15, 
+            ranks: [
+                { m: 'Guildmaster', f: 'Guildmistress' }, { m: 'Master of Coin', f: 'Mistress of Coin' }
+            ], 
+            sigils: ['⚖️', '💰', '🚢'], gold: 300, status: 'Wealthy' 
+        },
+        { 
+            id: 'religious', name: 'Religious House', prob: 0.05, 
+            ranks: [
+                { m: 'High Priest', f: 'High Priestess' }, { m: 'Deacon', f: 'Deaconess' }
+            ], 
+            sigils: ['☀️', '🕯️', '🕊️'], gold: 20, status: 'Pious' 
+        },
+        { 
+            id: 'fallen', name: 'Fallen House', prob: 0.05, 
+            ranks: [
+                { m: 'Exiled Lord', f: 'Exiled Lady' }, { m: 'Disgraced', f: 'Disgraced' }
+            ], 
+            sigils: ['🥀', '🏚️', '🐀'], gold: 5, status: 'Disgraced' 
+        },
+        { 
+            id: 'none', name: 'No House', prob: 0.48, 
+            ranks: [
+                { m: 'Peasant', f: 'Peasant' }, { m: 'Commoner', f: 'Commoner' }, { m: 'Serf', f: 'Serf' }
+            ], 
+            sigils: ['🔨', '🌾', '🥖'], gold: 0, status: 'Unknown' 
+        }
+    ];
+
+    const HOUSE_NAMES = ["Blackwood", "Hightower", "Ironfist", "Stormwind", "Goldleaf", "Thorn", "Winterbourne", "Ashford", "Redwyne", "Stark"];
     
-    // Helper to create events
-    // type: 'check' | 'flavor' | 'choice'
+    // 5. EVENT POOLS EXPANDED
     const createEvent = (id, title, text, choices) => ({ id, title, text, choices });
 
     const POOLS = {
         Infancy: [ // 0-2
             createEvent('inf_omen', 'Astrological Omen', 'The village elder casts bones upon your crib.', [
-                { text: 'Smile at the Elder', type: 'flavor', effect: () => { state.stats.cha++; log(`The Elder smiles back. "A charmer," she says. (+1 CHA)`); } },
+                { text: 'Smile at the Elder', type: 'flavor', effect: () => { state.stats.cha++; modRep('renown', 2); log(`The Elder smiles back. "A charmer," she says. (+1 CHA)`); } },
                 { text: 'Cry loudly', type: 'flavor', effect: () => { state.stats.con++; log(`"Strong lungs," the Elder grunts. (+1 CON)`); } }
             ]),
-            createEvent('inf_sick', 'The Fever', 'A sweating sickness grips the nursery.', [
-                { text: 'Fight the sickness', type: 'check', stat: 'con', dc: 10, 
-                  success: 'You break the fever naturally. Your immune system hardens. (+1 CON)', 
-                  fail: 'The fever breaks, but leaves you frail. (-1 STR)',
-                  onSuccess: () => state.stats.con++, onFail: () => state.stats.str-- }
+            createEvent('inf_lucky', 'Shiny Pebble', 'You find a perfectly round stone in the crib.', [
+                { text: 'Keep it', type: 'flavor', effect: () => { addItem('Lucky Stone', 'Common', 'A smooth river stone.'); log("It feels lucky."); } }
             ]),
-            createEvent('inf_toy', 'The Wooden Horse', 'Your father carves a small toy.', [
-                { text: 'Smash it', type: 'flavor', effect: () => { state.stats.str++; log("Destruction is a form of creation? (+1 STR)"); } },
-                { text: 'Observe it', type: 'flavor', effect: () => { state.stats.int++; log("You study the carving marks. (+1 INT)"); } }
+            createEvent('inf_sick', 'The Fever', 'A sweating sickness grips the nursery.', [
+                { text: 'Fight the sickness', type: 'check', stat: 'con', dc: 10, success: 'You break the fever naturally. (+1 CON)', fail: 'The fever breaks, but leaves you frail. (-1 STR)', onSuccess: () => state.stats.con++, onFail: () => state.stats.str-- }
+            ]),
+            createEvent('inf_toy', 'First Steps', 'You wobble on your feet, eyeing a toy.', [
+                { text: 'Walk to it', type: 'check', stat: 'dex', dc: 8, success: 'You walk! (+1 DEX)', fail: 'Plop. Gravity wins.', onSuccess: () => state.stats.dex++, onFail: () => {} }
             ])
         ],
         Childhood: [ // 3-11
             createEvent('child_bully', 'The Village Bully', 'The miller\'s son demands your lunch.', [
-                { text: 'Punch him', type: 'check', stat: 'str', dc: 12, success: 'You bloody his nose!', fail: 'He pummels you into the mud.', onSuccess: () => changeRep('Brave'), onFail: () => changeRep('Meek') },
-                { text: 'Outsmart him', type: 'check', stat: 'int', dc: 13, success: 'You trick him into falling in the creek.', fail: 'He doesn\'t understand your words and hits you.', onSuccess: () => state.stats.int++, onFail: () => state.health -= 5 }
+                { text: 'Punch him', type: 'check', stat: 'str', dc: 12, success: 'You bloody his nose! (+Honor)', fail: 'He pummels you.', onSuccess: () => modRep('honor', 5), onFail: () => modRep('honor', -2) },
+                { text: 'Outsmart him', type: 'check', stat: 'int', dc: 13, success: 'You trick him.', fail: 'He hits you.', onSuccess: () => state.stats.int++, onFail: () => state.health -= 5 }
             ]),
-            createEvent('child_lost', 'Lost in the Woods', 'You wandered too far from the village.', [
-                { text: 'Find your way back', type: 'check', stat: 'wis', dc: 11, success: 'You navigate by moss and sun. (+1 WIS)', fail: 'A search party finds you shivering at midnight.', onSuccess: () => state.stats.wis++, onFail: () => addTrait('Fear of Woods') },
-                { text: 'Climb a tree', type: 'check', stat: 'dex', dc: 12, success: 'You spot the village smoke.', fail: 'You fall and break a wrist. (-1 DEX)', onSuccess: () => state.stats.dex++, onFail: () => state.stats.dex-- }
+            createEvent('child_find', 'Lost Heirloom', 'Digging in the mud, you hit metal.', [
+                { text: 'Clean it off', type: 'check', stat: 'int', dc: 10, success: 'It is a silver locket!', fail: 'Just rusty scrap.', onSuccess: () => addItem('Rusted Locket', 'Common', 'Once held a portrait.'), onFail: () => {} }
             ]),
-            createEvent('child_fest', 'The Harvest Festival', 'Music plays and fires burn.', [
-                { text: 'Dance', type: 'check', stat: 'dex', dc: 10, success: 'You move with grace.', fail: 'You trip over your own feet.', onSuccess: () => state.stats.cha++, onFail: () => {} },
-                { text: 'Pickpocket a drunk', type: 'check', stat: 'dex', dc: 15, req: (s) => s.age >= 8, success: 'You snag a pouch! (+5 GP)', fail: 'You are caught and thrashed.', onSuccess: () => state.gold += 5, onFail: () => { state.health -= 10; addTrait('Marked Thief'); } }
+            createEvent('child_dog', 'Stray Dog', 'A mangy hound follows you.', [
+                { text: 'Feed it', type: 'check', stat: 'wis', dc: 10, success: 'It becomes your friend. (+Piety)', fail: 'It bites you.', onSuccess: () => { modRep('piety', 2); addTrait('Dog Friend'); }, onFail: () => state.health -= 2 }
+            ]),
+            createEvent('child_steal', 'Shiny Apple', 'A merchant leaves his stall unattended.', [
+                { text: 'Steal an apple', type: 'check', stat: 'dex', dc: 12, success: 'Delicious theft. (+Infamy)', fail: 'Caught!', onSuccess: () => { modRep('infamy', 2); }, onFail: () => { modRep('infamy', 5); modRep('honor', -5); } },
+                { text: 'Leave it', type: 'flavor', effect: () => { modRep('honor', 1); log("You stay honest."); } }
             ])
         ],
         Teen: [ // 12-17
-            createEvent('teen_love', 'First Crush', 'You catch the eye of a peer during market day.', [
-                { text: 'Woo them with poetry', type: 'check', stat: 'cha', dc: 13, success: 'A summer romance blooms.', fail: 'You stutter and shame yourself.', onSuccess: () => state.stats.cha++, onFail: () => state.stats.cha-- },
-                { text: 'Impress with strength', type: 'check', stat: 'str', dc: 12, success: 'They admire your physique.', fail: 'You fail to lift the heavy sack.', onSuccess: () => state.stats.str++, onFail: () => {} }
+            createEvent('teen_love', 'First Crush', 'You catch the eye of a peer.', [
+                { text: 'Woo with poetry', type: 'check', stat: 'cha', dc: 13, success: 'Romance blooms.', fail: 'You stutter.', onSuccess: () => state.stats.cha++, onFail: () => state.stats.cha-- },
+                { text: 'Impress with strength', type: 'check', stat: 'str', dc: 12, success: 'They admire you.', fail: 'You fail to lift the heavy sack.', onSuccess: () => state.stats.str++, onFail: () => {} }
             ]),
-            createEvent('teen_job', 'Apprenticeship', 'The local blacksmith is looking for help.', [
-                { text: 'Apply', type: 'check', stat: 'str', dc: 14, success: 'You are accepted as an apprentice.', fail: 'You are deemed too weak.', onSuccess: () => { addTrait('Smith Apprentice'); state.gold += 10; }, onFail: () => {} },
-                { text: 'Ignore', type: 'flavor', effect: () => log("You prefer idleness.") }
+            createEvent('teen_rebel', 'Rebellion', 'Your parents forbid you from the festival.', [
+                { text: 'Sneak out', type: 'check', stat: 'dex', dc: 14, success: 'A wild night! (+Renown)', fail: 'Caught and grounded.', onSuccess: () => modRep('renown', 5), onFail: () => modRep('honor', -2) },
+                { text: 'Obey', type: 'flavor', effect: () => { modRep('piety', 2); log("You meditate at home."); } }
             ]),
-            createEvent('teen_magic', 'The Hedge Wizard', 'You find a scroll dropped by a traveler.', [
-                { text: 'Try to read it', type: 'check', stat: 'int', dc: 16, req: (s) => s.flags.literate, success: 'Arcane energy crackles! (+2 INT)', fail: 'It gives you a headache.', onSuccess: () => state.stats.int += 2, onFail: () => {} },
-                { text: 'Sell it', type: 'flavor', effect: () => { state.gold += 15; log("Sold to the local priest for 15 GP."); } }
+            createEvent('teen_loot', 'Old Battlefield', 'You scavenge an old skirmish site.', [
+                { text: 'Search bodies', type: 'check', stat: 'wis', dc: 14, success: 'You find a blade!', fail: 'Nothing but bones.', onSuccess: () => addItem('Soldier\'s Dagger', 'Uncommon', 'A serviceable steel blade.'), onFail: () => {} }
+            ]),
+            createEvent('teen_duel', 'The Duel', 'Someone insults your lineage.', [
+                { text: 'Fight!', type: 'check', stat: 'str', dc: 13, success: 'You win glory! (+Renown, +Honor)', fail: 'Beaten in the dirt.', onSuccess: () => { modRep('renown', 5); modRep('honor', 5); }, onFail: () => { modRep('renown', -2); state.health -= 10; } },
+                { text: 'Ignore it', type: 'flavor', effect: () => { modRep('piety', 2); log("Turn the other cheek."); } }
             ])
         ],
         Adult: [ // 18-64
-            createEvent('adult_war', 'Call to Arms', ' The Baron demands levies for the border war.', [
-                { text: 'Go to War', type: 'check', stat: 'con', dc: 14, success: 'You survive the campaign and return a veteran. (+50 GP)', fail: 'You return with a limp. (-1 DEX)', onSuccess: () => { state.gold += 50; addTrait('Veteran'); }, onFail: () => state.stats.dex-- },
-                { text: 'Pay substitute (20 GP)', type: 'flavor', req: (s) => s.gold >= 20, effect: () => { state.gold -= 20; log("You paid a coward's tax."); } }
+            createEvent('adult_war', 'Call to Arms', 'The Baron demands levies.', [
+                { text: 'Go to War', type: 'check', stat: 'con', dc: 14, success: 'You survive a veteran. (+50 GP, +Honor)', fail: 'You return with a limp. (-1 DEX)', onSuccess: () => { state.gold += 50; addTrait('Veteran'); modRep('honor', 10); }, onFail: () => state.stats.dex-- },
+                { text: 'Pay substitute (20 GP)', type: 'flavor', req: (s) => s.gold >= 20, effect: () => { state.gold -= 20; log("You paid a coward's tax."); modRep('honor', -5); } }
             ]),
             createEvent('adult_inv', 'Merchant Venture', 'A ship captain seeks investors.', [
-                { text: 'Invest Risky (50 GP)', type: 'check', stat: 'wis', dc: 15, req: (s) => s.gold >= 50, success: 'The ship returns laden with silk! (+150 GP)', fail: 'The ship sank in a storm. (Lost 50 GP)', onSuccess: () => { state.gold += 100; }, onFail: () => { state.gold -= 50; } },
-                { text: 'Decline', type: 'flavor', effect: () => log("You keep your coin close.") }
+                { text: 'Invest Risky (50 GP)', type: 'check', stat: 'wis', dc: 15, req: (s) => s.gold >= 50, success: 'Returns! (+150 GP)', fail: 'Ship sank. (Lost 50 GP)', onSuccess: () => state.gold += 100, onFail: () => state.gold -= 50 },
+                { text: 'Decline', type: 'flavor', effect: () => log("You keep your coin.") }
+            ]),
+            createEvent('adult_magic', 'Arcane Discovery', 'You find a glowing rune.', [
+                { text: 'Touch it', type: 'check', stat: 'int', dc: 16, success: 'It fuses to your hand!', fail: 'It burns you.', onSuccess: () => addItem('Ring of Protection', 'Rare', 'Grants a magical shield.'), onFail: () => state.health -= 10 }
+            ]),
+            createEvent('adult_pray', 'Religious Vision', 'You see a sign in the clouds.', [
+                { text: 'Preach', type: 'check', stat: 'cha', dc: 14, success: 'Followers gather. (+Piety)', fail: 'They call you mad.', onSuccess: () => modRep('piety', 10), onFail: () => modRep('infamy', 2) }
             ])
         ],
         Elder: [ // 65+
             createEvent('elder_sick', 'Winter Chill', 'The cold settles deep in your bones.', [
-                { text: 'Resist', type: 'check', stat: 'con', dc: 12 + (state.age - 60), success: 'You see another spring.', fail: 'Your health fades drastically.', onSuccess: () => {}, onFail: () => state.health -= 30 }
+                { text: 'Resist', type: 'check', stat: 'con', dc: 12 + (state.age - 60), success: 'You see another spring.', fail: 'Your health fades.', onSuccess: () => {}, onFail: () => state.health -= 30 }
             ]),
-            createEvent('elder_teach', 'Pass the Torch', 'A youngster asks for your wisdom.', [
-                { text: 'Teach them', type: 'check', stat: 'wis', dc: 10, success: 'Your legacy will live on. (+Renown)', fail: 'You forget what you were saying.', onSuccess: () => addTrait('Village Elder'), onFail: () => {} }
+            createEvent('elder_legacy', 'Family Vault', 'You decide to open the old vault.', [
+                { text: 'Open it', type: 'check', stat: 'wis', dc: 15, success: 'An ancient relic!', fail: 'Just dust.', onSuccess: () => addItem('Ancient Grimoire', 'VeryRare', 'Contains lost spells.'), onFail: () => {} }
+            ]),
+            createEvent('elder_teach', 'Pass the Torch', 'A youngster asks for wisdom.', [
+                { text: 'Teach them', type: 'check', stat: 'wis', dc: 10, success: 'Legacy secured. (+Renown)', fail: 'You forget what you were saying.', onSuccess: () => { addTrait('Village Elder'); modRep('renown', 5); }, onFail: () => {} }
             ])
         ]
     };
 
-    // 4. LOGIC & GAME LOOP
-
+    // 6. LOGIC & ENGINE
     function init() {
         rerollStats();
-        // Hide game, show creation
         document.querySelector('.header').style.opacity = 0;
         document.querySelector('.main-layout').style.opacity = 0;
-        
-        // Listeners
         document.getElementById('char-name').addEventListener('input', checkReady);
     }
 
     function rerollStats() {
         const standardArray = [15, 14, 13, 12, 10, 8];
-        // Shuffle array
         for (let i = standardArray.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [standardArray[i], standardArray[j]] = [standardArray[j], standardArray[i]];
         }
-        
         let i = 0;
-        for (let key in state.stats) {
-            state.stats[key] = standardArray[i++];
-        }
+        for (let key in state.stats) state.stats[key] = standardArray[i++];
         renderCreationStats();
     }
 
@@ -482,14 +654,12 @@
         container.innerHTML = '';
         for (let key in state.stats) {
             const val = state.stats[key];
-            const mod = getModifier(val);
             container.innerHTML += `
                 <div class="bg-white/50 p-2 rounded text-center border border-[#5d4037]">
                     <div class="text-xs uppercase font-bold">${key}</div>
                     <div class="text-xl font-medieval">${val}</div>
-                    <div class="text-xs text-gray-600">${formatMod(mod)}</div>
-                </div>
-            `;
+                    <div class="text-xs text-gray-600">${formatMod(getModifier(val))}</div>
+                </div>`;
         }
     }
 
@@ -503,24 +673,50 @@
     }
 
     function checkReady() {
-        const name = document.getElementById('char-name').value;
-        const btn = document.getElementById('start-btn');
-        btn.disabled = name.length === 0;
+        document.getElementById('start-btn').disabled = document.getElementById('char-name').value.length === 0;
+    }
+
+    function generateHouse() {
+        const roll = Math.random();
+        let cumulative = 0;
+        let selected = HOUSE_DATA[HOUSE_DATA.length - 1]; 
+
+        for (let h of HOUSE_DATA) {
+            cumulative += h.prob;
+            if (roll <= cumulative) { selected = h; break; }
+        }
+
+        const isNoble = ['great', 'lesser', 'knightly', 'fallen'].includes(selected.id);
+        const name = isNoble || selected.id === 'merchant' ? HOUSE_NAMES[Math.floor(Math.random() * HOUSE_NAMES.length)] : "";
+        
+        // Pick rank based on gender
+        const rankObj = selected.ranks[Math.floor(Math.random() * selected.ranks.length)];
+        const title = state.gender === 'Female' ? rankObj.f : rankObj.m;
+
+        state.house = {
+            type: selected.id,
+            typeName: selected.name,
+            houseName: name,
+            rank: title,
+            sigil: selected.sigils[Math.floor(Math.random() * selected.sigils.length)],
+            status: selected.status,
+            reputation: 50,
+            holdings: selected.id === 'great' ? ["Castle", "Army"] : selected.id === 'merchant' ? ["Ship"] : []
+        };
+        state.gold += selected.gold;
+        state.class = state.house.type === 'none' ? 'Commoner' : `${state.house.rank} of House ${state.house.houseName}`;
     }
 
     function startGame() {
         state.name = document.getElementById('char-name').value;
+        generateHouse();
         document.getElementById('creation-screen').style.display = 'none';
         document.querySelector('.header').style.opacity = 1;
         document.querySelector('.main-layout').style.opacity = 1;
-        
-        // Initial setup
         document.getElementById('display-name').innerText = state.name;
+        
+        log(`<strong>Year ${state.year}:</strong> ${state.name} is born. Destiny awaits.`);
         updateUI();
-        
-        log(`<strong>Year ${state.year}:</strong> ${state.name} is born into the world. The dice are cast.`);
-        
-        // Start Loop
         processYear();
     }
 
@@ -528,35 +724,219 @@
         state.age++;
         state.year++;
         
-        // Update Displays
         document.getElementById('year-display').innerText = `Year ${state.year}`;
         document.getElementById('age-display').innerText = state.age;
 
-        // Visual break
         const logEl = document.getElementById('event-log');
         const marker = document.createElement('div');
         marker.className = 'event-entry age-marker';
         marker.innerText = `Age ${state.age}`;
         logEl.prepend(marker);
 
-        // Check Unlocks (Specific Requests)
+        processOccupation();
         checkUnlocks();
 
-        // Determine Event Pool
         let pool = POOLS.Infancy;
         if (state.age >= 3) pool = POOLS.Childhood;
         if (state.age >= 12) pool = POOLS.Teen;
         if (state.age >= 18) pool = POOLS.Adult;
         if (state.age >= 65) pool = POOLS.Elder;
 
-        // Filter pool by requirements
-        const validEvents = pool.filter(e => {
-            // Check if we've seen unique events? (optional)
-            return true;
-        });
-
+        const validEvents = pool.filter(e => true); 
         const event = validEvents[Math.floor(Math.random() * validEvents.length)];
         renderEvent(event);
+    }
+
+    // --- OCCUPATION SYSTEM LOGIC ---
+
+    function processOccupation() {
+        if (!state.occupation) return;
+
+        const occ = state.occupation;
+        const career = CAREERS[occ.id];
+        const rankInfo = career.ranks[occ.rankIndex];
+        
+        let income = rankInfo.wage;
+        let stressGain = rankInfo.stressMod;
+        let perfGain = 5;
+
+        // Work Stance Effects
+        if (occ.workStance === 'slack') {
+            income = Math.floor(income * 0.7);
+            stressGain = Math.max(0, stressGain - 5);
+            perfGain = -5;
+        } else if (occ.workStance === 'intense') {
+            income = Math.floor(income * 1.5);
+            stressGain += 5;
+            perfGain = 15;
+            // Burnout check
+            if (occ.stress > 80 && Math.random() > 0.8) {
+                log(`<strong class="text-red-800">BURNOUT:</strong> You pushed too hard at work and collapsed. (-Health)`);
+                state.health -= 10;
+                perfGain = -20;
+            }
+        }
+
+        state.gold += income;
+        occ.stress = Math.min(100, occ.stress + stressGain);
+        occ.performance = Math.min(100, Math.max(0, occ.performance + perfGain));
+        occ.years++;
+
+        log(`<strong>Occupation:</strong> Earned ${income} GP. Stress: ${occ.stress}%.`);
+        
+        // Passive Promotion Check if perf is high
+        if (occ.performance === 100 && occ.rankIndex < career.ranks.length - 1 && Math.random() > 0.7) {
+            occ.rankIndex++;
+            occ.performance = 50;
+            occ.stress = Math.max(0, occ.stress - 20);
+            const newTitle = career.ranks[occ.rankIndex].title;
+            log(`<strong class="text-green-800">PROMOTION:</strong> You have been raised to ${newTitle}!`);
+            modRep('renown', 10);
+        }
+    }
+
+    function renderOccupationTab() {
+        const container = document.getElementById('occ-content');
+        
+        if (!state.occupation) {
+            let html = `<p class="italic mb-4">You currently have no vocation.</p><div class="space-y-2">`;
+            
+            // Check for resumable jobs
+            const historyIds = Object.keys(state.jobHistory);
+            if (historyIds.length > 0) {
+                html += `<h4 class="font-bold border-b border-black/10 mb-2">Resume Career</h4>`;
+                historyIds.forEach(hid => {
+                    const hist = state.jobHistory[hid];
+                    const c = CAREERS[hid];
+                    html += `<button onclick="joinJob('${hid}')" class="choice-btn text-sm mb-2 border-l-4 border-amber-600">
+                        <span>Resume: ${c.ranks[hist.rankIndex].title}</span>
+                        <span class="opacity-70">Rank ${hist.rankIndex + 1}</span>
+                    </button>`;
+                });
+                html += `<h4 class="font-bold border-b border-black/10 mb-2 mt-4">New Career</h4>`;
+            }
+            
+            for (let id in CAREERS) {
+                const c = CAREERS[id];
+                // Check Req
+                let canJoin = true;
+                if (c.req.age && state.age < c.req.age) canJoin = false;
+                if (c.req.stat && state.stats[c.req.stat] < c.req.val) canJoin = false;
+                if (c.req.flag && !state.flags[c.req.flag]) canJoin = false;
+
+                if (canJoin) {
+                    html += `<button onclick="joinJob('${id}')" class="choice-btn text-sm">
+                        <span>${c.name}: ${c.ranks[0].title}</span>
+                        <span class="opacity-70">${c.ranks[0].wage} GP/yr</span>
+                    </button>`;
+                }
+            }
+            html += `</div>`;
+            if (state.age < 6) html = `<p class="italic">You are too young to work.</p>`;
+            container.innerHTML = html;
+        } else {
+            const occ = state.occupation;
+            const jobData = CAREERS[occ.id].ranks[occ.rankIndex];
+            
+            let stanceHtml = `
+                <div class="flex gap-2 text-xs mb-4">
+                    <button onclick="setStance('slack')" class="p-2 border rounded ${occ.workStance==='slack'?'bg-amber-300':'bg-white'}">Slack</button>
+                    <button onclick="setStance('normal')" class="p-2 border rounded ${occ.workStance==='normal'?'bg-amber-500 text-white':'bg-white'}">Normal</button>
+                    <button onclick="setStance('intense')" class="p-2 border rounded ${occ.workStance==='intense'?'bg-red-800 text-white':'bg-white'}">Intense</button>
+                </div>
+            `;
+
+            container.innerHTML = `
+                <div class="job-card">
+                    <h3 class="font-bold text-xl">${jobData.title}</h3>
+                    <p class="text-sm opacity-70">${CAREERS[occ.id].name} - Rank ${occ.rankIndex + 1}</p>
+                    <div class="mt-2 text-sm">Wage: ${jobData.wage} GP/yr</div>
+                    
+                    <div class="mt-4">
+                        <div class="text-xs flex justify-between"><span>Performance</span><span>${occ.performance}%</span></div>
+                        <div class="bar-container"><div class="bar-fill perf-fill" style="width: ${occ.performance}%"></div></div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="text-xs flex justify-between"><span>Stress</span><span>${occ.stress}%</span></div>
+                        <div class="bar-container"><div class="bar-fill stress-fill" style="width: ${occ.stress}%"></div></div>
+                    </div>
+                </div>
+                <h4 class="font-bold mb-2">Work Intensity</h4>
+                ${stanceHtml}
+                <button onclick="quitJob()" class="w-full border border-red-800 text-red-800 p-2 rounded hover:bg-red-100">Quit Job</button>
+            `;
+        }
+    }
+
+    function joinJob(id) {
+        // Check history
+        if (state.jobHistory[id]) {
+            state.occupation = state.jobHistory[id];
+            // Decay performance slightly
+            state.occupation.performance = Math.max(0, state.occupation.performance - 20);
+            log(`<strong>Career:</strong> You have resumed your post as ${CAREERS[id].ranks[state.occupation.rankIndex].title}.`);
+            delete state.jobHistory[id];
+        } else {
+            state.occupation = {
+                id: id,
+                rankIndex: 0,
+                performance: 50,
+                stress: 0,
+                workStance: 'normal',
+                years: 0
+            };
+            log(`<strong>Career:</strong> You have started working as a ${CAREERS[id].ranks[0].title}.`);
+        }
+        state.flags.employed = true;
+        updateUI();
+    }
+
+    function setStance(s) {
+        if(state.occupation) state.occupation.workStance = s;
+        updateUI();
+    }
+
+    function quitJob() {
+        if (state.occupation) {
+            log(`<strong>Career:</strong> You resigned from your position.`);
+            // Save to history
+            state.jobHistory[state.occupation.id] = state.occupation;
+            state.occupation = null;
+            state.flags.employed = false;
+            updateUI();
+        }
+    }
+
+    // --- INVENTORY SYSTEM ---
+    function addItem(name, rarity, desc) {
+        const item = { name, rarity, desc, id: Math.random().toString(36).substr(2, 9) };
+        state.inventory.push(item);
+        log(`<strong style="color:var(--gold)">ITEM GET:</strong> Found <span class="item-rarity-${rarity}">${name}</span>!`);
+        updateUI(); // renders inventory
+    }
+
+    function renderInventory() {
+        const list = document.getElementById('inventory-list');
+        if (state.inventory.length === 0) {
+            list.innerHTML = `<p class="italic opacity-50">Your satchel is empty.</p>`;
+            return;
+        }
+        
+        list.innerHTML = state.inventory.map(item => `
+            <div class="item-row">
+                <div>
+                    <div class="item-rarity-${item.rarity}">${item.name}</div>
+                    <div class="text-xs opacity-70">${item.desc}</div>
+                </div>
+                <div class="text-[10px] uppercase font-bold opacity-50 border border-black/20 px-1 rounded">${item.rarity}</div>
+            </div>
+        `).join('');
+    }
+
+    // --- GENERIC HELPERS ---
+
+    function modRep(type, amt) {
+        state.reputation[type] += amt;
     }
 
     function checkUnlocks() {
@@ -567,25 +947,20 @@
             li.style.color = "var(--ink)";
             li.style.fontWeight = "bold";
             ul.prepend(li);
-            log(`<span style="color:var(--gold)">Unlock: ${txt}</span>`);
         };
-
-        if (state.age === 4) addUnlock("Temple Blessings Available");
-        if (state.age === 6) { addUnlock("Basic Training"); state.flags.literate = true; log("You begin to learn your letters."); }
-        if (state.age === 8) addUnlock("Petty Crime / Mischief");
-        if (state.age === 14) addUnlock("Courtship & Betrothal");
-        if (state.age === 18) { addUnlock("Adulthood: All Paths Open"); state.flags.adult = true; }
+        if (state.age === 4) addUnlock("Temple Blessings");
+        if (state.age === 6) { addUnlock("Basic Training"); state.flags.literate = true; }
+        if (state.age === 8) addUnlock("Petty Crime");
+        if (state.age === 14) addUnlock("Courtship & Enlistment");
+        if (state.age === 18) { addUnlock("Adulthood"); state.flags.adult = true; }
     }
 
     function renderEvent(event) {
         log(`<strong>${event.title}:</strong> ${event.text}`);
         const container = document.getElementById('choices-container');
         container.innerHTML = '';
-
         event.choices.forEach(choice => {
-            // Check requirements
             if (choice.req && !choice.req(state)) return;
-
             const btn = document.createElement('button');
             btn.className = 'choice-btn';
             
@@ -597,17 +972,11 @@
             } else if (choice.type === 'flavor') {
                 badge = `<span class="opacity-50 text-xs">Free Action</span>`;
             }
-
             btn.innerHTML = `<span>${choice.text}</span> ${badge}`;
-            
             btn.onclick = () => {
-                // Disable all buttons
-                const allBtns = container.querySelectorAll('button');
-                allBtns.forEach(b => b.disabled = true);
-                
+                container.querySelectorAll('button').forEach(b => b.disabled = true);
                 resolveChoice(choice);
             };
-            
             container.appendChild(btn);
         });
     }
@@ -616,33 +985,18 @@
         if (choice.type === 'flavor') {
             if (choice.effect) choice.effect();
             nextTurn();
-        } 
-        else if (choice.type === 'check') {
+        } else if (choice.type === 'check') {
             const mod = getModifier(state.stats[choice.stat]);
             const result = rollD20(mod);
             const passed = result.total >= choice.dc;
-
-            // Render Dice Result
             const resultClass = result.isCrit ? 'dice-crit' : (passed ? 'dice-success' : 'dice-failure');
             const resultText = result.isCrit ? 'NAT 20!' : (result.isFail ? 'CRIT FAIL!' : (passed ? 'SUCCESS' : 'FAILURE'));
             
-            log(`
-                <div class="mt-2 mb-2 p-2 bg-black/5 rounded text-sm">
-                    <span class="font-bold">Rolling ${choice.stat.toUpperCase()}:</span> 
-                    d20(${result.roll}) ${formatMod(result.mod)} = <span class="text-lg font-bold">${result.total}</span> vs DC ${choice.dc}
-                    <br>
-                    <span class="${resultClass} dice-result">${resultText}</span>
-                </div>
-            `);
+            log(`<div class="mt-2 mb-2 p-2 bg-black/5 rounded text-sm"><span class="font-bold">Rolling ${choice.stat.toUpperCase()}:</span> d20(${result.roll}) ${formatMod(result.mod)} = <span class="text-lg font-bold">${result.total}</span> vs DC ${choice.dc}<br><span class="${resultClass} dice-result">${resultText}</span></div>`);
 
             setTimeout(() => {
-                if (passed) {
-                    log(choice.success);
-                    if (choice.onSuccess) choice.onSuccess();
-                } else {
-                    log(choice.fail);
-                    if (choice.onFail) choice.onFail();
-                }
+                if (passed) { log(choice.success); if(choice.onSuccess) choice.onSuccess(); } 
+                else { log(choice.fail); if(choice.onFail) choice.onFail(); }
                 updateUI();
                 nextTurn();
             }, 600);
@@ -651,7 +1005,6 @@
 
     function nextTurn() {
         updateUI();
-        // Add a small "Continue" button
         const container = document.getElementById('choices-container');
         container.innerHTML = '';
         const btn = document.createElement('button');
@@ -659,21 +1012,17 @@
         btn.innerText = "Advance Year";
         btn.onclick = processYear;
         container.appendChild(btn);
-
-        if (state.health <= 0) {
-            death();
-        }
+        if (state.health <= 0) death();
     }
 
     function death() {
         const container = document.getElementById('choices-container');
         container.innerHTML = '<div class="text-center text-red-800 font-bold text-xl p-4">YOUR WATCH HAS ENDED</div>';
-        log(`<strong style="color:red">DEATH:</strong> At the age of ${state.age}, ${state.name} passes into the void.`);
+        log(`<strong style="color:red">DEATH:</strong> At the age of ${state.age}, ${state.name} passes.`);
         document.getElementById('input-area').style.opacity = 0.5;
         document.getElementById('input-area').style.pointerEvents = 'none';
     }
 
-    // UI HELPER
     function log(html) {
         const logEl = document.getElementById('event-log');
         const div = document.createElement('div');
@@ -683,20 +1032,41 @@
     }
 
     function updateUI() {
-        // Stats
         for (let key in state.stats) {
             const val = state.stats[key];
-            const mod = getModifier(val);
             document.getElementById(`stat-${key}`).innerText = val;
-            document.getElementById(`mod-${key}`).innerText = formatMod(mod);
+            document.getElementById(`mod-${key}`).innerText = formatMod(getModifier(val));
         }
         document.getElementById('gold-display').innerText = state.gold;
         
-        // Character Tab
+        // Fix: Update both header display AND character sheet display
         document.getElementById('social-display').innerText = state.class;
+        document.getElementById('display-class').innerText = state.class;
+        
+        // Rep UI
+        document.getElementById('rep-renown').innerText = state.reputation.renown;
+        document.getElementById('rep-honor').innerText = state.reputation.honor;
+        document.getElementById('rep-piety').innerText = state.reputation.piety;
+        document.getElementById('rep-infamy').innerText = state.reputation.infamy;
+
+        renderHouseTab();
+        renderOccupationTab();
+        renderInventory();
+    }
+
+    function renderHouseTab() {
+        const h = state.house;
+        const container = document.getElementById('house-content');
+        if (h.type === 'none') {
+            container.innerHTML = `<div class="house-crest opacity-50">🌾</div><h2 class="text-3xl font-medieval mb-2">Common Lineage</h2><p class="italic mb-4">You were born to common folk.</p>`;
+            return;
+        }
+        let statusColor = h.status === 'Rising' || h.status === 'Wealthy' ? 'status-rising' : (h.status === 'Disgraced' ? 'status-declining' : 'status-stable');
+        container.innerHTML = `<div class="house-crest">${h.sigil}</div><h2 class="text-4xl font-medieval text-amber-900 mb-1">House ${h.houseName}</h2><div class="mb-6"><span class="font-bold text-lg uppercase tracking-widest">${h.typeName}</span><span class="status-badge ${statusColor}">${h.status}</span></div><div class="text-left"><p><strong>Rank:</strong> ${h.rank}</p><p><strong>Holdings:</strong> ${h.holdings.join(', ')}</p></div>`;
     }
 
     function addTrait(trait) {
+        if(state.traits.includes(trait)) return;
         state.traits.push(trait);
         const list = document.getElementById('traits-list');
         if (state.traits.length === 1) list.innerHTML = '';
@@ -706,19 +1076,13 @@
         log(`<strong>New Trait:</strong> ${trait}`);
     }
 
-    function changeRep(rep) {
-        // Placeholder for reputation system
-        log(`Reputation change: ${rep}`);
-    }
-
     function switchTab(tab) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-        document.getElementById(`${tab}-tab`).classList.remove('hidden');
+        document.getElementById(tab === 'occ' ? 'occ-tab' : `${tab}-tab`).classList.remove('hidden');
         document.getElementById(`tab-${tab}`).classList.add('active');
     }
 
-    // Boot
     init();
 
 </script>
