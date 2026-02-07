@@ -1509,7 +1509,7 @@
         const mother = addRelationship(getRandomName('Female'), "Mother", 80, "Female", "Lady", locIndex, false, true, motherAge);
         addHouseMember(mother.name, 'Female', 'Lady', locIndex, mother.id);
 
-        // UNCLE/AUNT GENERATION (0-2)
+        // UNCLE/AUNT & COUSIN GENERATION
         const numUncles = Math.floor(Math.random() * 3);
         for(let i=0; i < numUncles; i++) {
             const isUncle = Math.random() > 0.5;
@@ -1518,6 +1518,17 @@
             const uaAge = fatherAge + Math.floor(Math.random() * 10) - 5;
             const ua = addRelationship(getRandomName(uaGen), uaRel, 50, uaGen, "House Member", locIndex, true, true, uaAge);
             addHouseMember(ua.name, ua.gender, "House Member", locIndex, ua.id);
+
+            // Generate Cousins for this Uncle/Aunt
+            if (Math.random() > 0.3) { // 70% chance of having children
+                const numCousins = Math.floor(Math.random() * 3) + 1;
+                for(let j=0; j<numCousins; j++) {
+                    const cGen = Math.random() > 0.5 ? 'Male' : 'Female';
+                    const cAge = Math.max(1, uaAge - (18 + Math.floor(Math.random()*10)));
+                    const cousin = addRelationship(getRandomName(cGen), "Cousin", 40, cGen, "House Member", locIndex, true, true, cAge);
+                    addHouseMember(cousin.name, cGen, "House Member", locIndex, cousin.id);
+                }
+            }
         }
 
         addHouseMember(state.name, state.gender, rank, state.location, "PLAYER"); 
@@ -2838,73 +2849,99 @@
                 </div>`;
         };
 
-        // Gather Relations
-        const grandparents = state.relationships.filter(r => (r.relation === 'Grandfather' || r.relation === 'Grandmother'));
-        const parents = state.relationships.filter(r => (r.relation === 'Father' || r.relation === 'Mother'));
+        // Gather Relations by Group
+        const grandparents = state.relationships.filter(r => ['Grandfather', 'Grandmother'].includes(r.relation));
+        const parents = state.relationships.filter(r => ['Father', 'Mother'].includes(r.relation));
+        const unclesAunts = state.relationships.filter(r => ['Uncle', 'Aunt'].includes(r.relation));
         const siblings = state.relationships.filter(r => r.relation === 'Sibling');
+        const cousins = state.relationships.filter(r => r.relation === 'Cousin');
+        const children = state.relationships.filter(r => ['Son', 'Daughter'].includes(r.relation));
 
-        // Build Tree Structure
-        let treeStructure = '';
-        
-        // Block: Children (Player + Siblings)
-        // This is always the bottom layer
-        const childrenLayer = `
+        // --- BRANCH 1: PLAYER & SIBLINGS (Under Parents) ---
+        const playerBranch = `
             <ul>
-                <li>${renderPlayerNode()}</li>
+                <li>
+                    ${renderPlayerNode()}
+                    ${children.length > 0 ? `<ul>${children.map(c => `<li>${renderNode(c)}</li>`).join('')}</ul>` : ''}
+                </li>
                 ${siblings.map(sib => `<li>${renderNode(sib)}</li>`).join('')}
             </ul>
         `;
 
-        // Block: Parents
-        // If we have parents, they wrap the children. If not, children might be top level (orphans) or wrapped by placeholder.
-        let parentsLayer = '';
-        const hasParents = parents.length > 0;
-        
-        if (hasParents) {
-            parentsLayer = `
+        // --- BRANCH 2: UNCLES/AUNTS & COUSINS ---
+        // We distribute cousins among Uncles/Aunts for visual cohesiveness
+        let uaBranch = '';
+        if (unclesAunts.length > 0) {
+            // Create a copy of cousins to distribute
+            let availableCousins = [...cousins];
+            
+            uaBranch = unclesAunts.map(ua => {
+                let myCousinsHtml = '';
+                // Assign cousins to this UA (roughly evenly)
+                const cousinsForThisUA = [];
+                // If we have cousins left, grab some. 
+                // Logic: Divide remaining cousins by remaining uncles/aunts?
+                // Simple: Just grab 1 or 2 if available.
+                if(availableCousins.length > 0) {
+                    const take = Math.ceil(availableCousins.length / (unclesAunts.length - unclesAunts.indexOf(ua)));
+                    for(let k=0; k<take; k++) {
+                        if(availableCousins.length > 0) cousinsForThisUA.push(availableCousins.shift());
+                    }
+                }
+
+                if (cousinsForThisUA.length > 0) {
+                    myCousinsHtml = `<ul>${cousinsForThisUA.map(c => `<li>${renderNode(c)}</li>`).join('')}</ul>`;
+                }
+
+                return `<li>${renderNode(ua)}${myCousinsHtml}</li>`;
+            }).join('');
+        }
+
+        // --- LEVEL 2: PARENTS + UNCLES/AUNTS ---
+        let parentsNode = '';
+        if (parents.length > 0) {
+            parentsNode = `
                 <li>
-                    <div class="tree-member-group">
-                        ${parents.map(p => renderNode(p)).join('')}
-                    </div>
-                    ${childrenLayer}
+                    <div class="tree-member-group">${parents.map(p => renderNode(p)).join('')}</div>
+                    ${playerBranch}
                 </li>
             `;
-        } else if (grandparents.length > 0) {
-            // Placeholder for parents if we have grandparents but no parents in list
-            parentsLayer = `
+        } else {
+             // Fallback for orphans or missing parents data in tree
+             parentsNode = `
                 <li>
-                    <div class="opacity-50 p-2 italic border border-dashed border-leather/30 rounded">Unknown Parents</div>
-                    ${childrenLayer}
+                    <div class="tree-member-group opacity-50 border-dashed">Unknown Parents</div>
+                    ${playerBranch}
                 </li>
             `;
         }
 
-        // Final Construction based on Highest Available Ancestor
+        // --- LEVEL 1: ROOT (Grandparents or Placeholder) ---
+        let treeStructure = '';
         if (grandparents.length > 0) {
             treeStructure = `
                 <ul>
                     <li>
-                        <div class="tree-member-group">
-                            ${grandparents.map(gp => renderNode(gp)).join('')}
-                        </div>
+                        <div class="tree-member-group">${grandparents.map(gp => renderNode(gp)).join('')}</div>
                         <ul>
-                            ${parentsLayer}
+                            ${parentsNode}
+                            ${uaBranch}
                         </ul>
                     </li>
                 </ul>
             `;
-        } else if (hasParents) {
-            treeStructure = `
-                <ul>
-                    ${parentsLayer}
-                </ul>
-            `;
         } else {
-            // No ancestors known, start at player generation
+            // If no grandparents, create a dummy root "Ancestors" so the tree lines connect nicely
+            // between Parents and Uncles/Aunts
             treeStructure = `
                 <ul>
-                    <li>${renderPlayerNode()}</li>
-                    ${siblings.map(sib => `<li>${renderNode(sib)}</li>`).join('')}
+                    <li>
+                        <div class="p-2 border border-dashed border-leather/30 rounded italic opacity-50 bg-white/20">House Ancestors</div>
+                        <ul>
+                            ${parentsNode}
+                            ${uaBranch}
+                        </ul>
+                    </li>
                 </ul>
             `;
         }
