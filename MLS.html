@@ -952,6 +952,26 @@
                 { title: "Master Tanner", wage: 35, stressMod: 5 }
             ]
         },
+        guard: {
+            name: "City Guard",
+            req: { age: 16, stat: 'str', val: 12 },
+            dc: 13, stat: 'str',
+            ranks: [
+                { title: "Gate Watch", wage: 8, stressMod: 3 },
+                { title: "Patrolman", wage: 15, stressMod: 4 },
+                { title: "Captain of the Watch", wage: 35, stressMod: 6 }
+            ]
+        },
+        alchemist: {
+            name: "Alchemist",
+            req: { age: 14, stat: 'int', val: 13 },
+            dc: 14, stat: 'int',
+            ranks: [
+                { title: "Bottle Washer", wage: 5, stressMod: 2 },
+                { title: "Apprentice Brewer", wage: 15, stressMod: 3 },
+                { title: "Master Alchemist", wage: 50, stressMod: 5 }
+            ]
+        },
         merchant: {
             name: "Merchant",
             req: { age: 16, stat: 'cha', val: 12 },
@@ -1760,6 +1780,17 @@
         const rndJobKey = careerKeys[Math.floor(Math.random() * careerKeys.length)];
         const rndJob = CAREERS[rndJobKey].name;
         
+        const rndStats = { 
+            str: 8 + Math.floor(Math.random()*8),
+            dex: 8 + Math.floor(Math.random()*8),
+            con: 8 + Math.floor(Math.random()*8),
+            int: 8 + Math.floor(Math.random()*8),
+            wis: 8 + Math.floor(Math.random()*8),
+            cha: 8 + Math.floor(Math.random()*8)
+        };
+
+        const hpVal = 10 + Math.floor((rndStats.con - 10) / 2);
+
         const person = {
             id: Math.random().toString(36).substr(2, 9),
             name, relation, 
@@ -1768,18 +1799,13 @@
             gender, rank, locationIndex: location,
             age: 18 + Math.floor(Math.random()*40),
             health: "Healthy",
+            hp: hpVal,
+            maxHp: hpVal,
             occupation: rndJob,
             isBlood: isBlood,
             isFamily: isFamily,
             alignment: ALIGNMENTS[Math.floor(Math.random() * ALIGNMENTS.length)],
-            stats: { 
-                str: 8 + Math.floor(Math.random()*8),
-                dex: 8 + Math.floor(Math.random()*8),
-                con: 8 + Math.floor(Math.random()*8),
-                int: 8 + Math.floor(Math.random()*8),
-                wis: 8 + Math.floor(Math.random()*8),
-                cha: 8 + Math.floor(Math.random()*8)
-            }
+            stats: rndStats
         };
         state.relationships.push(person);
         return person;
@@ -1891,10 +1917,10 @@
         state.flags.travelAllowed = false; 
         state.eventQueue = []; // Clear queue
 
-        const conMod = getModifier(state.stats.con);
-        const hpGain = Math.max(1, 1 + conMod);
-        state.maxHealth += hpGain;
-        state.health = Math.min(state.maxHealth, state.health + hpGain);
+        // Revamped HP: Always 10 + CON Mod (Dynamic)
+        state.maxHealth = 10 + getModifier(state.stats.con);
+        // Heal nicely over a year
+        state.health = Math.min(state.maxHealth, state.health + 5); 
 
         const spFlux = Math.floor(Math.random() * 3) - 1; 
         state.sanity = Math.min(state.maxSanity, Math.max(0, state.sanity + spFlux));
@@ -2360,6 +2386,8 @@
             actions = `<button onclick="interact('${id}', 'letter')" class="choice-btn text-sm">Send Letter (1g)</button>`;
         }
 
+        const hpDisplay = r.health === "Deceased" ? "Deceased" : `${r.hp}/${r.maxHp}`;
+
         let html = `
             <h2 class="text-3xl font-medieval mb-1">${r.name}</h2>
             <div class="flex justify-between items-center mb-4 border-b border-black/10 pb-2">
@@ -2374,7 +2402,7 @@
                     <p><strong>Job:</strong> ${r.occupation}</p>
                 </div>
                 <div>
-                    <p><strong>Health:</strong> ${r.health}</p>
+                    <p><strong>Health:</strong> ${hpDisplay}</p>
                     <p><strong>Relation:</strong> ${r.relation}</p>
                 </div>
             </div>
@@ -2864,6 +2892,12 @@
     // --- CEMETERY TAB ---
     function renderCemeteryTab() {
         const container = document.getElementById('cemetery-content');
+        
+        if (state.age < 8) {
+            container.innerHTML = `<p class="italic opacity-50 text-center mt-10">You are too young to understand the gravity of this place.</p>`;
+            return;
+        }
+
         const dead = state.relationships.filter(r => r.health === "Deceased");
 
         if (dead.length === 0) {
