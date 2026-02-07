@@ -1630,33 +1630,169 @@
         const isEnemy = person.friendship < -20;
         const isLover = person.romance > 30;
 
-        let event = null;
+        let type = 'neutral';
+        if (isLover) type = 'lover';
+        else if (isEnemy) type = 'enemy';
+        else if (isFriend) type = 'friend';
 
-        if (isLover) {
-            event = createEvent(`soc_lover_${person.id}`, `Time with ${person.name}`, `Your partner, ${person.name}, asks for your time.`, [
-                { text: 'Romantic Walk', type: 'check', stat: 'cha', dc: 10, success: 'Sparks fly. (+Romance)', fail: 'It rains. Mood ruined.', onSuccess: () => modRel(person.id, 5, 5), onFail: () => modRel(person.id, 2, -2) },
-                { text: 'Buy Gift (10g)', type: 'flavor', req: (s) => s.gold >= 10, effect: () => { state.gold -= 10; modRel(person.id, 10, 10); log("They love it."); } },
-                { text: 'Argue', type: 'flavor', effect: () => { modRel(person.id, -5, -5); log("A petty squabble."); } }
-            ]);
-        } else if (isEnemy) {
-            event = createEvent(`soc_enemy_${person.id}`, `Rivalry: ${person.name}`, `${person.name} confronts you in the street!`, [
-                { text: 'Intimidate', type: 'check', stat: 'str', dc: 12, success: 'They back down in fear. (+Renown)', fail: 'They laugh at you.', onSuccess: () => { modRel(person.id, -5); modRep('renown', 5); }, onFail: () => modRep('honor', -2) },
-                { text: 'Ignore', type: 'check', stat: 'wis', dc: 10, success: 'You take the high road. (+Piety)', fail: 'Their insults get to you. (-Sanity)', onSuccess: () => modRep('piety', 5), onFail: () => modSanity(-1) },
-                { text: 'Brawl', type: 'check', stat: 'str', dc: 14, success: 'You beat them soundly!', fail: 'They beat you black and blue.', onSuccess: () => { takeDamage(1); modRep('infamy', 5); }, onFail: () => { takeDamage(5); modRep('infamy', 2); } }
-            ]);
-        } else if (isFriend) {
-            event = createEvent(`soc_friend_${person.id}`, `Friendship: ${person.name}`, `${person.name} invites you for a drink.`, [
-                { text: 'Drink Deep', type: 'check', stat: 'con', dc: 12, req: (s) => s.age >= 18, success: 'A great night! (+Friendship, -Stress)', fail: 'You vomit on their shoes.', onSuccess: () => { modRel(person.id, 5); if(state.occupation) state.occupation.stress=0; }, onFail: () => modRel(person.id, -5) },
-                { text: 'Talk Life', type: 'check', stat: 'wis', dc: 10, success: 'Deep conversation. (+Sanity)', fail: 'Awkward silence.', onSuccess: () => { modSanity(2); modRel(person.id, 5); }, onFail: () => {} },
-                { text: 'Decline', type: 'flavor', effect: () => log("You stay home.") }
-            ]);
-        } else {
-            event = createEvent(`soc_neut_${person.id}`, `Meeting ${person.name}`, `You run into ${person.name}.`, [
-                { text: 'Chat', type: 'check', stat: 'cha', dc: 10, success: 'Pleasant conversation.', fail: 'You stutter.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
-                { text: 'Ask for News', type: 'check', stat: 'int', dc: 12, success: 'You learn of local events. (+1 INT)', fail: 'Just gossip.', onSuccess: () => { if(Math.random()>0.8) state.stats.int++; }, onFail: () => {} }
-            ]);
-        }
-        return event;
+        const pool = getSocialPool(person, type);
+        return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function getSocialPool(person, type) {
+        // 10 Unique Events per archetype
+        const pools = {
+            lover: [
+                createEvent(`lov_1_${person.id}`, `A Quiet Stroll`, `${person.name} asks to walk beneath the starlight.`, [
+                    { text: 'Hold Hands', type: 'check', stat: 'cha', dc: 8, success: 'A tender moment. (+Romance, +Sanity)', fail: 'Your palms are sweaty.', onSuccess: () => { modRel(person.id, 5, 5); modSanity(1); }, onFail: () => modRel(person.id, 0, -1) },
+                    { text: 'Recite Poetry', type: 'check', stat: 'int', dc: 12, success: 'They swoon at your words. (+Romance)', fail: 'You rhyme "love" with "turnip".', onSuccess: () => modRel(person.id, 5, 10), onFail: () => modRel(person.id, -2, -2) }
+                ]),
+                createEvent(`lov_2_${person.id}`, `The Gift`, `${person.name} eyes a merchant's necklace longing.`, [
+                    { text: 'Buy it (20g)', type: 'flavor', req: s => s.gold >= 20, effect: () => { state.gold -= 20; modRel(person.id, 10, 20); log("Their eyes sparkle brighter than the gem."); } },
+                    { text: 'Craft One', type: 'check', stat: 'dex', dc: 14, success: 'You make a beautiful charm from wood. (+Romance)', fail: 'It breaks immediately.', onSuccess: () => modRel(person.id, 5, 15), onFail: () => modRel(person.id, -2, -2) },
+                    { text: 'Ignore', type: 'flavor', effect: () => { modRel(person.id, 0, -5); log("They look disappointed."); } }
+                ]),
+                createEvent(`lov_3_${person.id}`, `Midnight Quarrel`, `A misunderstanding with ${person.name} turns heated.`, [
+                    { text: 'Apologize', type: 'check', stat: 'cha', dc: 10, success: 'Forgiveness is sweet. (+Sanity)', fail: 'They are still angry.', onSuccess: () => { modSanity(1); modRel(person.id, 2, 2); }, onFail: () => modRel(person.id, -5, -5) },
+                    { text: 'Stand Ground', type: 'check', stat: 'wis', dc: 14, success: 'Logic prevails. They respect you.', fail: 'You sleep on the floor.', onSuccess: () => modRel(person.id, 5, 0), onFail: () => { modRel(person.id, -10, -10); modSanity(-1); } }
+                ]),
+                createEvent(`lov_4_${person.id}`, `Illness`, `${person.name} is bedridden with a fever.`, [
+                    { text: 'Nurse them', type: 'check', stat: 'wis', dc: 12, success: 'Your care heals them. (+Deep Bond)', fail: 'You make the soup too salty.', onSuccess: () => modRel(person.id, 15, 10), onFail: () => modRel(person.id, 2, 0) },
+                    { text: 'Hire Healer (15g)', type: 'flavor', req: s => s.gold >= 15, effect: () => { state.gold -= 15; modRel(person.id, 10, 5); log("They recover swiftly thanks to your coin."); } }
+                ]),
+                createEvent(`lov_5_${person.id}`, `Jealousy`, `Someone else was seen flirting with ${person.name}.`, [
+                    { text: 'Trust them', type: 'check', stat: 'wis', dc: 10, success: 'Your confidence strengthens the bond.', fail: 'Doubts linger. (-Sanity)', onSuccess: () => { modRel(person.id, 5, 5); modSanity(1); }, onFail: () => modSanity(-1) },
+                    { text: 'Confront Rival', type: 'check', stat: 'str', dc: 12, success: 'You scare the rival away. (+Renown)', fail: 'You make a scene.', onSuccess: () => modRep('renown', 5), onFail: () => { modRep('infamy', 2); modRel(person.id, -5, -5); } }
+                ]),
+                createEvent(`lov_6_${person.id}`, `Cooking Together`, `A chance to make a meal with ${person.name}.`, [
+                    { text: 'Cook', type: 'check', stat: 'dex', dc: 12, success: 'A delicious feast! (+HP)', fail: 'You burn the roast.', onSuccess: () => { state.health = Math.min(state.maxHealth, state.health + 2); modRel(person.id, 5, 5); }, onFail: () => modRel(person.id, 0, -2) }
+                ]),
+                createEvent(`lov_7_${person.id}`, `The Future`, `${person.name} asks: "Where do you see us in ten years?"`, [
+                    { text: 'Speak from Heart', type: 'check', stat: 'cha', dc: 12, success: 'They tear up with joy.', fail: 'You stutter awkwardly.', onSuccess: () => modRel(person.id, 10, 10), onFail: () => modRel(person.id, -2, -2) },
+                    { text: 'Joke', type: 'flavor', effect: () => { modRel(person.id, 2, -5); log("They laugh, but eyes remain sad."); } }
+                ]),
+                createEvent(`lov_8_${person.id}`, `Romantic Surprise`, `You find a rare flower perfect for ${person.name}.`, [
+                    { text: 'Give it', type: 'flavor', effect: () => { modRel(person.id, 5, 5); log("A simple gesture means the most."); } }
+                ]),
+                createEvent(`lov_9_${person.id}`, `Stargazing`, `The night sky is clear.`, [
+                    { text: 'Identify Constellations', type: 'check', stat: 'int', dc: 14, success: 'You impress them with lore. (+1 INT)', fail: 'You make stuff up.', onSuccess: () => { state.stats.int++; modRel(person.id, 5, 5); }, onFail: () => {} }
+                ]),
+                createEvent(`lov_10_${person.id}`, `Public Affection`, `${person.name} kisses you in the busy market.`, [
+                    { text: 'Kiss Back', type: 'check', stat: 'cha', dc: 10, success: 'Crowd cheers! (+Renown)', fail: 'You bump heads.', onSuccess: () => { modRep('renown', 2); modRel(person.id, 0, 5); }, onFail: () => modRep('infamy', 1) },
+                    { text: 'Shy Away', type: 'flavor', effect: () => { modRel(person.id, 0, -5); log("They blush in embarrassment."); } }
+                ])
+            ],
+            enemy: [
+                createEvent(`eny_1_${person.id}`, `Public Slander`, `${person.name} is spreading lies about you!`, [
+                    { text: 'Defend Honor', type: 'check', stat: 'cha', dc: 14, success: 'You turn the crowd against them. (+Renown)', fail: 'People believe the lies. (-Honor)', onSuccess: () => modRep('renown', 10), onFail: () => modRep('honor', -5) },
+                    { text: 'Ignore', type: 'flavor', effect: () => { modRep('honor', -2); log("Silence is admission to some."); } }
+                ]),
+                createEvent(`eny_2_${person.id}`, `Alleyway Ambush`, `${person.name} jumps you with a club!`, [
+                    { text: 'Fight Back', type: 'check', stat: 'str', dc: 13, success: 'You beat them senseless. (-Rel)', fail: 'Ouch! (-HP)', onSuccess: () => { modRel(person.id, -10); takeDamage(1); }, onFail: () => takeDamage(5) },
+                    { text: 'Dodge', type: 'check', stat: 'dex', dc: 14, success: 'You escape unharmed.', fail: 'Too slow. (-HP)', onSuccess: () => {}, onFail: () => takeDamage(4) }
+                ]),
+                createEvent(`eny_3_${person.id}`, `Sabotage`, `You find your work tools damaged. You know it was ${person.name}.`, [
+                    { text: 'Fix it', type: 'check', stat: 'dex', dc: 12, success: 'Good as new. (+1 DEX)', fail: 'You waste materials. (-5g)', onSuccess: () => state.stats.dex++, onFail: () => state.gold = Math.max(0, state.gold - 5) },
+                    { text: 'Revenge', type: 'flavor', effect: () => { modRel(person.id, -20); log("You break their window in the night."); } }
+                ]),
+                createEvent(`eny_4_${person.id}`, `The Stare Down`, `You lock eyes with ${person.name} across the tavern.`, [
+                    { text: 'Intimidate', type: 'check', stat: 'str', dc: 12, success: 'They look away first. (+Renown)', fail: 'They laugh at you. (-Renown)', onSuccess: () => modRep('renown', 2), onFail: () => modRep('renown', -2) },
+                    { text: 'Buy them a drink', type: 'flavor', req: s => s.gold >= 2, effect: () => { state.gold -= 2; modRel(person.id, 5); log("A confused truce is formed."); } }
+                ]),
+                createEvent(`eny_5_${person.id}`, `Petty Theft`, `${person.name} bumps into you. Your purse feels lighter.`, [
+                    { text: 'Catch them', type: 'check', stat: 'dex', dc: 14, success: 'You grab their wrist! (+Renown)', fail: 'They vanish with 5g.', onSuccess: () => { modRep('renown', 5); modRel(person.id, -10); }, onFail: () => { state.gold = Math.max(0, state.gold - 5); } }
+                ]),
+                createEvent(`eny_6_${person.id}`, `The Duel`, `${person.name} challenges you to a duel of honor!`, [
+                    { text: 'Accept (Combat)', type: 'check', stat: 'str', dc: 15, success: 'Victory! (+Renown, +Honor)', fail: 'Defeat. (-HP, -Honor)', onSuccess: () => { modRep('renown', 10); modRep('honor', 10); }, onFail: () => { takeDamage(8); modRep('honor', -5); } },
+                    { text: 'Refuse', type: 'flavor', effect: () => { modRep('honor', -10); log("Cowardice stains your name."); } }
+                ]),
+                createEvent(`eny_7_${person.id}`, `Mockery`, `${person.name} mimics your walk and voice.`, [
+                    { text: 'Laugh with them', type: 'check', stat: 'cha', dc: 12, success: 'You disarm them with humor. (+Rel)', fail: 'It looks desperate.', onSuccess: () => modRel(person.id, 10), onFail: () => modSanity(-1) },
+                    { text: 'Punch', type: 'check', stat: 'str', dc: 10, success: 'That shut them up.', fail: 'You miss.', onSuccess: () => modRel(person.id, -10), onFail: () => {} }
+                ]),
+                createEvent(`eny_8_${person.id}`, `Legal Trouble`, `${person.name} accuses you of a crime you didn't commit.`, [
+                    { text: 'Argue Case', type: 'check', stat: 'int', dc: 13, success: 'The guard believes you.', fail: 'You pay a fine. (-10g)', onSuccess: () => {}, onFail: () => state.gold = Math.max(0, state.gold - 10) }
+                ]),
+                createEvent(`eny_9_${person.id}`, `Dark Rumors`, `You hear ${person.name} whispering to a dark figure.`, [
+                    { text: 'Eavesdrop', type: 'check', stat: 'wis', dc: 14, success: 'You learn a secret! (+1 INT)', fail: 'They spot you.', onSuccess: () => state.stats.int++, onFail: () => modRel(person.id, -10) }
+                ]),
+                createEvent(`eny_10_${person.id}`, `Truce?`, `${person.name} looks tired. "Must we do this forever?"`, [
+                    { text: 'Make Peace', type: 'check', stat: 'cha', dc: 10, success: 'The feud ends. (Reset Rel)', fail: 'It was a trap!', onSuccess: () => { const r = state.relationships.find(x=>x.id===person.id); if(r) r.friendship = 0; }, onFail: () => takeDamage(2) },
+                    { text: 'Never', type: 'flavor', effect: () => log("The war continues.") }
+                ])
+            ],
+            friend: [
+                createEvent(`frn_1_${person.id}`, `Drinking Contest`, `${person.name} slams a tankard down. "Bet you can't outdrink me!"`, [
+                    { text: 'Accept', type: 'check', stat: 'con', dc: 14, success: 'You drink them under the table! (+Renown)', fail: 'You blackout. (-2 HP)', onSuccess: () => { modRep('renown', 5); modRel(person.id, 5); }, onFail: () => takeDamage(2) },
+                    { text: 'Decline', type: 'flavor', effect: () => log("You sip water sensibly.") }
+                ]),
+                createEvent(`frn_2_${person.id}`, `Need a Loan`, `${person.name} asks to borrow 10 gold.`, [
+                    { text: 'Lend it', type: 'flavor', req: s => s.gold >= 10, effect: () => { state.gold -= 10; modRel(person.id, 15); log("They promise to pay it back."); } },
+                    { text: 'Refuse', type: 'flavor', effect: () => { modRel(person.id, -5); log("They look dejected."); } }
+                ]),
+                createEvent(`frn_3_${person.id}`, `Sparring Partner`, `${person.name} wants to practice fighting.`, [
+                    { text: 'Spar', type: 'check', stat: 'str', dc: 12, success: 'Good training. (+1 STR)', fail: 'You get bruised. (+1 CON)', onSuccess: () => state.stats.str++, onFail: () => state.stats.con++ }
+                ]),
+                createEvent(`frn_4_${person.id}`, `Confession`, `${person.name} confesses a dark secret to you.`, [
+                    { text: 'Keep Secret', type: 'check', stat: 'wis', dc: 10, success: 'Your bond deepens.', fail: 'The burden weighs on you. (-Sanity)', onSuccess: () => modRel(person.id, 10), onFail: () => modSanity(-1) },
+                    { text: 'Blackmail', type: 'flavor', effect: () => { modRel(person.id, -50); state.gold += 20; modRep('infamy', 10); log("You extorted 20g."); } }
+                ]),
+                createEvent(`frn_5_${person.id}`, `Adventure Hook`, `${person.name} found a map!`, [
+                    { text: 'Go exploring', type: 'check', stat: 'wis', dc: 14, success: 'You find treasure! (+20g)', fail: 'You get lost in the woods.', onSuccess: () => state.gold += 20, onFail: () => {} }
+                ]),
+                createEvent(`frn_6_${person.id}`, `Matchmaking`, `${person.name} introduces you to their cousin.`, [
+                    { text: 'Charm them', type: 'check', stat: 'cha', dc: 12, success: 'A new romance begins!', fail: 'Awkward.', onSuccess: () => { createRandomRel(20); const r = state.relationships[state.relationships.length-1]; r.romance = 20; }, onFail: () => {} }
+                ]),
+                createEvent(`frn_7_${person.id}`, `Gift Exchange`, `${person.name} hands you a wrapped bundle.`, [
+                    { text: 'Open it', type: 'flavor', effect: () => { addItem('Wooden Flute', 'Common', 'A gift from a friend.', 5); modRel(person.id, 5); } }
+                ]),
+                createEvent(`frn_8_${person.id}`, `Religious Festival`, `${person.name} drags you to the temple.`, [
+                    { text: 'Pray', type: 'check', stat: 'wis', dc: 10, success: 'You feel blessed. (+Piety, +Sanity)', fail: 'You fall asleep.', onSuccess: () => { modRep('piety', 5); modSanity(1); }, onFail: () => {} }
+                ]),
+                createEvent(`frn_9_${person.id}`, `Work Grievance`, `${person.name} complains about their boss for hours.`, [
+                    { text: 'Listen', type: 'check', stat: 'con', dc: 12, success: 'You are a good listener. (+Rel)', fail: 'You snap at them.', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -5) }
+                ]),
+                createEvent(`frn_10_${person.id}`, `Dice Game`, `${person.name} takes out the dice.`, [
+                    { text: 'Play (5g)', type: 'check', stat: 'int', dc: 12, req: s => s.gold >= 5, success: 'You win! (+5g)', fail: 'You lose. (-5g)', onSuccess: () => state.gold += 5, onFail: () => state.gold -= 5 }
+                ])
+            ],
+            neutral: [
+                createEvent(`neu_1_${person.id}`, `Bumping Shoulders`, `You collide with ${person.name} in the street.`, [
+                    { text: 'Apologize', type: 'check', stat: 'cha', dc: 10, success: 'They nod politely.', fail: 'They grumble.', onSuccess: () => modRel(person.id, 2), onFail: () => modRel(person.id, -2) },
+                    { text: 'Blame them', type: 'check', stat: 'str', dc: 12, success: 'They back off.', fail: 'Argument starts.', onSuccess: () => {}, onFail: () => modRel(person.id, -5) }
+                ]),
+                createEvent(`neu_2_${person.id}`, `Small Talk`, `${person.name} comments on the weather.`, [
+                    { text: 'Chat', type: 'flavor', effect: () => { log("It is indeed a cloudy day."); modRel(person.id, 2); } }
+                ]),
+                createEvent(`neu_3_${person.id}`, `Dropped Item`, `${person.name} drops a handkerchief.`, [
+                    { text: 'Return it', type: 'check', stat: 'dex', dc: 10, success: 'They thank you. (+Honor)', fail: 'You trip trying to pick it up.', onSuccess: () => { modRel(person.id, 5); modRep('honor', 2); }, onFail: () => {} },
+                    { text: 'Steal it', type: 'flavor', effect: () => { addItem('Handkerchief', 'Common', 'Stolen.', 1); modRep('honor', -2); } }
+                ]),
+                createEvent(`neu_4_${person.id}`, `Market Haggle`, `You see ${person.name} selling apples.`, [
+                    { text: 'Haggle', type: 'check', stat: 'cha', dc: 12, success: 'Good deal! (+1 HP)', fail: 'Full price.', onSuccess: () => { state.gold = Math.max(0, state.gold - 1); state.health++; }, onFail: () => state.gold = Math.max(0, state.gold - 2) }
+                ]),
+                createEvent(`neu_5_${person.id}`, `Ask Directions`, `You ask ${person.name} where the blacksmith is.`, [
+                    { text: 'Ask', type: 'check', stat: 'int', dc: 10, success: 'Clear directions.', fail: 'You get lost.', onSuccess: () => {}, onFail: () => {} }
+                ]),
+                createEvent(`neu_6_${person.id}`, `News of the Realm`, `${person.name} has a newspaper.`, [
+                    { text: 'Read over shoulder', type: 'check', stat: 'dex', dc: 12, success: 'You learn of the war. (+1 INT)', fail: 'They catch you.', onSuccess: () => state.stats.int++, onFail: () => modRel(person.id, -2) }
+                ]),
+                createEvent(`neu_7_${person.id}`, `Charity`, `${person.name} is collecting for the poor.`, [
+                    { text: 'Give 1g', type: 'flavor', req: s => s.gold >= 1, effect: () => { state.gold -= 1; modRep('piety', 1); log("A small kindness."); } },
+                    { text: 'Walk away', type: 'flavor', effect: () => log("Not today.") }
+                ]),
+                createEvent(`neu_8_${person.id}`, `Observation`, `You watch ${person.name} working.`, [
+                    { text: 'Observe', type: 'check', stat: 'wis', dc: 12, success: 'You learn a trick of the trade. (+1 WIS)', fail: 'Boring.', onSuccess: () => state.stats.wis++, onFail: () => {} }
+                ]),
+                createEvent(`neu_9_${person.id}`, `Shared Grievance`, `You both wait in a long line.`, [
+                    { text: 'Complain', type: 'check', stat: 'cha', dc: 10, success: 'You bond over the delay. (+Rel)', fail: 'They ignore you.', onSuccess: () => modRel(person.id, 5), onFail: () => {} }
+                ]),
+                createEvent(`neu_10_${person.id}`, `Fleeting Glance`, `${person.name} looks at you curiously.`, [
+                    { text: 'Smile', type: 'check', stat: 'cha', dc: 10, success: 'They smile back. (+Rel)', fail: 'You have spinach in your teeth.', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -2) }
+                ])
+            ]
+        };
+        return pools[type] || pools['neutral'];
     }
 
     function processYear() {
