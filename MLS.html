@@ -1306,6 +1306,26 @@
                 { text: 'Stay', type: 'flavor', effect: () => log("You decide to wait.") }
             ])
         ],
+        // NEW: Health Complications for Old Age
+        HealthIssues: [
+            createEvent('health_heart', 'Fluttering Heart', 'Your chest tightens painfully as you climb the stairs.', [
+                { text: 'Catch Breath', type: 'check', stat: 'con', dc: 15, success: 'The pain passes, leaving you shaken.', fail: 'You collapse. Your heart is permanently weakened. (-3 Max HP)', onSuccess: () => {}, onFail: () => { state.maxHealth = Math.max(1, state.maxHealth - 3); state.health = Math.min(state.health, state.maxHealth); log("Your vitality fades."); } },
+                { text: 'Call Healer (50g)', type: 'flavor', req: s => s.gold >= 50, effect: () => { state.gold -= 50; log("The bitter medicine settles your heart. You survive."); } }
+            ]),
+            createEvent('health_fever', 'The Grey Fever', 'A cold sweat grips you in the night. It feels like winter in your veins.', [
+                { text: 'Endure', type: 'check', stat: 'con', dc: 16, success: 'You sweat it out over three days.', fail: 'It settles deep in your lungs. (-1 CON, -5 HP)', onSuccess: () => {}, onFail: () => { state.stats.con = Math.max(3, state.stats.con - 1); takeDamage(5); } }
+            ]),
+            createEvent('health_joints', 'Crippling Arthritis', 'Your joints lock up in the cold damp of morning.', [
+                { text: 'Force Movement', type: 'check', stat: 'str', dc: 14, success: 'You push through the agony.', fail: 'You cannot move. You lose flexibility. (-1 DEX)', onSuccess: () => {}, onFail: () => { state.stats.dex = Math.max(3, state.stats.dex - 1); log("You are less agile now."); } },
+                { text: 'Bed Rest', type: 'flavor', effect: () => { log("You spend the year in a chair, watching the world go by."); } } 
+            ]),
+            createEvent('health_stroke', 'Sudden Darkness', 'The world spins violently and vision fades.', [
+                { text: 'Hold On', type: 'check', stat: 'con', dc: 18, success: 'You regain your senses, terrified.', fail: 'DEATH CALLS.', onSuccess: () => { modSanity(-2); }, onFail: () => { takeDamage(100); } }
+            ]),
+            createEvent('health_memory', 'Fading Mind', 'You wake up and do not recognize the room.', [
+                { text: 'Focus', type: 'check', stat: 'int', dc: 15, success: 'The fog lifts.', fail: 'Who are you? (-1 INT, -1 WIS)', onSuccess: () => {}, onFail: () => { state.stats.int = Math.max(3, state.stats.int - 1); state.stats.wis = Math.max(3, state.stats.wis - 1); modSanity(-3); } }
+            ])
+        ],
         LordInteraction: [
             createEvent('lord_meet', 'Audience with the Lord', 'You stand before the ruler of the city.', [
                 { text: 'Pay Respects', type: 'check', stat: 'cha', dc: 10, success: 'The Lord nods. (+Renown)', fail: 'You stumble on your words.', onSuccess: () => modRep('renown', 5), onFail: () => {} },
@@ -1939,6 +1959,25 @@
         processOccupation();
         checkUnlocks();
 
+        // HEALTH COMPLICATION LOGIC (Player)
+        if (state.age > 60) {
+            // Risk increases by 2% per year after 60. 
+            // Age 65: 10%. Age 75: 30%. Age 85: 50%.
+            const risk = (state.age - 60) * 2; 
+            const roll = Math.floor(Math.random() * 100);
+            
+            if (roll < risk) {
+                const healthPool = POOLS.HealthIssues;
+                const healthEvt = healthPool[Math.floor(Math.random() * healthPool.length)];
+                
+                // Health events take priority, pushed to front
+                state.eventQueue.unshift(healthEvt);
+                
+                // Visual warning
+                log(`<strong class="text-red-900">HEALTH CRISIS:</strong> Age takes its toll...`);
+            }
+        }
+
         const socialEvt = generateSocialEvent();
         if (socialEvt && state.age > 3) state.eventQueue.push(socialEvt);
 
@@ -1989,11 +2028,34 @@
             
             r.age++;
             
-            let deathChance = r.age > 60 ? 0.05 : 0.005;
+            // Dynamic Death Chance for NPCs (Old Age)
+            let deathChance = 0.005; // 0.5% base chance (accidents/sickness)
+            
+            if (r.age > 55) {
+                // Curve starts gentle, gets steep
+                // Age 60: ~1.5%
+                // Age 70: ~3.5%
+                // Age 80: ~5.5%
+                // Age 90+: High risk
+                deathChance += (r.age - 55) * 0.002; 
+            }
+            
+            // Hard cap check for very old age (increasing rapidly after 80)
+            if (r.age > 80) {
+                deathChance += 0.10; // +10% flat risk per year after 80
+            }
+
             if (Math.random() < deathChance) {
                 r.health = "Deceased";
-                log(`<span style="color:var(--failure)">† ${r.name} (${r.relation}) has passed away.</span>`);
-                if(r.friendship > 20) modSanity(-1);
+                
+                // Flavor text for cause of death
+                let cause = "passed away peacefully";
+                if (r.age < 50) cause = "died of a sudden illness";
+                else if (r.age > 80) cause = "succumbed to old age";
+                
+                log(`<span style="color:var(--failure)">† ${r.name} (${r.relation}) has ${cause} at age ${r.age}.</span>`);
+                
+                if(r.friendship > 20 || r.isFamily) modSanity(-1);
                 return; 
             }
 
