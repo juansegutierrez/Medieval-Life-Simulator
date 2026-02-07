@@ -1131,24 +1131,80 @@
     const createEvent = (id, title, text, choices) => ({ id, title, text, choices });
     const POOLS = {
         Canon: [
-            createEvent('canon_raid', 'Goblin Raid', 'Screams echo in the night! Goblins are raiding the outskirts of the city.', [
-                { text: 'Fight them off', type: 'check', stat: 'str', dc: 14, success: 'You cleave through their ranks! The city is safe. (+Renown)', fail: 'They overwhelm you before fleeing. (-HP, -Honor)', onSuccess: () => { modRep('renown', 15); }, onFail: () => { takeDamage(8); modRep('honor', -5); } },
-                { text: 'Hide', type: 'check', stat: 'dex', dc: 12, success: 'You survive unharmed, but the guilt lingers. (-Honor)', fail: 'They find your hiding spot! (-HP)', onSuccess: () => { modRep('honor', -5); }, onFail: () => { takeDamage(6); } },
-                { text: 'Rally the Guards', type: 'check', stat: 'cha', dc: 15, success: 'Your voice commands order from chaos! (+Renown, +Honor)', fail: 'Your voice cracks. No one listens.', onSuccess: () => { modRep('renown', 10); modRep('honor', 10); }, onFail: () => {} }
+            createEvent('canon_raid', 'The Goblin Raid', 'Screams echo in the night! Goblins are raiding the outskirts.', [
+                { text: 'Slaughter them', type: 'check', stat: 'str', dc: 15, success: 'You stand atop a mound of green bodies. (Title: Goblin-Bane)', fail: 'They overwhelm you. (-HP)', onSuccess: () => { modRep('renown', 20); addTrait('Title: Goblin-Bane'); }, onFail: () => { takeDamage(8); modRep('honor', -5); } },
+                { text: 'Command Defense', type: 'check', stat: 'cha', dc: 14, success: 'You organize the militia into a wall of spears. (Title: The Commander)', fail: 'Panic takes the villagers.', onSuccess: () => { modRep('renown', 15); modRep('honor', 15); addTrait('Title: The Commander'); }, onFail: () => { takeDamage(5); } },
+                { text: 'Shadow Strike', type: 'check', stat: 'dex', dc: 14, success: 'You eliminate the leader from the shadows. (Title: The Ghost)', fail: 'You are spotted!', onSuccess: () => { modRep('renown', 10); addTrait('Title: The Ghost'); }, onFail: () => { takeDamage(6); } }
             ]),
             createEvent('canon_spirit', 'The Ancestral Spirit', 'A ghostly figure manifests at the foot of your bed.', [
-                { text: 'Listen to its wisdom', type: 'check', stat: 'wis', dc: 16, success: 'It whispers secrets of the cosmos. (+1 INT, +1 WIS)', fail: 'The knowledge shatters your mind. (-Sanity)', onSuccess: () => { state.stats.int++; state.stats.wis++; }, onFail: () => { modSanity(-3); } },
-                { text: 'Banish it', type: 'check', stat: 'cha', dc: 13, success: 'The spirit fades. You feel safer.', fail: 'It laughs and curses you. (Haunted)', onSuccess: () => { modSanity(2); }, onFail: () => { addTrait('Haunted'); modSanity(-2); } },
-                { text: 'Offer Coin', type: 'flavor', effect: () => { state.gold = Math.max(0, state.gold - 10); log("The spirit ignores your material offering and vanishes."); } }
+                { text: 'Commune', type: 'check', stat: 'wis', dc: 16, success: 'You walk between worlds. (Title: Spirit-Walker)', fail: 'The void stares back. (-Sanity)', onSuccess: () => { state.stats.int++; state.stats.wis++; addTrait('Title: Spirit-Walker'); }, onFail: () => { modSanity(-3); } },
+                { text: 'Banish', type: 'check', stat: 'cha', dc: 13, success: 'Begone, foul shade! (Title: The Exorcist)', fail: 'It laughs and curses you.', onSuccess: () => { modSanity(2); addTrait('Title: The Exorcist'); }, onFail: () => { addTrait('Haunted'); modSanity(-2); } },
+                { text: 'Listen quietly', type: 'flavor', effect: () => { log("It whispers of a hidden treasure, then fades."); state.gold += 20; addTrait('Title: The Listener'); } }
             ]),
             createEvent('canon_bear', 'The Great Bear', 'A massive bear has wandered into the market square!', [
-                { text: 'Slay it', type: 'check', stat: 'str', dc: 15, success: 'A mighty trophy! (+Renown, +Meat)', fail: 'It mauls you severely. (-HP)', onSuccess: () => { modRep('renown', 10); addItem('Bear Pelt', 'Uncommon', 'Thick fur.', 40); }, onFail: () => { takeDamage(12); } },
-                { text: 'Calm it', type: 'check', stat: 'wis', dc: 16, success: 'The beast bows to you and leaves. (+Piety)', fail: 'It roars and attacks!', onSuccess: () => { modRep('piety', 15); addTrait('Beast Friend'); }, onFail: () => { takeDamage(10); } },
-                { text: 'Run', type: 'check', stat: 'dex', dc: 10, success: 'You escape.', fail: 'You trip and scrape your knee.', onSuccess: () => {}, onFail: () => takeDamage(2) }
+                { text: 'Single Combat', type: 'check', stat: 'str', dc: 16, success: 'You wrestle the beast to submission! (Title: Bear-Claw)', fail: 'It mauls you severely.', onSuccess: () => { modRep('renown', 20); addTrait('Title: Bear-Claw'); addItem('Bear Pelt', 'Rare', 'Proof of might.', 50); }, onFail: () => { takeDamage(12); } },
+                { text: 'Tame it', type: 'check', stat: 'wis', dc: 17, success: 'The beast bows to you. (Title: Beast-Master)', fail: 'It roars and attacks!', onSuccess: () => { modRep('piety', 15); addTrait('Title: Beast-Master'); addTrait('Beast Friend'); }, onFail: () => { takeDamage(10); } },
+                { text: 'Outrun it', type: 'check', stat: 'dex', dc: 12, success: 'You are faster than death. (Title: Fleet-Foot)', fail: 'You trip.', onSuccess: () => { addTrait('Title: Fleet-Foot'); }, onFail: () => takeDamage(5) }
             ]),
-            createEvent('canon_plague', 'The Black Cough', 'A sickness spreads through the district.', [
-                { text: 'Help the sick', type: 'check', stat: 'con', dc: 14, success: 'You resist the plague and save lives. (+Renown, +Piety)', fail: 'You catch the sickness. (-1 CON)', onSuccess: () => { modRep('renown', 10); modRep('piety', 10); }, onFail: () => { state.stats.con = Math.max(3, state.stats.con - 1); log("The sickness weakens you permanently."); } },
-                { text: 'Isolate', type: 'flavor', effect: () => { modSanity(-1); log("You survive, alone."); } }
+            createEvent('canon_plague', 'The Black Cough', 'A sickness spreads through the district. Bodies pile up.', [
+                { text: 'Heal the Sick', type: 'check', stat: 'wis', dc: 14, success: 'Your poultices save dozens. (Title: The Saint)', fail: 'You catch the sickness.', onSuccess: () => { modRep('renown', 10); modRep('piety', 20); addTrait('Title: The Saint'); }, onFail: () => { state.stats.con--; log("The sickness weakens you permanently."); } },
+                { text: 'Barricade Door', type: 'check', stat: 'con', dc: 10, success: 'You survive, alone and safe. (Title: The Survivor)', fail: 'Rats get in.', onSuccess: () => { addTrait('Title: The Survivor'); }, onFail: () => { takeDamage(5); } },
+                { text: 'Sell "Cures"', type: 'check', stat: 'cha', dc: 15, success: 'You sell colored water to the desperate. (Title: The Vulture)', fail: 'They realize the fraud.', onSuccess: () => { state.gold += 100; modRep('infamy', 20); addTrait('Title: The Vulture'); }, onFail: () => { takeDamage(5); modRep('infamy', 10); } }
+            ]),
+            createEvent('canon_star', 'The Fallen Star', 'A meteor crashes nearby, glowing with starlight.', [
+                { text: 'Touch it', type: 'check', stat: 'con', dc: 16, success: 'Starlight infuses your veins. (Title: Star-Touched)', fail: 'It burns your flesh!', onSuccess: () => { state.maxHealth += 5; state.health = state.maxHealth; addTrait('Title: Star-Touched'); }, onFail: () => { takeDamage(10); } },
+                { text: 'Forge Weapon', type: 'check', stat: 'str', dc: 15, success: 'You craft a blade of the heavens. (Title: Star-Smith)', fail: 'The metal shatters.', onSuccess: () => { addItem('Star-Metal Sword', 'Legendary', 'Glows with blue light.', 200); addTrait('Title: Star-Smith'); }, onFail: () => { takeDamage(2); } },
+                { text: 'Sell Shards', type: 'flavor', effect: () => { state.gold += 80; log("A wizard pays handsomely."); addTrait('Title: Coin-Counter'); } }
+            ]),
+            createEvent('canon_hart', 'The White Hart', 'A legendary white stag appears in the glade.', [
+                { text: 'Take the Shot', type: 'check', stat: 'dex', dc: 18, success: 'A perfect shot! The King pays a fortune. (Title: The Huntsman)', fail: 'You miss and it vanishes.', onSuccess: () => { state.gold += 150; modRep('renown', 10); addTrait('Title: The Huntsman'); }, onFail: () => {} },
+                { text: 'Follow it', type: 'check', stat: 'wis', dc: 15, success: 'It leads you to a fae glade. (Title: The Pathfinder)', fail: 'You get lost in the woods.', onSuccess: () => { modSanity(5); addTrait('Title: The Pathfinder'); }, onFail: () => { modSanity(-1); } },
+                { text: 'Protect it', type: 'check', stat: 'cha', dc: 14, success: 'You stop other hunters. The forest blesses you. (Title: Warden)', fail: 'Poachers laugh at you.', onSuccess: () => { addTrait('Title: Warden'); state.stats.wis++; }, onFail: () => { modRep('honor', -5); } }
+            ]),
+            createEvent('canon_fire', 'The Burning Library', 'The city archives are in flames!', [
+                { text: 'Save the Elders', type: 'check', stat: 'str', dc: 14, success: 'You carry them out on your back. (Title: The Shield)', fail: 'The smoke chokes you.', onSuccess: () => { modRep('honor', 20); addTrait('Title: The Shield'); }, onFail: () => { takeDamage(5); state.stats.con--; } },
+                { text: 'Save the Books', type: 'check', stat: 'int', dc: 15, success: 'You rescue lost knowledge. (Title: The Scholar)', fail: 'The scrolls burn.', onSuccess: () => { state.stats.int += 2; addTrait('Title: The Scholar'); }, onFail: () => { modSanity(-2); } },
+                { text: 'Loot the Vault', type: 'check', stat: 'dex', dc: 16, success: 'You grab the gold while chaos reigns. (Title: The Opportunist)', fail: 'Caught by guards!', onSuccess: () => { state.gold += 200; modRep('infamy', 10); addTrait('Title: The Opportunist'); }, onFail: () => { state.gold = 0; modRep('infamy', 10); } }
+            ]),
+            createEvent('canon_sword', 'The Cursed Blade', 'You find a black sword humming with dark energy.', [
+                { text: 'Wield it', type: 'check', stat: 'con', dc: 18, success: 'The power is yours! (Title: Cursed-Blade)', fail: 'It drains your life force.', onSuccess: () => { state.stats.str += 3; addTrait('Title: Cursed-Blade'); }, onFail: () => { state.maxHealth -= 5; state.health = Math.min(state.health, state.maxHealth); } },
+                { text: 'Destroy it', type: 'check', stat: 'str', dc: 16, success: 'You shatter the evil. (Title: The Purifier)', fail: 'It cannot be broken.', onSuccess: () => { modRep('piety', 20); addTrait('Title: The Purifier'); }, onFail: () => { modSanity(-1); } },
+                { text: 'Sell it', type: 'flavor', effect: () => { state.gold += 100; log("You sold it to a shady dealer."); addTrait('Title: The Peddler'); modRep('infamy', 5); } }
+            ]),
+            createEvent('canon_dragon', 'The Dragon Egg', 'You discover a warm, scaled egg in a cave.', [
+                { text: 'Incubate', type: 'check', stat: 'wis', dc: 18, success: 'It hatches! You have a baby dragon. (Title: Dragon-Parent)', fail: 'It goes cold and dies.', onSuccess: () => { addTrait('Title: Dragon-Parent'); addTrait('Dragon Companion'); }, onFail: () => { modSanity(-2); } },
+                { text: 'Smash it', type: 'check', stat: 'str', dc: 14, success: 'One less monster in the world. (Title: Wyrm-Bane)', fail: 'The shell is too hard.', onSuccess: () => { modRep('renown', 15); addTrait('Title: Wyrm-Bane'); }, onFail: () => {} },
+                { text: 'Make Omelette', type: 'check', stat: 'con', dc: 12, success: 'Most expensive meal ever. (Title: The Glutton)', fail: 'It tastes like sulfur.', onSuccess: () => { state.maxHealth += 2; addTrait('Title: The Glutton'); }, onFail: () => { takeDamage(2); } }
+            ]),
+            createEvent('canon_well', 'The Whispering Well', 'An ancient well offers you a wish.', [
+                { text: 'Wish for Power', type: 'check', stat: 'con', dc: 15, success: 'You feel surges of strength. (Title: The Ambitious)', fail: 'The power twists your body.', onSuccess: () => { state.stats.str++; state.stats.cha++; addTrait('Title: The Ambitious'); }, onFail: () => { state.stats.dex--; state.stats.con--; } },
+                { text: 'Wish for Love', type: 'check', stat: 'cha', dc: 14, success: 'You become irresistibly charming. (Title: The Romantic)', fail: 'You fall in love with your reflection.', onSuccess: () => { state.stats.cha += 2; addTrait('Title: The Romantic'); }, onFail: () => { addTrait('Narcissist'); } },
+                { text: 'Seal the Well', type: 'check', stat: 'wis', dc: 16, success: 'You silence the dark voice. (Title: The Gatekeeper)', fail: 'It whispers secrets you cannot forget.', onSuccess: () => { modRep('piety', 15); addTrait('Title: The Gatekeeper'); }, onFail: () => { modSanity(-5); } }
+            ]),
+            createEvent('canon_king', 'The Bandit King', 'The notorious Bandit King challenges you.', [
+                { text: 'Duel to Death', type: 'check', stat: 'str', dc: 17, success: 'You strike him down! (Title: Kingslayer)', fail: 'He leaves you bleeding in the dirt.', onSuccess: () => { modRep('renown', 30); addTrait('Title: Kingslayer'); addItem('Bandit Crown', 'Rare', 'Gold and blood.', 100); }, onFail: () => { takeDamage(9); modRep('honor', -10); } },
+                { text: 'Negotiate', type: 'check', stat: 'cha', dc: 16, success: 'You convince him to leave. (Title: Silver-Tongue)', fail: 'He laughs and robs you.', onSuccess: () => { modRep('renown', 10); addTrait('Title: Silver-Tongue'); }, onFail: () => { state.gold = 0; } },
+                { text: 'Join Him', type: 'check', stat: 'dex', dc: 14, success: 'You raid together! (Title: The Betrayer)', fail: 'He doesn\'t trust traitors.', onSuccess: () => { state.gold += 200; modRep('infamy', 50); addTrait('Title: The Betrayer'); }, onFail: () => { takeDamage(5); } }
+            ]),
+            createEvent('canon_obelisk', 'The Mysterious Obelisk', 'A black monolith rises from the earth overnight.', [
+                { text: 'Decipher Runes', type: 'check', stat: 'int', dc: 17, success: 'You learn the language of gods. (Title: The Sage)', fail: 'Your nose bleeds from the strain.', onSuccess: () => { state.stats.int += 3; addTrait('Title: The Sage'); }, onFail: () => { takeDamage(2); } },
+                { text: 'Worship', type: 'check', stat: 'wis', dc: 12, success: 'You become its first priest. (Title: The Zealot)', fail: 'It ignores you.', onSuccess: () => { modRep('piety', 10); addTrait('Title: The Zealot'); }, onFail: () => { modSanity(-1); } },
+                { text: 'Topple It', type: 'check', stat: 'str', dc: 18, success: 'Man is the only god here! (Title: The Iconoclast)', fail: 'It does not budge.', onSuccess: () => { modRep('renown', 20); addTrait('Title: The Iconoclast'); }, onFail: () => { state.stats.str--; log("You pulled a muscle."); } }
+            ]),
+            createEvent('canon_scandal', 'The Royal Scandal', 'You catch a noble in a compromising position.', [
+                { text: 'Expose Them', type: 'check', stat: 'cha', dc: 15, success: 'The court gasps! (Title: Truth-Teller)', fail: 'They turn it around on you.', onSuccess: () => { modRep('renown', 15); addTrait('Title: Truth-Teller'); }, onFail: () => { modRep('infamy', 10); modRep('honor', -10); } },
+                { text: 'Blackmail', type: 'check', stat: 'int', dc: 14, success: 'They pay for your silence. (Title: The Spider)', fail: 'They send assassins.', onSuccess: () => { state.gold += 300; addTrait('Title: The Spider'); }, onFail: () => { takeDamage(10); } },
+                { text: 'Look Away', type: 'flavor', effect: () => { log("You pretend you saw nothing."); addTrait('Title: The Silent'); } }
+            ]),
+            createEvent('canon_famine', 'The Great Famine', 'Crops fail. The village starves.', [
+                { text: 'Feed the Poor', type: 'flavor', req: s => s.gold >= 50, effect: () => { state.gold -= 50; modRep('renown', 20); modRep('piety', 20); addTrait('Title: The Provider'); log("You saved the village."); } },
+                { text: 'Hoard Food', type: 'check', stat: 'int', dc: 12, success: 'You eat while others starve. (Title: The Hoarder)', fail: 'Rioters steal your stash.', onSuccess: () => { addTrait('Title: The Hoarder'); }, onFail: () => { state.gold = 0; takeDamage(5); } },
+                { text: 'Steal Supplies', type: 'check', stat: 'dex', dc: 14, success: 'Survival of the fittest. (Title: The Scavenger)', fail: 'Caught stealing bread.', onSuccess: () => { state.health = state.maxHealth; addTrait('Title: The Scavenger'); }, onFail: () => { modRep('honor', -10); } }
+            ]),
+            createEvent('canon_ritual', 'The Dark Ritual', 'Cultists are summoning something in the crypts.', [
+                { text: 'Disrupt It', type: 'check', stat: 'str', dc: 16, success: 'You smash the altar! (Title: The Inquisitor)', fail: 'The magic blasts you.', onSuccess: () => { modRep('piety', 25); addTrait('Title: The Inquisitor'); }, onFail: () => { takeDamage(10); modSanity(-5); } },
+                { text: 'Join Them', type: 'check', stat: 'int', dc: 15, success: 'You embrace the void. (Title: The Cultist)', fail: 'You are meant as a sacrifice.', onSuccess: () => { modRep('infamy', 30); state.stats.int++; addTrait('Title: The Cultist'); }, onFail: () => { takeDamage(15); } },
+                { text: 'Observe', type: 'check', stat: 'dex', dc: 14, success: 'You learn forbidden arts. (Title: The Watcher)', fail: 'They spot you.', onSuccess: () => { state.stats.wis++; state.stats.int++; addTrait('Title: The Watcher'); }, onFail: () => { takeDamage(5); } }
             ])
         ],
         Infancy: [ 
