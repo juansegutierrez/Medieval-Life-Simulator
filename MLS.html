@@ -1282,13 +1282,13 @@
     const TIER_DATA = {
         royal: { name: 'Royal House', prob: 0.01, startGold: 10000 },
         greater: { name: 'Greater House', prob: 0.10, startGold: 5000 },
-        lesser: { name: 'Lesser House', sigils: ['🌲', '🐍', '🏰', '🐗', '🗡️', '🛡️', '🔔'], prob: 0.89, startGold: 500 }
+        lesser: { name: 'Lesser House', sigils: ['🌲', '🐍', '🏰', '🐗', '🗡️', '🛡️', '🔔','🦁'], prob: 0.89, startGold: 500 }
     };
     
     const HOUSE_RANKS = ["Lord/Lady", "Heir", "Younger Child", "House Member", "Sworn Sword", "Servant"];
     
     const GREATER_HOUSES_INFO = {
-        "Chep": { motto: "Unity in Starlight", desc: "The Royal line, descended from Hero Ren.", heirloom: "Lumina, the Star-Blade", sigil: "🦁👑", holding: "The Sun Fortress", holdingDesc: "The radiant seat of the High King, built from white marble that glows at dawn." },
+        "Chep": { motto: "Unity in Starlight", desc: "The Royal line, descended from Hero Ren.", heirloom: "Lumina, the Star-Blade", sigil: "👑", holding: "The Sun Fortress", holdingDesc: "The radiant seat of the High King, built from white marble that glows at dawn." },
         "Valdoria": { motto: "Gold is Power", desc: "Masters of coin and trade in the golden west.", heirloom: "The Gilded Scepter", sigil: "🦅", holding: "The Golden Vaults", holdingDesc: "A massive palace carved into the cliffside, guarding the realm's treasury." },
         "Thalor": { motto: "Tides Bow to None", desc: "Wardens of the stormy seas and the leviathans beneath.", heirloom: "The Abyssal Trident", sigil: "🦑", holding: "Stormwatch Keep", holdingDesc: "A formidable fortress lashed by eternal waves, protecting the southern coasts." },
         "Grimward": { motto: "Winter is our Anvil", desc: "Sentinels of the frozen north against the darkness.", heirloom: "Frostfang (Greataxe)", sigil: "🐺", holding: "Ice-Fang Citadel", holdingDesc: "Built from black basalt and magical ice, it has never been breached." },
@@ -1318,10 +1318,38 @@
         { name: "Tidecaller's Keep", ruler: "House Thalor", desc: "A fortress withstanding the eternal ocean storms.", x: 10, y: 80 }
     ];
 
-    const NPC_NAMES = {
-        m: ["Aelar", "Thorne", "Cedric", "Dravek", "Eldric", "Fenris", "Garrick", "Haldor", "Isen", "Jorik"],
-        f: ["Aeliana", "Brynn", "Caelia", "Elara", "Fae", "Gwyneth", "Isolde", "Kaida", "Lyra", "Mira"]
-    };
+const NPC_NAMES = {
+    m: [
+        "Aelar", "Thorne", "Cedric", "Dravek", "Eldric", "Fenris", "Garrick", "Haldor", "Isen", "Jorik",
+
+        "Alric", "Beren", "Cael", "Dain", "Edric", "Faelan", "Godric", "Hadrian", "Ivar", "Jasper",
+        "Kael", "Leoric", "Merric", "Nolan", "Orrin", "Perrin", "Quint", "Roderic", "Sylas", "Tarin",
+
+        "Ulric", "Varyn", "Wulfric", "Xander", "Yorick", "Zoren", "Baldric", "Corvin", "Dorian",
+        "Eamon", "Falk", "Grimwald", "Hector", "Ignas", "Jareth", "Korin", "Lucan", "Magnus",
+
+        "Neric", "Osric", "Ronan", "Severin", "Theron", "Valen", "Wystan", "Amon", "Briar",
+        "Calder", "Davos", "Emrys", "Fintan", "Galen", "Harrow", "Idris", "Kestrel", "Luther",
+
+        "Malric", "Nestor", "Orwyn", "Phelan", "Rurik", "Soren", "Torin", "Viggo", "Wyatt",
+        "Zarek"
+    ],
+    f: [
+        "Aeliana", "Brynn", "Caelia", "Elara", "Fae", "Gwyneth", "Isolde", "Kaida", "Lyra", "Mira",
+
+        "Alys", "Briala", "Ceris", "Daphne", "Eira", "Freya", "Helena", "Ilyra", "Jessa", "Kara",
+        "Liora", "Maelis", "Nerys", "Olwen", "Petra", "Quilla", "Rowan", "Seraphine", "Tamsin",
+
+        "Una", "Vespera", "Willow", "Xanthe", "Ysolde", "Zara", "Anwen", "Beatrix", "Cleo",
+        "Delphine", "Elys", "Fiora", "Greta", "Hestia", "Iria", "Junia", "Kestia", "Luneth",
+
+        "Maribel", "Nimue", "Odette", "Primrose", "Rhea", "Selene", "Thalia", "Vanya", "Wren",
+        "Zinnia", "Arielle", "Branwen", "Celeste", "Daria", "Elowen", "Fenna", "Giselle",
+
+        "Hadara", "Ilena", "Kalista", "Lorelei", "Melora", "Noemi", "Orla", "Roslyn",
+        "Sybella", "Tirza"
+    ]
+};
 
     // 5. EVENT POOLS
     const createEvent = (id, title, text, choices) => ({ id, title, text, choices });
