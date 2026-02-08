@@ -1421,18 +1421,20 @@
 
         definitions.forEach(def => {
             // 1. Try to find an existing vendor NPC in this city with the right job
+            // FILTER: Must be alive. If previous vendor died, this returns undefined, triggering succession.
             let vendor = state.relationships.find(r => 
                 r.locationIndex === cityIndex && 
                 r.occupation === def.role && 
                 r.health !== 'Deceased'
             );
 
-            // 2. If no vendor exists, create a new persistent NPC
+            // 2. If no vendor exists (or previous died), create a new persistent NPC
             if (!vendor) {
                 const gender = Math.random() > 0.5 ? 'Male' : 'Female';
                 const name = getRandomName(gender);
                 // Create relationship with specific role
-                vendor = addRelationship(name, "Merchant", 0, gender, "Commoner", cityIndex);
+                // ARGS: name, relation, friendship, gender, rank, locIndex, isBlood, isFamily, age, isKnown
+                vendor = addRelationship(name, "Merchant", 0, gender, "Commoner", cityIndex, false, false, null, false);
                 vendor.occupation = def.role; // Force the correct job
             }
 
@@ -1494,6 +1496,13 @@
             console.error("Shop ID not found:", shopId);
             document.getElementById('shop-detail-content').innerHTML = `<div class="p-4 text-center italic opacity-50">This shop has closed for the day.</div>`;
             return;
+        }
+
+        // REVEAL LOGIC: If we enter the shop, we meet the vendor
+        const vendor = state.relationships.find(r => r.id === shop.vendorId);
+        if (vendor && vendor.isKnown === false) {
+            vendor.isKnown = true;
+            // No log needed, visual confirmation is enough in the UI
         }
 
         const container = document.getElementById('shop-detail-content');
@@ -2094,7 +2103,7 @@
         });
     }
 
-    function addRelationship(name, relation, friendship, gender, rank, locIndex = null, isBlood = false, isFamily = false, specificAge = null) {
+    function addRelationship(name, relation, friendship, gender, rank, locIndex = null, isBlood = false, isFamily = false, specificAge = null, isKnown = true) {
         const location = locIndex !== null ? locIndex : Math.floor(Math.random() * CITIES.length);
         
         // NEW: Job Selection Logic based on Rank/Class
@@ -2139,6 +2148,7 @@
             occupation: rndJob,
             isBlood: isBlood,
             isFamily: isFamily,
+            isKnown: isKnown, // NEW FLAG
             alignment: ALIGNMENTS[Math.floor(Math.random() * ALIGNMENTS.length)],
             stats: rndStats,
             appearance: appearance, // Store appearance
@@ -3334,10 +3344,14 @@
             return;
         }
         
-        const filtered = state.relationships.filter(r => r.name.toLowerCase().includes(query) || r.relation.toLowerCase().includes(query));
+        // FILTER: Only show people we know (isKnown !== false)
+        const filtered = state.relationships.filter(r => 
+            (r.isKnown !== false) && 
+            (r.name.toLowerCase().includes(query) || r.relation.toLowerCase().includes(query))
+        );
 
         if (filtered.length === 0) {
-            container.innerHTML = `<p class="italic opacity-50">No relationships found.</p>`;
+            container.innerHTML = `<p class="italic opacity-50">No known relationships found.</p>`;
             return;
         }
 
