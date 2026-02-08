@@ -1075,7 +1075,7 @@
         location: 0, // Index of current city
         relationships: [],
         interactions: {}, // tracks yearly interactions per person ID
-        activityLog: { love: 0, quest: 0, crime: 0, train: 0, lord: 0 }, 
+        activityLog: { socialize: 0, lord: 0, tournament: 0, train: 0, brothel: 0, dungeon: 0, crime: 0, meditate: 0 }, 
         occupation: null, 
         jobHistory: {},
         rejectedJobs: [], // Stores rejected job IDs for the current year
@@ -1581,13 +1581,30 @@
             createEvent('child_3', 'The Stray Dog', 'A mangy dog approaches you.', [
                 { text: 'Pet it', type: 'check', stat: 'wis', dc: 10, success: 'It licks your face. (+1 WIS)', fail: 'It growls at you.', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-1) }
             ]),
-            createEvent('child_4', 'The Bully', 'A larger kid demands your lunch.', [
-                { text: 'Fight', type: 'check', stat: 'str', dc: 10, success: 'You give them a bloody nose!', fail: 'They sit on you.', onSuccess: () => { modRep('renown', 2); addTrait('Scrapped Knuckles'); }, onFail: () => { takeDamage(1); modRep('honor', -2); } },
-                { text: 'Outsmart', type: 'check', stat: 'int', dc: 12, success: 'You trick them into eating mud.', fail: 'They punch you.', onSuccess: () => state.stats.int++, onFail: () => { takeDamage(2); addTrait('Chipped Tooth'); } }
-            ]),
             createEvent('child_5', 'Lost Coin', 'You find a coin in the mud.', [
                 { text: 'Keep it', type: 'flavor', effect: () => { state.gold++; log("Finders keepers. (+1g)"); } },
                 { text: 'Donate', type: 'flavor', effect: () => { modRep('piety', 2); log("The gods see your kindness."); } }
+            ])
+        ],
+        Childhood: [
+             createEvent('kid_1', 'The Old Oak', 'The great tree in the village square looks climbable.', [
+                { text: 'Climb High', type: 'check', stat: 'dex', dc: 12, success: 'You see the whole world from up here! (+1 DEX)', fail: 'You slip and scrape your knee. (-1 HP)', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(1) },
+                { text: 'Stay Low', type: 'flavor', effect: () => log("You play safely in the roots.") }
+            ]),
+            createEvent('kid_2', 'Mud Pies', 'Heavy rain has turned the road into a playground.', [
+                { text: 'Play', type: 'check', stat: 'con', dc: 10, success: 'You build a magnificent fortress. (+1 CON)', fail: 'You catch a cold. (-2 HP)', onSuccess: () => state.stats.con++, onFail: () => takeDamage(2) },
+                { text: 'Avoid Dirt', type: 'flavor', effect: () => log("You keep your clothes clean, pleasing your parents.") }
+            ]),
+            createEvent('kid_3', 'The Market Thief', 'You see a man steal an apple.', [
+                { text: 'Yell', type: 'check', stat: 'cha', dc: 10, success: 'The guards catch him! (+Renown)', fail: 'He glares at you and runs.', onSuccess: () => modRep('renown', 5), onFail: () => modSanity(-1) },
+                { text: 'Stay Silent', type: 'flavor', effect: () => log("You pretend you saw nothing.") }
+            ]),
+            createEvent('kid_4', 'Lesson Time', 'An elder offers to teach you letters.', [
+                { text: 'Learn', type: 'check', stat: 'int', dc: 12, success: 'You learn to write your name. (+1 INT)', fail: 'The ink goes everywhere.', onSuccess: () => { state.stats.int++; state.flags.literate = true; }, onFail: () => {} },
+                { text: 'Skip Class', type: 'flavor', effect: () => { state.stats.dex++; log("You ran around outside instead. (+1 DEX)"); } }
+            ]),
+            createEvent('kid_5', 'Scary Story', 'The older kids tell ghost stories.', [
+                { text: 'Listen', type: 'check', stat: 'wis', dc: 12, success: 'You realize it is just a story. (+1 WIS)', fail: 'Nightmares haunt you. (-Sanity)', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-2) }
             ])
         ],
         Teen: [
@@ -1713,10 +1730,7 @@
         Jeopardy: [createEvent('sanity_break', 'Mental Snap', 'The pressure is too much. Reality bends.', [{ text: 'Scream', type: 'flavor', effect: () => { modSanity(-2); log("You lose yourself for a moment."); } }]), createEvent('sanity_visions', 'Dark Visions', 'Shadows whisper your name.', [{ text: 'Pray', type: 'check', stat: 'wis', dc: 12, success: 'The voices fade.', fail: 'They scream louder. (-1 SP)', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }]), createEvent('sanity_final', 'Mental Break', 'Your mind shatters under the strain of existence.', [{ text: 'Hold it together', type: 'check', stat: 'wis', dc: 15, success: 'You claw back your sanity from the brink. (+1 SP)', fail: 'Your mind snaps. Massive shock. (-20 HP)', onSuccess: () => modSanity(1), onFail: () => { takeDamage(20); modSanity(-2); } }])]
     };
     
-    // Add missing pools referenced in code if any...
-    // Note: To save space, using existing pools logic.
-    POOLS.Childhood = POOLS.Infancy; // Fallback for brevity in this response, ideally fill with real data from previous artifact
-    
+    // REMOVED POOLS.Childhood = POOLS.Infancy; 
 
     // 6. LOGIC & ENGINE
     function init() {
@@ -2444,7 +2458,7 @@
             state.age++;
             state.year++;
             state.interactions = {}; 
-            state.activityLog = { love: 0, quest: 0, crime: 0, train: 0, lord: 0 }; 
+            state.activityLog = { socialize: 0, lord: 0, tournament: 0, train: 0, brothel: 0, dungeon: 0, crime: 0, meditate: 0 }; 
             state.rejectedJobs = []; // RESET JOB REJECTIONS
             state.flags.travelAllowed = false; 
             state.flags.traveledThisYear = false;
@@ -2655,39 +2669,84 @@
             return;
         }
 
-        const canLove = state.activityLog.love < 3; 
-        const canQuest = state.activityLog.quest < 1;
-        const canCrime = state.activityLog.crime < 1;
-        const canTrain = state.activityLog.train < 1;
-        const canLord = state.activityLog.lord < 1;
-
-        // REMOVED SHOP BUTTON
+        // Updated Activity Grid - Reordered & Labeled
         container.innerHTML = `
-            <button onclick="actVisitLord()" class="act-btn choice-btn ${canLord?'':'opacity-50'}" ${canLord?'':'disabled'}><span class="act-icon">👑</span>Visit Lord (1/yr)</button>
+            <button onclick="actTrain()" class="act-btn choice-btn"><span class="act-icon">⚔️</span>Train <span class="text-[10px] opacity-70 block">(Age 8+)</span></button>
+            <button onclick="actMeditate()" class="act-btn choice-btn"><span class="act-icon">🧘</span>Meditate</button>
+            
             <button onclick="actSocialize()" class="act-btn choice-btn"><span class="act-icon">🍻</span>Socialize</button>
-            <button onclick="actLove()" class="act-btn choice-btn ${canLove?'':'opacity-50'}" ${canLove?'':'disabled'}><span class="act-icon">💘</span>Find Love (${3-state.activityLog.love} left)</button>
-            <button onclick="actQuest()" class="act-btn choice-btn ${canQuest?'':'opacity-50'}" ${canQuest?'':'disabled'}><span class="act-icon">⚔️</span>Quest (1/yr)</button>
-            <button onclick="actCrime()" class="act-btn choice-btn ${canCrime?'':'opacity-50'}" ${canCrime?'':'disabled'}><span class="act-icon">🗡️</span>Crime (1/yr)</button>
-            <button onclick="actTrain()" class="act-btn choice-btn ${canTrain?'':'opacity-50'}" ${canTrain?'':'disabled'}><span class="act-icon">🏋️</span>Train (1/yr)</button>
+            <button onclick="actBrothel()" class="act-btn choice-btn"><span class="act-icon">♥️</span>Brothel <span class="text-[10px] opacity-70 block">(Age 18+)</span></button>
+            
+            <button onclick="actVisitLord()" class="act-btn choice-btn"><span class="act-icon">👑</span>Visit Lord <span class="text-[10px] opacity-70 block">(Age 16+, 50 Renown)</span></button>
+            <button onclick="actTournament()" class="act-btn choice-btn"><span class="act-icon">🎪</span>Tournament <span class="text-[10px] opacity-70 block">(Age 16+)</span></button>
+            
+            <button onclick="actDungeon()" class="act-btn choice-btn"><span class="act-icon">💀</span>Dungeon <span class="text-[10px] opacity-70 block">(Age 16+)</span></button>
+            <button onclick="actCrime()" class="act-btn choice-btn"><span class="act-icon">🗡️</span>Crime <span class="text-[10px] opacity-70 block">(Age 8+)</span></button>
         `;
     }
 
-    // REMOVED OLD actShop() and closeShop() functions as they are replaced by the Market Tab logic.
+    // --- REVAMPED ACTIVITY HANDLERS ---
+
+    function checkActLimit(type, max, failMsg) {
+        if (state.activityLog[type] >= max) {
+            log(`<span class="italic opacity-70">${failMsg}</span>`);
+            switchTab('log');
+            return false;
+        }
+        state.activityLog[type]++;
+        return true;
+    }
+
+    function actSocialize() {
+        if(state.health <= 0) return;
+        // Age 6+ implied by tab visibility
+        if(!checkActLimit('socialize', 3, "The taverns are empty and the streets quiet. You find no one of interest.")) return;
+
+        const gender = Math.random() > 0.5 ? 'Male' : 'Female';
+        const name = getRandomName(gender);
+        const rank = Math.random() > 0.9 ? (gender === 'Male' ? 'Sir' : 'Dame') : "Commoner";
+        
+        // Dynamic Social Encounter
+        const evt = createEvent('act_social', `Social Encounter`, `You spot ${name} (${rank}) in the city. They seem approachable.`, [
+            { 
+                text: 'Friendly Greeting', type: 'check', stat: 'cha', dc: 10, 
+                success: 'You hit it off immediately!', 
+                fail: 'They nod politely but seem uninterested.',
+                onSuccess: () => { addRelationship(name, "Friend", 35, gender, rank, state.location); modSanity(1); },
+                onFail: () => { addRelationship(name, "Acquaintance", 10, gender, rank, state.location); }
+            },
+            {
+                text: 'Flirt', type: 'check', stat: 'cha', dc: 12, req: s => s.age >= 14,
+                success: 'They blush and smile back.',
+                fail: 'They look uncomfortable.',
+                onSuccess: () => { const r = addRelationship(name, "Love Interest", 20, gender, rank, state.location); r.romance = 30; },
+                onFail: () => { addRelationship(name, "Acquaintance", -5, gender, rank, state.location); modSanity(-1); }
+            },
+            {
+                text: 'Start Rivalry', type: 'check', stat: 'str', dc: 10,
+                success: 'You insult them perfectly. A rivalry is born!',
+                fail: 'They just laugh at you.',
+                onSuccess: () => { addRelationship(name, "Rival", -30, gender, rank, state.location); modRep('infamy', 2); },
+                onFail: () => { addRelationship(name, "Acquaintance", -10, gender, rank, state.location); }
+            }
+        ]);
+        renderEvent(evt);
+        switchTab('log');
+    }
 
     function actVisitLord() {
-        if(state.health <= 0) return; // Guard
-        if(!checkAge(10)) return;
-        state.activityLog.lord++;
+        if(state.health <= 0) return;
+        if(!checkAge(16)) return;
+        if(!checkActLimit('lord', 1, "The Lord is not accepting further audiences this year.")) return;
 
-        if (state.reputation.renown < 50) {
+        if (state.reputation.renown < 50 && state.socialClass !== 'House') {
             log(`<strong class="text-red-800">Denied.</strong> The guards block your path. "The Lord only grants audiences to those of name (50 Renown)."`);
             switchTab('log');
             return;
         }
 
         const city = CITIES[state.location];
-        const rulerName = city.ruler;
-        log(`You attempt to gain audience with the ruling family of ${rulerName}.`);
+        log(`You attempt to gain audience with the ruling family of ${city.ruler}.`);
         
         let dc = 18;
         if (state.socialClass === 'House') dc = 12;
@@ -2698,9 +2757,7 @@
             log(`<strong class="text-green-800">Granted!</strong> You meet the Lord/Lady. They are impressed by your bearing.`);
             modRep('renown', 5);
             modSanity(1);
-            const gender = Math.random() > 0.5 ? 'Male' : 'Female';
-            const name = getRandomName(gender);
-            addRelationship(name, "Lord of " + city.name, 20, gender, "Lord", state.location);
+            // Create the Lord NPC if not exists, or update interactions
             renderEvent(POOLS.LordInteraction[0]);
         } else {
             log(`<strong class="text-red-800">Denied.</strong> The guards turn you away at the gate.`);
@@ -2708,78 +2765,169 @@
         switchTab('log');
     }
 
-    function actSocialize() {
-        if(state.health <= 0) return; // Guard
-        if(!checkAge(6)) return;
-        const roll = Math.random();
-        if (roll < 0.4) {
-            log("You wander the streets but meet no one of interest.");
-        } else if (roll < 0.8) {
-            const gender = Math.random() > 0.5 ? 'Male' : 'Female';
-            const name = getRandomName(gender);
-            let rank = "Commoner";
-            if (Math.random() > 0.9) rank = gender === 'Male' ? 'Sir' : 'Dame';
-            
-            addRelationship(name, "Acquaintance", 20, gender, "Commoner", state.location);
-            log(`You met ${name} (${rank}) in the city square.`);
-            modSanity(1);
-            updateUI();
-        } else {
-            const pool = POOLS.Interactive;
-            renderEvent(pool[Math.floor(Math.random() * pool.length)]);
-        }
-        switchTab('log');
-    }
-
-    function actLove() {
-        if(state.health <= 0) return; // Guard
-        if(!checkAge(14)) return;
-        state.activityLog.love++;
-        const roll = Math.random();
-        if (roll < 0.5) {
-            log("Your glances go unnoticed.");
-        } else if (roll < 0.8) {
-            const gender = Math.random() > 0.5 ? 'Male' : 'Female';
-            const name = getRandomName(gender);
-            addRelationship(name, "Love Interest", 40, gender, "Commoner", state.location);
-            log(`You caught the eye of ${name}.`);
-            modSanity(1);
-            updateUI();
-        } else {
-            renderEvent(POOLS.SocialFail[1]); 
-        }
-        switchTab('log');
-    }
-
-    function actQuest() {
-        if(state.health <= 0) return; // Guard
+    function actTournament() {
+        if(state.health <= 0) return;
         if(!checkAge(16)) return;
-        state.activityLog.quest++;
-        const pool = POOLS.Quest;
-        renderEvent(pool[Math.floor(Math.random() * pool.length)]);
+        if(!checkActLimit('tournament', 1, "There are no active tournaments in the city right now.")) return;
+
+        log(`<strong>The Grand Tournament:</strong> Flags wave and the crowd roars.`);
+
+        // Round 3 (Final)
+        const round3 = createEvent('tourney_r3', 'Tournament: The Final', 'You face the Champion, a giant in black plate.', [
+            { text: 'Duel (STR)', type: 'check', stat: 'str', dc: 18, 
+              success: 'VICTORY! You disarm the champion to thunderous applause!', 
+              fail: 'You are crushed. (-15 HP, Injury)', 
+              onSuccess: () => { modRep('renown', 50); state.gold += 200; addItem('Champion Helm', 'Rare', 'Proof of victory.', 150); log("You won 200g!"); },
+              onFail: () => { takeDamage(15); addTrait('Limp'); }
+            },
+            { text: 'Outmaneuver (DEX)', type: 'check', stat: 'dex', dc: 18,
+              success: 'You dance around their blows and strike true!',
+              fail: 'They catch you mid-step. (-15 HP, Injury)',
+              onSuccess: () => { modRep('renown', 50); state.gold += 200; addItem('Champion Blade', 'Rare', 'Proof of victory.', 150); log("You won 200g!"); },
+              onFail: () => { takeDamage(15); addTrait('Scarred Face'); }
+            }
+        ]);
+
+        // Round 2
+        const round2 = createEvent('tourney_r2', 'Tournament: Semi-Finals', 'Your opponent is a swift mercenary from the south.', [
+            { text: 'Overpower (STR)', type: 'check', stat: 'str', dc: 15,
+              success: 'You batter through their guard.',
+              fail: 'They are too fast. (-10 HP)',
+              onSuccess: () => renderEvent(round3),
+              onFail: () => { takeDamage(10); log("Eliminated in Round 2."); }
+            },
+            { text: 'Predict (INT)', type: 'check', stat: 'int', dc: 14,
+              success: 'You anticipate their feint and counter.',
+              fail: 'You miscalculated. (-10 HP)',
+              onSuccess: () => renderEvent(round3),
+              onFail: () => { takeDamage(10); log("Eliminated in Round 2."); }
+            }
+        ]);
+
+        // Round 1
+        const round1 = createEvent('tourney_r1', 'Tournament: Qualifiers', 'A local knight challenges you.', [
+            { text: 'Joust (STR)', type: 'check', stat: 'str', dc: 12,
+              success: 'Your lance strikes true!',
+              fail: 'You are unhorsed. (-5 HP)',
+              onSuccess: () => renderEvent(round2),
+              onFail: () => { takeDamage(5); log("Eliminated in Round 1."); }
+            },
+            { text: 'Melee (DEX)', type: 'check', stat: 'dex', dc: 12,
+              success: 'You weave through their defenses.',
+              fail: 'A clumsy defeat. (-5 HP)',
+              onSuccess: () => renderEvent(round2),
+              onFail: () => { takeDamage(5); log("Eliminated in Round 1."); }
+            }
+        ]);
+
+        renderEvent(round1);
+        switchTab('log');
+    }
+
+    function actTrain() {
+        if(state.health <= 0) return;
+        if(!checkAge(8)) return;
+        if(!checkActLimit('train', 1, "Your body is exhausted. You cannot train anymore this year.")) return;
+
+        const evt = createEvent('act_train', 'Training Grounds', 'What do you wish to improve?', [
+            { text: 'Strength Drill', type: 'check', stat: 'str', dc: 12, success: 'You feel stronger! (+1 STR)', fail: 'You pull a muscle. No gain.', onSuccess: () => state.stats.str++, onFail: () => takeDamage(1) },
+            { text: 'Agility Course', type: 'check', stat: 'dex', dc: 12, success: 'You feel faster! (+1 DEX)', fail: 'You trip and fall.', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(1) },
+            { text: 'Endurance Run', type: 'check', stat: 'con', dc: 12, success: 'You feel tougher! (+1 CON)', fail: 'You collapse breathless.', onSuccess: () => { state.stats.con++; state.maxHealth++; }, onFail: () => {} },
+            { text: 'Library Study', type: 'check', stat: 'int', dc: 12, success: 'You feel smarter! (+1 INT)', fail: 'You fall asleep reading.', onSuccess: () => state.stats.int++, onFail: () => {} }
+        ]);
+        renderEvent(evt);
+        switchTab('log');
+    }
+
+    function actBrothel() {
+        if(state.health <= 0) return;
+        if(!checkAge(18)) return;
+        if(!checkActLimit('brothel', 3, "The establishment is closed for the night.")) return;
+
+        const evt = createEvent('act_brothel', 'The Velvet Lantern', 'Music and perfume fill the air.', [
+            { text: 'Common Company (10g)', type: 'flavor', req: s => s.gold >= 10, effect: () => { state.gold -= 10; modSanity(2); log("A pleasant distraction. (+Sanity)"); } },
+            { text: 'Luxury Suite (50g)', type: 'flavor', req: s => s.gold >= 50, effect: () => { state.gold -= 50; modSanity(5); state.health = Math.min(state.maxHealth, state.health + 2); log("A night of pure hedonism. (+Max Sanity, +HP)"); } },
+            { text: 'Gather Rumors (20g)', type: 'check', stat: 'cha', dc: 12, req: s => s.gold >= 20, success: 'You learn juicy secrets. (+Renown)', fail: 'You just get drunk.', onSuccess: () => { state.gold -= 20; modRep('renown', 5); }, onFail: () => { state.gold -= 20; } }
+        ]);
+        renderEvent(evt);
+        switchTab('log');
+    }
+
+    function actDungeon() {
+        if(state.health <= 0) return;
+        if(!checkAge(16)) return;
+        if(!checkActLimit('dungeon', 1, "You have explored the local ruins enough for now.")) return;
+
+        // Dynamic Dungeon Generator
+        const loot = ['Ancient Coin', 'Silver Goblet', 'Gemstone', 'Magic Scroll'];
+        const reward = loot[Math.floor(Math.random() * loot.length)];
+        
+        const evt = createEvent('act_dungeon', 'The Sunken Crypt', 'You descend into the dark, damp ruins.', [
+            { text: 'Smash Door (STR)', type: 'check', stat: 'str', dc: 14, 
+              success: `You bash through and find treasure! (+${reward})`, 
+              fail: 'The door holds. You hurt your shoulder. (-HP)', 
+              onSuccess: () => { addItem(reward, 'Uncommon', 'Dungeon loot', 50); modRep('renown', 2); }, 
+              onFail: () => takeDamage(3) 
+            },
+            { text: 'Pick Lock (DEX)', type: 'check', stat: 'dex', dc: 14, 
+              success: `Click. The chest opens! (+${reward})`, 
+              fail: 'Trap triggered! Poison dart. (-HP)', 
+              onSuccess: () => { addItem(reward, 'Uncommon', 'Dungeon loot', 50); }, 
+              onFail: () => takeDamage(5) 
+            },
+            { text: 'Decipher Runes (INT)', type: 'check', stat: 'int', dc: 14, 
+              success: 'You open a secret passage. (+Scroll)', 
+              fail: 'You trigger a curse. (-Sanity)', 
+              onSuccess: () => { addItem('Arcane Scroll', 'Rare', 'Ancient magic', 100); state.stats.int++; }, 
+              onFail: () => { modSanity(-2); addTrait('Paranoid'); } 
+            }
+        ]);
+        renderEvent(evt);
         switchTab('log');
     }
 
     function actCrime() {
-        if(state.health <= 0) return; // Guard
+        if(state.health <= 0) return;
         if(!checkAge(8)) return;
-        showConfirm("This is an evil act. Are you sure you wish to walk this path?", () => {
-            state.activityLog.crime++;
-            const pool = POOLS.Crime;
-            renderEvent(pool[Math.floor(Math.random() * pool.length)]);
-            switchTab('log');
-        });
+        if(!checkActLimit('crime', 3, "The guards are too alert right now. Lay low.")) return;
+
+        const evt = createEvent('act_crime', 'Criminal Enterprise', 'Choose your target.', [
+            { text: 'Pickpocket (Easy)', type: 'check', stat: 'dex', dc: 12, 
+              success: 'Snagged a purse! (+10g)', 
+              fail: 'Caught! You run. (+Infamy)', 
+              onSuccess: () => { state.gold += 10; modRep('infamy', 1); }, 
+              onFail: () => { modRep('infamy', 5); modRep('renown', -2); } 
+            },
+            { text: 'Burgle Shop (Medium)', type: 'check', stat: 'dex', dc: 15, 
+              success: 'Cleaned out the register! (+50g)', 
+              fail: 'Guard dog bit you. (-HP)', 
+              onSuccess: () => { state.gold += 50; modRep('infamy', 3); }, 
+              onFail: () => { takeDamage(5); modRep('infamy', 2); } 
+            },
+            { text: 'Heist Manor (Hard)', type: 'check', stat: 'int', dc: 18, 
+              success: 'Jackpot! (+200g, +Infamy)', 
+              fail: 'Arrested! Fined heavily.', 
+              onSuccess: () => { state.gold += 200; modRep('infamy', 10); }, 
+              onFail: () => { state.gold = Math.floor(state.gold / 2); modRep('infamy', 10); log("You spent months in jail."); } 
+            }
+        ]);
+        renderEvent(evt);
+        switchTab('log');
     }
 
-    function actTrain() {
-        if(state.health <= 0) return; // Guard
-        if(!checkAge(6)) return;
-        state.activityLog.train++;
-        const stat = ABILITIES[Math.floor(Math.random() * ABILITIES.length)];
-        state.stats[stat]++;
-        log(`You trained hard. (+1 ${stat.toUpperCase()})`);
-        modSanity(1);
-        updateUI();
+    function actMeditate() {
+        if(state.health <= 0) return;
+        if(!checkActLimit('meditate', 1, "Your mind is too cluttered to focus again.")) return;
+
+        const evt = createEvent('act_meditate', 'Meditation', 'You seek inner peace.', [
+            { text: 'Focus', type: 'check', stat: 'wis', dc: 12, 
+              success: 'Clarity returns. (+1 Sanity)', 
+              fail: 'Distracting thoughts plague you.', 
+              onSuccess: () => modSanity(1), 
+              onFail: () => {} 
+            }
+        ]);
+        renderEvent(evt);
         switchTab('log');
     }
 
