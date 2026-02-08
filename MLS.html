@@ -266,9 +266,15 @@
             border: 1px solid rgba(0,0,0,0.2);
         }
         .gene-house { background: var(--royal); color: white; border-color: var(--gold); }
-        .gene-common { background: rgba(0,0,0,0.1); color: var(--ink); }
-        .gene-good { background: #dcfce7; color: var(--success); border-color: var(--success); }
-        .gene-bad { background: #fee2e2; color: var(--failure); border-color: var(--failure); }
+        
+        /* NEW MUTATION STYLES */
+        .mut-common { background: #e5e7eb; color: #374151; border-color: #9ca3af; }
+        .mut-uncommon { background: #dcfce7; color: #166534; border-color: #86efac; }
+        .mut-rare { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+        .mut-epic { background: #f3e8ff; color: #6b21a8; border-color: #d8b4fe; border: 1px double #6b21a8; }
+        .mut-legendary { background: #ffedd5; color: #9a3412; border-color: #fdba74; box-shadow: 0 0 5px #fdba74; animation: pulse 2s infinite; }
+        
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
 
 
         /* House System Styling */
@@ -743,8 +749,11 @@
                         </div>
                     </div>
                     <div>
-                         <h3 class="font-bold mb-2">Genetics</h3>
-                         <div id="gene-list" class="text-sm italic mb-4">No dominant genes.</div>
+                         <h3 class="font-bold mb-2">Appearance & Genetics</h3>
+                         <div id="appearance-display" class="text-sm mb-2 p-2 bg-white/30 rounded border border-black/10">
+                             <!-- Injected via JS -->
+                         </div>
+                         <div id="gene-list" class="text-sm italic mb-4">No mutations.</div>
 
                         <h3 class="font-bold mb-2 border-t border-black/10 pt-2">Traits & Feats</h3>
                         <div id="traits-list" class="text-sm space-y-1 italic">None yet...</div>
@@ -824,142 +833,162 @@
         }
     };
     
-    // Custom Confirm Modal
-    function showConfirm(text, onConfirm) {
-        document.getElementById('confirm-text').innerText = text;
-        const yesBtn = document.getElementById('confirm-yes-btn');
-        yesBtn.onclick = function() {
-            onConfirm();
-            closeConfirm();
-        };
-        document.getElementById('confirm-modal').classList.remove('hidden');
-    }
-    function closeConfirm() { document.getElementById('confirm-modal').classList.add('hidden'); }
-
-    // Global Click Listener for Sound
-    document.addEventListener('click', (e) => {
-        // If clicking a button or something inside a button
-        if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
-            AudioEngine.pulse();
-        }
-    });
-
-    function toggleSoundSetting() {
-        state.settings.sound = !state.settings.sound;
-        const btn = document.getElementById('btn-sound-toggle');
-        btn.innerText = `Sound Effects: ${state.settings.sound ? 'ON' : 'OFF'}`;
-        btn.style.opacity = state.settings.sound ? '1' : '0.6';
-    }
-    
-    // UI Helpers
-    function showMsg(title, text) {
-        document.getElementById('msg-title').innerText = title;
-        document.getElementById('msg-text').innerHTML = text;
-        document.getElementById('msg-modal').classList.remove('hidden');
-    }
-
-    // 0.5 GENETIC ENGINE
-    const GENE_POOL = {
-        physical: [
-            { name: 'Towering', mutex: 'height', type: 'good' }, { name: 'Runt', mutex: 'height', type: 'bad' },
-            { name: 'Herculean', mutex: 'build', type: 'good' }, { name: 'Frail', mutex: 'build', type: 'bad' },
-            { name: 'Stunning', mutex: 'looks', type: 'good' }, { name: 'Hideous', mutex: 'looks', type: 'bad' },
-            { name: 'Eagle-Eyed', mutex: 'senses', type: 'good' }, { name: 'Myopic', mutex: 'senses', type: 'bad' },
-            { name: 'Iron-Gut', mutex: 'health', type: 'good' }, { name: 'Sickly', mutex: 'health', type: 'bad' }
-        ],
-        mental: [
-            { name: 'Genius', mutex: 'int', type: 'good' }, { name: 'Dullard', mutex: 'int', type: 'bad' },
-            { name: 'Magnetic', mutex: 'cha', type: 'good' }, { name: 'Repulsive', mutex: 'cha', type: 'bad' },
-            { name: 'Sage', mutex: 'wis', type: 'good' }, { name: 'Foolish', mutex: 'wis', type: 'bad' }
-        ]
+    // 0.5 NEW GENETIC ENGINE: PHENOTYPES & MUTATIONS
+    const COSMETICS = {
+        hair: ['Brown', 'Black', 'Blonde', 'Red', 'Grey', 'White', 'Auburn', 'Chestnut', 'Straw'],
+        eyes: ['Brown', 'Blue', 'Green', 'Hazel', 'Grey', 'Amber', 'Dark'],
+        skin: ['Pale', 'Fair', 'Olive', 'Tan', 'Brown', 'Dark', 'Ebony', 'Ruddy'],
+        height: ['Dwarf', 'Short', 'Average', 'Tall', 'Towering', 'Giant']
     };
+
+    const HOUSE_PHENOTYPES = {
+        "Chep": { hair: "Platinum", eyes: "Violet", skin: "Fair" },
+        "Valdoria": { hair: "Golden", eyes: "Amber", skin: "Tan" },
+        "Thalor": { hair: "Black", eyes: "Sea-Green", skin: "Pale" },
+        "Grimward": { hair: "Raven", eyes: "Ice-Blue", skin: "Pale" },
+        "Sunstrider": { hair: "Fiery Red", eyes: "Emerald", skin: "Olive" },
+        "Ironheart": { hair: "Ash-Grey", eyes: "Steel-Grey", skin: "Fair" },
+        "Moonshadow": { hair: "Silver", eyes: "Black", skin: "Pale" },
+        "Stormbreaker": { hair: "White", eyes: "Electric Blue", skin: "Fair" }
+    };
+
+    const MUTATION_POOL = [
+    // ===== COMMON (cosmetic, rumor-tier) =====
+    { name: "Birthmark", rarity: "Common", desc: "A distinct mark on the skin." },
+    { name: "Freckles", rarity: "Common", desc: "Sun-kissed spots across the face." },
+    { name: "Cleft Chin", rarity: "Common", desc: "A prominent, noble jawline." },
+    { name: "Widow's Peak", rarity: "Common", desc: "A sharp V-shaped hairline." },
+    { name: "Thick Eyebrows", rarity: "Common", desc: "Dense, expressive brows." },
+    { name: "Long Lashes", rarity: "Common", desc: "Unnaturally long eyelashes." },
+    { name: "Crooked Smile", rarity: "Common", desc: "A slightly uneven grin." },
+    { name: "Unusual Voice", rarity: "Common", desc: "A voice that sounds rough, airy, or oddly musical." },
+    { name: "Asymmetrical Face", rarity: "Common", desc: "Subtle imbalance in facial features." },
+
+    // ===== UNCOMMON (noticeable, whispered about) =====
+    { name: "Heterochromia", rarity: "Uncommon", desc: "Eyes of two different colors." },
+    { name: "Albinism", rarity: "Uncommon", desc: "Complete lack of pigment." },
+    { name: "Vitiligo", rarity: "Uncommon", desc: "Patches of unpigmented skin." },
+    { name: "Sharp Teeth", rarity: "Uncommon", desc: "Slightly pointed canines." },
+    { name: "Double Pupil", rarity: "Uncommon", desc: "Two pupils in one eye." },
+    { name: "Extended Canines", rarity: "Uncommon", desc: "Fangs just long enough to be unsettling." },
+    { name: "Unusual Ear Shape", rarity: "Uncommon", desc: "Ears taper, curl, or angle unnaturally." },
+    { name: "Heat-Resistant Skin", rarity: "Uncommon", desc: "Skin rarely blisters or burns." },
+
+    // ===== RARE (distinctive, earns a nickname) =====
+    { name: "Webbed Fingers", rarity: "Rare", desc: "Skin between fingers, good for swimming." },
+    { name: "Cat Eyes", rarity: "Rare", desc: "Vertical slit pupils." },
+    { name: "Forked Tongue", rarity: "Rare", desc: "A split tongue capable of precise movement." },
+    { name: "Stone Nails", rarity: "Rare", desc: "Hard, grayish nails resistant to breakage." },
+    { name: "Thickened Bones", rarity: "Rare", desc: "Bones are unusually dense and heavy." },
+    { name: "Shadow Veins", rarity: "Rare", desc: "Dark veins visible beneath the skin." },
+
+    // ===== EPIC (unnatural, feared or revered) =====
+    { name: "Scales", rarity: "Epic", desc: "Patches of hardened, scaled skin." },
+    { name: "Bioluminescence", rarity: "Epic", desc: "Skin glows faintly in absolute darkness." },
+    { name: "Third Eye", rarity: "Epic", desc: "A dormant eye in the center of the forehead." },
+    { name: "Horns", rarity: "Epic", desc: "Small bony protrusions on the forehead." },
+
+
+    // ===== LEGENDARY (myth-tier, almost unique) =====
+    { name: "Seer", rarity: "Legendary", desc: "Innate ability to perceive beyond linear time and physical reality." }
+    
+];
 
     const GeneticEngine = {
-        // Flatten pool for easy picking
-        allGenes: [...GENE_POOL.physical, ...GENE_POOL.mental],
+        generate: function(houseName = null, forcedTrait = null) {
+            let look = {};
+            
+            // 1. Base Appearance (House Template or Random)
+            if (houseName && HOUSE_PHENOTYPES[houseName]) {
+                look = { ...HOUSE_PHENOTYPES[houseName] };
+            } else {
+                look.hair = COSMETICS.hair[Math.floor(Math.random() * COSMETICS.hair.length)];
+                look.eyes = COSMETICS.eyes[Math.floor(Math.random() * COSMETICS.eyes.length)];
+                look.skin = COSMETICS.skin[Math.floor(Math.random() * COSMETICS.skin.length)];
+            }
+            
+            // Height is always random/independent of House template
+            look.height = COSMETICS.height[Math.floor(Math.random() * COSMETICS.height.length)];
+
+            let mutations = [];
+            
+            // 2. Forced Trait Logic (House Generation)
+            if (forcedTrait) {
+                // If the trait is a mutation, force it
+                const mut = MUTATION_POOL.find(m => m.name === forcedTrait);
+                if (mut) {
+                    mutations.push(mut);
+                } else if (forcedTrait.includes("Hair")) {
+                    look.hair = forcedTrait.replace(" Hair", "");
+                } else if (forcedTrait.includes("Eyes")) {
+                    look.eyes = forcedTrait.replace(" Eyes", "");
+                }
+            }
+
+            // 3. Random Mutation (Only if no mutation exists - LIMIT 1)
+            if (mutations.length === 0 && Math.random() < 0.25) { 
+                const roll = Math.random();
+                let tier = 'Common';
+                if (roll > 0.99) tier = 'Legendary';
+                else if (roll > 0.96) tier = 'Epic';
+                else if (roll > 0.85) tier = 'Rare';
+                else if (roll > 0.60) tier = 'Uncommon';
+                
+                const pool = MUTATION_POOL.filter(m => m.rarity === tier);
+                if(pool.length > 0) {
+                    mutations.push(pool[Math.floor(Math.random() * pool.length)]);
+                }
+            }
+            
+            return { ...look, mutations };
+        },
         
-        // Map to quickly find mutex
-        mutexMap: {},
-
-        init: function() {
-            this.allGenes.forEach(g => this.mutexMap[g.name] = g);
-        },
-
-        // Generate genes based on parents (or mutation if null)
-        mix: function(father, mother, houseTrait = null) {
-            let genes = [];
-            const MAX_SLOTS = 5;
-
-            // 1. Bloodline Anchor
-            if (houseTrait) {
-                genes.push(houseTrait);
-            }
-
-            // 2. Inheritance
-            const parentGenes = [];
-            if (father && father.genes) parentGenes.push(...father.genes);
-            if (mother && mother.genes) parentGenes.push(...mother.genes);
-
-            // Shuffle parent genes to give fair chance
-            parentGenes.sort(() => Math.random() - 0.5);
-
-            for (let geneName of parentGenes) {
-                if (genes.length >= MAX_SLOTS) break;
-                if (Math.random() < 0.5) { // 50% inheritance chance
-                    if (this.isCompatible(genes, geneName)) {
-                        genes.push(geneName);
-                    }
+        // Inheritance Logic
+        mix: function(father, mother) {
+            const fGenes = father.appearance || this.generate();
+            const mGenes = mother.appearance || this.generate();
+            
+            const hair = Math.random() > 0.5 ? fGenes.hair : mGenes.hair;
+            const eyes = Math.random() > 0.5 ? fGenes.eyes : mGenes.eyes;
+            const skin = Math.random() > 0.5 ? fGenes.skin : mGenes.skin;
+            const height = Math.random() > 0.5 ? (fGenes.height || 'Average') : (mGenes.height || 'Average');
+            
+            let mutations = [];
+            
+            // 1. High Inheritance from Parents (80% chance)
+            const parentMutations = [...(fGenes.mutations || []), ...(mGenes.mutations || [])];
+            
+            // Filter unique mutations from parents
+            const uniqueParentMutations = [];
+            const seen = new Set();
+            for (const m of parentMutations) {
+                if(!seen.has(m.name)) {
+                    seen.add(m.name);
+                    uniqueParentMutations.push(m);
                 }
             }
 
-            // 3. Mutation (Fill empty slots)
-            while (genes.length < 2 && genes.length < MAX_SLOTS) { // Minimum 2 genes
-                 const randomGene = this.allGenes[Math.floor(Math.random() * this.allGenes.length)];
-                 if (this.isCompatible(genes, randomGene.name)) {
-                     genes.push(randomGene.name);
-                 }
-            }
-            
-            // Random chance for extra mutation even if full? No, respect max slots.
-            // But if we have space, small chance to add one more random trait
-            if (genes.length < MAX_SLOTS && Math.random() < 0.3) {
-                 const randomGene = this.allGenes[Math.floor(Math.random() * this.allGenes.length)];
-                 if (this.isCompatible(genes, randomGene.name)) {
-                     genes.push(randomGene.name);
-                 }
-            }
-
-            return genes;
-        },
-
-        isCompatible: function(currentGenes, newGeneName) {
-            if (currentGenes.includes(newGeneName)) return false; // No duplicates
-            
-            const newGeneData = this.mutexMap[newGeneName];
-            if (!newGeneData) return true; // Should not happen
-
-            // Check against existing genes for mutex conflict
-            for (let existingName of currentGenes) {
-                const existingData = this.mutexMap[existingName];
-                if (existingData && existingData.mutex === newGeneData.mutex) {
-                    return false; // Conflict found (e.g., Tall vs Short)
+            if (uniqueParentMutations.length > 0) {
+                // Pick one potential mutation to inherit
+                const candidate = uniqueParentMutations[Math.floor(Math.random() * uniqueParentMutations.length)];
+                
+                // 80% Chance to Inherit
+                if (Math.random() < 0.80) {
+                    mutations.push(candidate);
                 }
             }
-            return true;
-        },
-
-        generateRandom: function(count = 2) {
-            let genes = [];
-            let attempts = 0;
-            while(genes.length < count && attempts < 50) {
-                const g = this.allGenes[Math.floor(Math.random() * this.allGenes.length)];
-                if(this.isCompatible(genes, g.name)) genes.push(g.name);
-                attempts++;
+            
+            // 2. Random new mutation (5% chance) ONLY if no mutation yet (Limit 1)
+            if(mutations.length === 0 && Math.random() < 0.05) {
+                 const newGen = this.generate();
+                 if(newGen.mutations.length > 0) {
+                     mutations.push(newGen.mutations[0]);
+                 }
             }
-            return genes;
+
+            return { hair, eyes, skin, height, mutations };
         }
     };
-    GeneticEngine.init();
 
 
     // 1. D&D 5e MECHANICS
@@ -1010,7 +1039,8 @@
         age: 0,
         year: 1200,
         stats: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
-        genes: [], // GENETIC TRAITS
+        appearance: { hair: "Brown", eyes: "Brown", skin: "Fair", height: "Average", mutations: [] }, // NEW: Appearance Object
+        genes: [], // Legacy/Unused or purely strictly internal ID tracking if needed, but appearance.mutations is main
         reputation: { renown: 0, honor: 0, piety: 0, infamy: 0 },
         gold: 0,
         health: 10,
@@ -1063,6 +1093,16 @@
                 { title: "Field Hand", wage: 3, stressMod: 2 },
                 { title: "Homesteader", wage: 10, stressMod: 3 },
                 { title: "Land Owner", wage: 25, stressMod: 4 }
+            ]
+        },
+        artist: {
+            name: "Artist",
+            req: { age: 12, stat: 'cha', val: 12 },
+            dc: 12, stat: 'cha',
+            ranks: [
+                { title: "Apprentice Painter", wage: 5, stressMod: 2 },
+                { title: "Portraitist", wage: 20, stressMod: 3 },
+                { title: "Royal Court Painter", wage: 60, stressMod: 5 }
             ]
         },
         blacksmith: {
@@ -1174,6 +1214,26 @@
                 { title: "Foot Soldier", wage: 10, stressMod: 5 },
                 { title: "Veteran Sergeant", wage: 25, stressMod: 6 },
                 { title: "Captain", wage: 60, stressMod: 8 }
+            ]
+        },
+        knight: {
+            name: "Knight",
+            req: { age: 16, stat: 'str', val: 12, class: 'House' },
+            dc: 14, stat: 'str',
+            ranks: [
+                { title: "Household Guard", wage: 15, stressMod: 3 },
+                { title: "Knight-Errant", wage: 30, stressMod: 5 },
+                { title: "Lord Commander", wage: 80, stressMod: 7 }
+            ]
+        },
+        diplomat: {
+            name: "Diplomat",
+            req: { age: 16, stat: 'cha', val: 12, class: 'House' },
+            dc: 13, stat: 'cha',
+            ranks: [
+                { title: "Envoy", wage: 20, stressMod: 2 },
+                { title: "Ambassador", wage: 45, stressMod: 4 },
+                { title: "High Chancellor", wage: 120, stressMod: 8 }
             ]
         },
         scholar: {
@@ -1644,7 +1704,7 @@
         const motherAge = 18 + Math.floor(Math.random() * 21);
         const gpAge = Math.max(fatherAge, motherAge) + 20 + Math.floor(Math.random() * 21);
         
-        let houseTrait = null;
+        let houseNameForGenes = null;
         
         if (state.flags.startOrigin === 'Peasant') {
             state.socialClass = "Peasant";
@@ -1661,7 +1721,7 @@
                 const sibAge = Math.max(1, Math.floor(Math.random() * 15));
                 const sib = addRelationship(getRandomName(gen), "Sibling", 50, gen, "Peasant", locIndex, true, true, sibAge);
                 // Siblings inherit from parents
-                sib.genes = GeneticEngine.mix(dad, mom);
+                sib.appearance = GeneticEngine.mix(dad, mom);
             }
             return;
         }
@@ -1678,8 +1738,8 @@
         const names = HOUSE_NAMES[tierKey];
         const houseName = names[Math.floor(Math.random() * names.length)];
         
-        // HOUSE TRAIT GENERATION
-        houseTrait = GeneticEngine.allGenes[Math.floor(Math.random() * GeneticEngine.allGenes.length)].name;
+        // Set house name for gene generation to force phenotype
+        houseNameForGenes = houseName;
 
         let houseDetails = {};
         if (tierKey !== 'lesser' && GREATER_HOUSES_INFO[houseName]) {
@@ -1703,6 +1763,21 @@
         if (rankRoll > 0.95) rank = "Heir";
         else if (rankRoll > 0.70) rank = "Younger Child";
 
+        // NEW: Select House Trait from Phenotypes or Mutations
+        let potentialTraits = [];
+        if (HOUSE_PHENOTYPES[houseName]) {
+            potentialTraits.push(`${HOUSE_PHENOTYPES[houseName].hair} Hair`);
+            potentialTraits.push(`${HOUSE_PHENOTYPES[houseName].eyes} Eyes`);
+        } else {
+            // Random cosmetic feature for random houses
+            potentialTraits.push(`${COSMETICS.hair[Math.floor(Math.random() * COSMETICS.hair.length)]} Hair`);
+            potentialTraits.push(`${COSMETICS.eyes[Math.floor(Math.random() * COSMETICS.eyes.length)]} Eyes`);
+        }
+        // Add mutations to the pool
+        potentialTraits = potentialTraits.concat(MUTATION_POOL.filter(m => m.rarity !== 'Common').map(m => m.name));
+        
+        const houseTrait = potentialTraits[Math.floor(Math.random() * potentialTraits.length)];
+
         state.house = {
             tier: tierData.name,
             name: houseName,
@@ -1713,25 +1788,30 @@
             holding: houseDetails.holding,
             holdingDesc: houseDetails.holdingDesc,
             treasury: tierData.startGold,
-            trait: houseTrait, // STORE HOUSE TRAIT
+            trait: houseTrait,
             members: []
         };
         
         state.class = `${rank} of House ${houseName}`;
 
         // -- EXTENDED FAMILY GENERATION --
+        // FORCE HOUSE TRAIT ON FOUNDER (Grandfather)
+        
         const grandpa = addRelationship(getRandomName('Male'), "Grandfather", 60, "Male", "Lord Emeritus", locIndex, true, true, gpAge + 2);
-        grandpa.genes = GeneticEngine.mix(null, null, houseTrait); // Founder genes
+        grandpa.appearance = GeneticEngine.generate(houseNameForGenes, houseTrait); 
         addHouseMember(grandpa.name, 'Male', 'Lord Emeritus', locIndex, grandpa.id);
 
         const grandma = addRelationship(getRandomName('Female'), "Grandmother", 60, "Female", "Dowager Lady", locIndex, false, true, gpAge);
+        // Grandma marries in, usually random
+        grandma.appearance = GeneticEngine.generate(); 
         addHouseMember(grandma.name, 'Female', 'Dowager Lady', locIndex, grandma.id);
 
         const father = addRelationship(getRandomName('Male'), "Father", 80, "Male", "Lord", locIndex, true, true, fatherAge);
-        father.genes = GeneticEngine.mix(grandpa, grandma, houseTrait);
+        father.appearance = GeneticEngine.mix(grandpa, grandma); // Inherits (High chance due to engine update)
         addHouseMember(father.name, 'Male', 'Lord', locIndex, father.id);
 
         const mother = addRelationship(getRandomName('Female'), "Mother", 80, "Female", "Lady", locIndex, false, true, motherAge);
+        mother.appearance = GeneticEngine.generate(); // Married in
         addHouseMember(mother.name, 'Female', 'Lady', locIndex, mother.id);
 
         // UNCLE/AUNT & COUSIN GENERATION
@@ -1742,7 +1822,7 @@
             const uaRel = isUncle ? 'Uncle' : 'Aunt';
             const uaAge = fatherAge + Math.floor(Math.random() * 10) - 5;
             const ua = addRelationship(getRandomName(uaGen), uaRel, 50, uaGen, "House Member", locIndex, true, true, uaAge);
-            ua.genes = GeneticEngine.mix(grandpa, grandma, houseTrait); // Siblings of father
+            ua.appearance = GeneticEngine.mix(grandpa, grandma); // Siblings of father
             addHouseMember(ua.name, ua.gender, "House Member", locIndex, ua.id);
 
             // Generate Cousins for this Uncle/Aunt
@@ -1752,7 +1832,8 @@
                     const cGen = Math.random() > 0.5 ? 'Male' : 'Female';
                     const cAge = Math.max(1, uaAge - (18 + Math.floor(Math.random()*10)));
                     const cousin = addRelationship(getRandomName(cGen), "Cousin", 40, cGen, "House Member", locIndex, true, true, cAge);
-                    cousin.genes = GeneticEngine.mix(ua, null, houseTrait); // Inherit from Uncle/Aunt
+                    const spouseDummy = { appearance: GeneticEngine.generate() };
+                    cousin.appearance = GeneticEngine.mix(ua, spouseDummy); // Inherit from Uncle/Aunt
                     addHouseMember(cousin.name, cGen, "House Member", locIndex, cousin.id);
                 }
             }
@@ -1766,7 +1847,7 @@
             const sibGender = Math.random() > 0.5 ? 'Male' : 'Female';
             const sibAge = Math.floor(Math.random() * 10) + 1;
             const sib = addRelationship(getRandomName(sibGender), "Sibling", 80, sibGender, "House Member", state.location, true, true, sibAge);
-            sib.genes = GeneticEngine.mix(father, mother, houseTrait); // Inherit from parents
+            sib.appearance = GeneticEngine.mix(father, mother); // Inherit from parents
             addHouseMember(sib.name, sib.gender, sib.rank, sib.locationIndex, sib.id);
         }
     }
@@ -1832,7 +1913,9 @@
              holdingDesc: "A modest fortification recently acquired."
         };
 
-        const houseTrait = GeneticEngine.allGenes[Math.floor(Math.random() * GeneticEngine.allGenes.length)].name;
+        // NEW: Select House Trait from Mutations for player created houses
+        const validMutations = MUTATION_POOL.filter(m => m.rarity !== 'Common');
+        const houseTrait = validMutations[Math.floor(Math.random() * validMutations.length)].name;
 
         state.house = {
             tier: tierData.name,
@@ -1873,7 +1956,19 @@
 
     function addRelationship(name, relation, friendship, gender, rank, locIndex = null, isBlood = false, isFamily = false, specificAge = null) {
         const location = locIndex !== null ? locIndex : Math.floor(Math.random() * CITIES.length);
-        const careerKeys = Object.keys(CAREERS);
+        
+        // NEW: Job Selection Logic based on Rank/Class
+        let careerKeys = Object.keys(CAREERS);
+        const isNoble = rank.includes("Lord") || rank.includes("Lady") || rank.includes("Sir") || rank.includes("Dame") || rank === "House Member" || rank === "Heir";
+        
+        if (isNoble) {
+            // Nobles get noble jobs
+            careerKeys = ['knight', 'diplomat', 'merchant', 'scholar', 'clergy', 'military', 'alchemist', 'artist'];
+        } else {
+            // Peasants generally don't get noble exclusive jobs (though Merchant/Military/Clergy overlap)
+            careerKeys = careerKeys.filter(k => k !== 'knight' && k !== 'diplomat' && k !== 'squire');
+        }
+
         const rndJobKey = careerKeys[Math.floor(Math.random() * careerKeys.length)];
         const rndJob = CAREERS[rndJobKey].name;
         
@@ -1888,8 +1983,8 @@
 
         const hpVal = 10 + Math.floor((rndStats.con - 10) / 2);
 
-        // INITIAL GENES (Random for strangers, will be overwritten by caller if inheriting)
-        const genes = GeneticEngine.generateRandom(2 + Math.floor(Math.random()*3));
+        // NEW: Generate Standard Appearance
+        const appearance = GeneticEngine.generate();
 
         const person = {
             id: Math.random().toString(36).substr(2, 9),
@@ -1906,7 +2001,8 @@
             isFamily: isFamily,
             alignment: ALIGNMENTS[Math.floor(Math.random() * ALIGNMENTS.length)],
             stats: rndStats,
-            genes: genes, // Assign genes
+            appearance: appearance, // Store appearance
+            genes: [], // Legacy
             traits: [] // Existing acquired traits
         };
         state.relationships.push(person);
@@ -1935,28 +2031,16 @@
         
         generateHouse(); 
 
-        // --- GENETIC INHERITANCE FOR PLAYER ---
+        // --- NEW: GENETIC INHERITANCE FOR PLAYER ---
         const father = getParent('Father');
         const mother = getParent('Mother');
-        const houseTrait = state.house ? state.house.trait : null;
-
-        // Apply genes
-        state.genes = GeneticEngine.mix(father, mother, houseTrait);
         
-        // Apply Gene Modifiers to Stats
-        state.genes.forEach(g => {
-             if(g === 'Towering') state.stats.str += 1;
-             if(g === 'Runt') state.stats.str -= 1;
-             if(g === 'Herculean') state.stats.con += 2;
-             if(g === 'Frail') state.stats.con -= 2;
-             if(g === 'Genius') state.stats.int += 2;
-             if(g === 'Dullard') state.stats.int -= 2;
-             if(g === 'Magnetic') state.stats.cha += 2;
-             if(g === 'Repulsive') state.stats.cha -= 2;
-             if(g === 'Eagle-Eyed') state.stats.dex += 1;
-             if(g === 'Myopic') state.stats.dex -= 1;
-        });
-
+        // Apply genes
+        state.appearance = GeneticEngine.mix(father, mother);
+        
+        // STATS NO LONGER MODIFIED BY GENES
+        // Base stats are purely from the random roll/standard array
+        
         const conMod = getModifier(state.stats.con);
         const wisMod = getModifier(state.stats.wis);
         const chaMod = getModifier(state.stats.cha);
@@ -1979,7 +2063,7 @@
         
         log(`<strong>Year ${state.year}:</strong> ${state.name} is born in <strong>${CITIES[state.location].name}</strong>.`);
         if (state.socialClass === 'House') {
-            log(`You are born a ${state.class}. House Trait: <strong style="color:var(--royal)">${state.house.trait}</strong>.`);
+            log(`You are born a ${state.class}. House Look: <strong style="color:var(--royal)">${state.appearance.hair} Hair, ${state.appearance.eyes} Eyes</strong>.`);
         } else {
             log(`You are born a free peasant.`);
         }
@@ -2369,11 +2453,9 @@
                     
                     // INHERIT GENES (From this parent + Random Spouse)
                     // We treat the spouse as having random genes
-                    const spouseGenes = GeneticEngine.generateRandom(2);
-                    const spouseObj = { genes: spouseGenes };
+                    const spouseDummy = { appearance: GeneticEngine.generate() };
                     
-                    let houseTrait = state.house ? state.house.trait : null;
-                    child.genes = GeneticEngine.mix(r, spouseObj, houseTrait);
+                    child.appearance = GeneticEngine.mix(r, spouseDummy);
 
                     // Add to house members if applicable
                     if (state.house) {
@@ -2724,16 +2806,13 @@
 
         const hpDisplay = r.health === "Deceased" ? "Deceased" : `${r.hp}/${r.maxHp}`;
         
-        let genesHtml = '<span class="italic text-xs opacity-50">None</span>';
-        if (r.genes && r.genes.length > 0) {
-            genesHtml = r.genes.map(g => {
-                const data = GeneticEngine.mutexMap[g];
-                const typeClass = data ? (data.type === 'good' ? 'gene-good' : 'gene-bad') : 'gene-common';
-                // Check if it's house trait
-                const isHouse = state.house && state.house.trait === g && r.isBlood;
-                const finalClass = isHouse ? 'gene-house' : typeClass;
-                
-                return `<span class="gene-tag ${finalClass}">${g}</span>`;
+        // NEW: RENDER APPEARANCE AND MUTATIONS
+        const ap = r.appearance || { hair: "Unknown", eyes: "Unknown", skin: "Unknown", mutations: [] };
+        
+        let mutationsHtml = '<span class="italic text-xs opacity-50">None</span>';
+        if (ap.mutations && ap.mutations.length > 0) {
+            mutationsHtml = ap.mutations.map(m => {
+                return `<span class="gene-tag mut-${m.rarity.toLowerCase()}" title="${m.desc}">${m.name}</span>`;
             }).join('');
         }
 
@@ -2757,8 +2836,10 @@
             </div>
 
             <div class="mb-4">
-                <div class="text-xs font-bold uppercase mb-1">Genetics</div>
-                <div>${genesHtml}</div>
+                <div class="text-xs font-bold uppercase mb-1">Appearance</div>
+                <div class="text-sm italic mb-2">${ap.height}, ${ap.hair} Hair, ${ap.eyes} Eyes, ${ap.skin} Skin</div>
+                <div class="text-xs font-bold uppercase mb-1">Mutations</div>
+                <div>${mutationsHtml}</div>
             </div>
 
             <div class="mb-4 space-y-2">
@@ -3217,6 +3298,7 @@
         // --- UNIFIED TREE RENDERING LOGIC ---
         const renderNode = (p) => {
             const isDead = p.health === 'Deceased' ? 'dead' : '';
+            // Blood badge logic is good, keep it
             const bloodBadge = p.isBlood ? `<span class="tree-blood">Blood</span>` : (p.isFamily ? `<span class="tree-married">In-Law</span>` : '');
             
             let extraIcon = '';
@@ -3225,6 +3307,9 @@
             }
             if (p.health === "Deceased") extraIcon += `<div class="tree-grave">💀</div>`;
 
+            // Note: Removed gene badges from tree nodes to keep them clean, 
+            // as new mutations are too detailed for the tiny tree node.
+            
             return `
                 <div class="tree-member ${isDead}" onclick="openNPC('${p.id}')">
                     ${bloodBadge}
@@ -3678,18 +3763,17 @@
         document.getElementById('rep-piety').innerText = state.reputation.piety;
         document.getElementById('rep-infamy').innerText = state.reputation.infamy;
         
-        // RENDER PLAYER GENES
+        // RENDER PLAYER GENES & APPEARANCE (NEW)
+        const ap = state.appearance;
+        document.getElementById('appearance-display').innerText = `${ap.height}, ${ap.hair} Hair, ${ap.eyes} Eyes, ${ap.skin} Skin`;
+
         const geneList = document.getElementById('gene-list');
-        if (state.genes.length > 0) {
-            geneList.innerHTML = state.genes.map(g => {
-                const data = GeneticEngine.mutexMap[g];
-                const typeClass = data ? (data.type === 'good' ? 'gene-good' : 'gene-bad') : 'gene-common';
-                const isHouse = state.house && state.house.trait === g;
-                const finalClass = isHouse ? 'gene-house' : typeClass;
-                return `<span class="gene-tag ${finalClass}">${g}</span>`;
+        if (ap.mutations && ap.mutations.length > 0) {
+            geneList.innerHTML = ap.mutations.map(m => {
+                return `<span class="gene-tag mut-${m.rarity.toLowerCase()}" title="${m.desc}">${m.name}</span>`;
             }).join('');
         } else {
-            geneList.innerHTML = '<span class="italic opacity-50">Average build, average mind.</span>';
+            geneList.innerHTML = '<span class="italic opacity-50">No distinctive mutations.</span>';
         }
 
         renderHouseTab();
