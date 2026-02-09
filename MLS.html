@@ -2606,9 +2606,14 @@
         document.querySelector('.main-layout').style.opacity = 1;
         document.getElementById('display-name').innerText = state.name;
         
-        log(`<strong>Year ${state.year}:</strong> ${state.name} is born in <strong>${CITIES[state.location].name}</strong>.`);
+        // Format appearance string
+        const app = state.appearance;
+        const mutsReadable = app.mutations.length > 0 ? ` You were born with a mutation(s): ${app.mutations.map(m => m.name).join(', ')}.` : '';
+
+        log(`<strong>Year ${state.year}:</strong> You are born in <strong>${CITIES[state.location].name}</strong>. You are of ${app.height} height, with ${app.hair} hair, ${app.eyes} eyes, and ${app.skin} skin.${mutsReadable}`);
+        
         if (state.socialClass === 'House') {
-            log(`You are born a ${state.class}. House Look: <strong style="color:var(--royal)">${state.appearance.hair} Hair, ${state.appearance.eyes} Eyes</strong>.`);
+            log(`You are born a ${state.class}. House Bloodline Trait: <strong style="color:var(--royal)">${state.house.trait}</strong>.`);
         } else {
             log(`You are born a free commoner.`);
         }
