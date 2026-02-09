@@ -3274,12 +3274,12 @@
                     desc: desc,
                     type: type,
                     level: 1,
-                    locationIndex: state.location, 
+                    locationIndex: rulerNPC.locationIndex, // Fixed: Uses Ruler's location, not Player's
                     population: Math.floor(tmpl.basePop * 0.5),
                     capacity: tmpl.basePop + tmpl.capPerLvl,
                     defense: tmpl.baseDef + tmpl.defPerLvl
                 });
-                log(`<strong style="color:var(--royal)">HOUSE:</strong> ${ruler.name} commissioned the construction of <strong>${newName}</strong>.`);
+                log(`<strong style="color:var(--royal)">HOUSE:</strong> ${ruler.name} commissioned the construction of <strong>${newName}</strong> in ${CITIES[rulerNPC.locationIndex].name}.`);
                 return;
             }
         }
@@ -4306,6 +4306,13 @@
         }
     }
 
+    function setHouseTrait(traitName) {
+        if(state.health <= 0) return;
+        state.house.trait = traitName;
+        log(`<strong style="color:var(--gold)">HOUSE DECREE:</strong> You have declared <strong>${traitName}</strong> as the new Bloodline Trait of House ${state.house.name}.`);
+        updateUI();
+    }
+
     function purchaseHolding(type) {
         if(state.health <= 0) return;
         const tmpl = HOLDING_TEMPLATES[type];
@@ -4658,6 +4665,25 @@
             const mut = MUTATION_POOL.find(m => m.name === state.house.trait);
             const rarity = mut ? mut.rarity.toLowerCase() : 'common';
             houseTraitHtml = `<div class="mt-2 text-sm">Bloodline Trait: <span class="gene-tag mut-${rarity}">${state.house.trait}</span></div>`;
+        }
+
+        // NEW: Allow Lord to set Bloodline Trait from own traits
+        if (state.socialClass === 'House' && (state.class.includes("Lord") || state.class.includes("Lady"))) {
+             const available = [];
+             if (state.appearance.mutations) available.push(...state.appearance.mutations.map(m => m.name));
+             if (state.traits) available.push(...state.traits);
+             
+             // Filter out current trait
+             const options = available.filter(t => t !== state.house.trait);
+
+             if (options.length > 0) {
+                 houseTraitHtml += `<div class="mt-2 pt-2 border-t border-black/10">
+                    <div class="text-xs font-bold mb-1 opacity-70">Consecrate Bloodline Trait</div>
+                    <div class="flex flex-wrap justify-center gap-1">
+                        ${options.map(t => `<button onclick="setHouseTrait('${t}')" class="px-2 py-0.5 text-[10px] border border-leather rounded bg-white/40 hover:bg-amber-700 hover:text-white transition-colors">${t}</button>`).join('')}
+                    </div>
+                 </div>`;
+             }
         }
 
         let headerTitle = `House ${h.name}`;
