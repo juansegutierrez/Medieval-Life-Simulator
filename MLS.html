@@ -612,6 +612,15 @@
         </div>
     </div>
 
+    <!-- NEW: Fate Lock Modal -->
+    <div id="lock-modal" class="modal-overlay hidden">
+        <div class="modal-box border-amber-900">
+            <h2 class="text-3xl font-medieval mb-2 text-amber-900">Fate Awaits</h2>
+            <p class="mb-6 italic">You must resolve the current event in the Chronicle before attending to other matters.</p>
+            <button onclick="document.getElementById('lock-modal').classList.add('hidden')" class="choice-btn text-center justify-center">Return to Chronicle</button>
+        </div>
+    </div>
+
     <!-- Shop Modal -->
     <div id="shop-modal" class="modal-overlay hidden">
         <div class="modal-box text-left relative">
@@ -621,6 +630,21 @@
                 <!-- Keeper injected here -->
             </div>
             <div id="shop-content" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <!-- NEW: Transaction Modal -->
+    <div id="trans-modal" class="modal-overlay hidden">
+        <div class="modal-box border-amber-900">
+            <h2 id="trans-title" class="text-3xl font-medieval mb-2 text-amber-900">Treasury</h2>
+            <p id="trans-text" class="mb-4 italic">How much gold?</p>
+            <div class="flex justify-center mb-4">
+                <input type="number" id="trans-input" class="w-1/2 p-2 border-2 border-[#5d4037] text-center font-medieval text-xl bg-[#fdf6e3] rounded" placeholder="0" min="1">
+            </div>
+            <div class="flex justify-center gap-4">
+                <button onclick="confirmTransaction()" class="choice-btn w-32 justify-center bg-green-900 text-white">Confirm</button>
+                <button onclick="document.getElementById('trans-modal').classList.add('hidden')" class="choice-btn w-32 justify-center">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -721,12 +745,12 @@
         <div class="content-area">
             <!-- D&D Stat Block -->
             <div class="stats-grid">
-                <div class="stat-box"><span class="stat-label">STR</span><span id="stat-str" class="stat-val">10</span><span id="mod-str" class="stat-mod">+0</span></div>
-                <div class="stat-box"><span class="stat-label">DEX</span><span id="stat-dex" class="stat-val">10</span><span id="mod-dex" class="stat-mod">+0</span></div>
-                <div class="stat-box"><span class="stat-label">CON</span><span id="stat-con" class="stat-val">10</span><span id="mod-con" class="stat-mod">+0</span></div>
-                <div class="stat-box"><span class="stat-label">INT</span><span id="stat-int" class="stat-val">10</span><span id="mod-int" class="stat-mod">+0</span></div>
-                <div class="stat-box"><span class="stat-label">WIS</span><span id="stat-wis" class="stat-val">10</span><span id="mod-wis" class="stat-mod">+0</span></div>
-                <div class="stat-box"><span class="stat-label">CHA</span><span id="stat-cha" class="stat-val">10</span><span id="mod-cha" class="stat-mod">+0</span></div>
+                <div class="stat-box"><span class="stat-label">STRENGTH</span><span id="stat-str" class="stat-val">10</span><span id="mod-str" class="stat-mod">+0</span></div>
+                <div class="stat-box"><span class="stat-label">DEXTERITY</span><span id="stat-dex" class="stat-val">10</span><span id="mod-dex" class="stat-mod">+0</span></div>
+                <div class="stat-box"><span class="stat-label">CONSTITUTION</span><span id="stat-con" class="stat-val">10</span><span id="mod-con" class="stat-mod">+0</span></div>
+                <div class="stat-box"><span class="stat-label">INTELLIGENCE</span><span id="stat-int" class="stat-val">10</span><span id="mod-int" class="stat-mod">+0</span></div>
+                <div class="stat-box"><span class="stat-label">WISDOM</span><span id="stat-wis" class="stat-val">10</span><span id="mod-wis" class="stat-mod">+0</span></div>
+                <div class="stat-box"><span class="stat-label">CHARISMA</span><span id="stat-cha" class="stat-val">10</span><span id="mod-cha" class="stat-mod">+0</span></div>
             </div>
 
             <!-- Tab: Log (Main Gameplay) -->
@@ -778,6 +802,12 @@
 
                         <h3 class="font-bold mb-2 border-t border-black/10 pt-2">Traits & Feats</h3>
                         <div id="traits-list" class="text-sm space-y-1 italic">None yet...</div>
+
+                        <!-- NEW: HONORIFICS SECTION -->
+                        <h3 class="font-bold mb-2 border-t border-black/10 pt-2">Titles & Honorifics</h3>
+                        <div id="honorific-list" class="flex flex-wrap gap-2 text-sm">
+                            <span class="italic opacity-50">No titles yet.</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1084,6 +1114,9 @@
         market: [], // NEW: Stores current year's shops
         eventQueue: [], // NEW: Stores events for the current year
         recentEvents: [], // NEW: Duplicate Ward memory
+        nextCanonAge: null, // NEW: Destiny Tracker
+        honorifics: [], // ADDED: List of earned titles
+        primaryHonorific: null, // ADDED: Current display title
         flags: {
             literate: false,
             criminal: false,
@@ -1093,7 +1126,8 @@
             travelAllowed: false,
             travelTarget: null,
             adult: false,
-            traveledThisYear: false
+            traveledThisYear: false,
+            lockedInChronicle: false // NEW: Lock flag
         }
     };
 
@@ -1349,6 +1383,31 @@
     
     const HOLDING_PREFIXES = ["The Keep of", "Fortress of", "Manor of", "Hall of"];
     
+    // NEW: DEFINED HOLDING TEMPLATES
+    const HOLDING_TEMPLATES = {
+        'Farm': { 
+            baseCost: 500, 
+            basePop: 50, capPerLvl: 100, 
+            baseDef: 0, defPerLvl: 1,
+            descriptors: ["Fertile Valley", "Golden Fields", "River Basin", "Orchards", "Grazing Lands", "Terraced Hills"],
+            descText: ["Rich soil tilled by many hands.", "A sprawling network of irrigation ditches.", "Fields of wheat waving in the wind.", "Orchards heavy with seasonal fruit."]
+        },
+        'Manor': { 
+            baseCost: 2000, 
+            basePop: 150, capPerLvl: 200, 
+            baseDef: 5, defPerLvl: 5,
+            descriptors: ["Stone Hall", "Timber Estate", "Fortified Villa", "Hilltop Manor", "Lakeside Estate"],
+            descText: ["A sturdy stone house overseeing the lands.", "A grand hall surrounded by vineyards.", "An administrative hub for the region.", "A fortified estate with a tall watchtower."]
+        },
+        'Keep': { 
+            baseCost: 10000, 
+            basePop: 300, capPerLvl: 500, 
+            baseDef: 20, defPerLvl: 15,
+            descriptors: ["Iron Citadel", "Blackstone Fort", "High Tower", "Storm Bastion", "Dragon's Tooth"],
+            descText: ["Thick walls that have withstood sieges.", "A military fortress guarding the pass.", "Towers that pierce the sky, manned by archers.", "A citadel surrounded by a treacherous moat."]
+        }
+    };
+
     const CITIES = [
         { name: "Chep (Capital)", ruler: "House Chep", desc: "The royal seat of power, founded by Hero Ren.", x: 50, y: 50 },
         { name: "Frosthold", ruler: "House Grimward", desc: "A fortress of ice and stone in the far north.", x: 50, y: 15 },
@@ -1765,7 +1824,97 @@
             ])
         ],
         JobInterview: [], // Populated dynamically,
-        Canon: [], // Populated later or empty
+        Canon: [
+            createEvent('canon_goblin', 'The Goblin Raid', 'Screeches echo in the night. Goblins are raiding the granary!', [
+                { text: 'Slay them all (STR)', type: 'check', stat: 'str', dc: 14, success: 'Green blood soaks the earth. You stand victorious.', fail: 'They swarm you. (-HP)', onSuccess: () => { addHonorific('Goblin-Slayer'); modRep('renown', 20); state.gold+=50; }, onFail: () => { takeDamage(8); modRep('infamy', 2); } },
+                { text: 'Set Trap (INT)', type: 'check', stat: 'int', dc: 14, success: 'They blow themselves up!', fail: 'The trap fails.', onSuccess: () => { addHonorific('The Cunning'); state.gold+=50; }, onFail: () => takeDamage(5) },
+                { text: 'Hide', type: 'flavor', effect: () => { log("You survived, but the village suffered."); modRep('honor', -5); } }
+            ]),
+
+            createEvent('canon_troll', 'The Bridge Troll', 'A massive troll demands a toll to cross the river.', [
+                { text: 'Fight (STR)', type: 'check', stat: 'str', dc: 16, success: 'You chopped off its head!', fail: 'It smashed you.', onSuccess: () => { addHonorific('Trollsbane'); modRep('renown', 30); }, onFail: () => takeDamage(12) },
+                { text: 'Persuade (CHA)', type: 'check', stat: 'cha', dc: 15, success: 'You tricked it into letting you pass.', fail: 'It eats you.', onSuccess: () => { addHonorific('Silver-Tongue'); }, onFail: () => takeDamage(15) },
+                { text: 'Pay Toll (50g)', type: 'flavor', req: s => s.gold >= 50, effect: () => { state.gold -= 50; log("Costly, but safe."); } }
+            ]),
+
+            createEvent('canon_wizard', 'The Dark Ritual', 'An evil wizard is abducting villagers for a sacrifice.', [
+                { text: 'Disrupt Ritual (INT)', type: 'check', stat: 'int', dc: 16, success: 'You counterspell the magic!', fail: 'The magic backfires.', onSuccess: () => { addHonorific('Mage-Breaker'); modRep('honor', 20); }, onFail: () => { modSanity(-3); } },
+                { text: 'Charge! (STR)', type: 'check', stat: 'str', dc: 15, success: 'You tackle the wizard mid-chant.', fail: 'You are blasted by lightning.', onSuccess: () => { addHonorific('The Brave'); modRep('renown', 20); }, onFail: () => takeDamage(10) },
+                { text: 'Flee', type: 'flavor', effect: () => { log("You ran, leaving them to their fate."); modRep('infamy', 10); } }
+            ]),
+
+            createEvent('canon_festival', 'The Grand Festival', 'The King declares a month of celebration!', [
+                { text: 'Perform (CHA)', type: 'check', stat: 'cha', dc: 15, success: 'You become a legend of the tavern!', fail: 'You trip on stage.', onSuccess: () => { addHonorific('Party Legend'); modRep('renown', 15); }, onFail: () => modRep('infamy', 2) },
+                { text: 'Feast (CON)', type: 'check', stat: 'con', dc: 14, success: 'You ate an entire boar.', fail: 'Food poisoning.', onSuccess: () => { addHonorific('Iron-Stomach'); state.health+=5; }, onFail: () => takeDamage(3) },
+                { text: 'Enjoy', type: 'flavor', effect: () => { modSanity(5); log("A wonderful time."); } }
+            ]),
+
+            createEvent('canon_bear', 'The Great Bear', 'A bear the size of a wagon attacks the camp.', [
+                { text: 'Wrestle (STR)', type: 'check', stat: 'str', dc: 18, success: 'You pinned the bear!', fail: 'It mauled you.', onSuccess: () => { addHonorific('Bear-Wrestler'); modRep('renown', 40); }, onFail: () => takeDamage(15) },
+                { text: 'Shoot (DEX)', type: 'check', stat: 'dex', dc: 14, success: 'Clean shot between the eyes.', fail: 'You missed.', onSuccess: () => { addHonorific('Deadeye'); state.gold+=20; }, onFail: () => takeDamage(10) },
+                { text: 'Play Dead', type: 'check', stat: 'con', dc: 12, success: 'It sniffed you and left.', fail: 'It took a bite.', onSuccess: () => { addHonorific('The Survivor'); }, onFail: () => takeDamage(8) }
+            ]),
+
+            createEvent('canon_fey', 'The Sprite\'s Prank', 'A fey creature turns your skin blue.', [
+                { text: 'Outsmart (WIS)', type: 'check', stat: 'wis', dc: 15, success: 'You trick it into reversing the spell.', fail: 'It turns your hair green too.', onSuccess: () => { addHonorific('Fey-Touched'); state.stats.int++; }, onFail: () => { addHonorific('The Colorful'); modRep('infamy', 5); } },
+                { text: 'Beg (CHA)', type: 'check', stat: 'cha', dc: 14, success: 'It laughs and fixes you.', fail: 'It laughs and leaves.', onSuccess: () => {}, onFail: () => addTrait('Blue Skin') },
+                { text: 'Endure', type: 'flavor', effect: () => { log("It wears off in a year."); } }
+            ]),
+
+            createEvent('canon_bandit', 'The Bandit King', 'The notorious Bandit King challenges you to a duel.', [
+                { text: 'Accept Duel (STR)', type: 'check', stat: 'str', dc: 16, success: 'You ended his reign of terror.', fail: 'He thrashed you.', onSuccess: () => { addHonorific('Justicar'); state.gold+=100; modRep('honor', 30); }, onFail: () => { takeDamage(10); state.gold=0; } },
+                { text: 'Cheat (DEX)', type: 'check', stat: 'dex', dc: 15, success: 'Pocket sand!', fail: 'He saw it coming.', onSuccess: () => { addHonorific('The Ruthless'); state.gold+=100; }, onFail: () => takeDamage(15) },
+                { text: 'Pay Tribute (100g)', type: 'flavor', req: s => s.gold >= 100, effect: () => { state.gold -= 100; log("You bought your life."); } }
+            ]),
+
+            createEvent('canon_plague', 'The Plague Ship', 'A ship arrives carrying the Black Death. Do you help?', [
+                { text: 'Heal Sick (WIS)', type: 'check', stat: 'wis', dc: 16, success: 'You saved the crew!', fail: 'You caught the plague.', onSuccess: () => { addHonorific('The Saint'); modRep('piety', 50); }, onFail: () => { takeDamage(10); addTrait('Scarred Lungs'); } },
+                { text: 'Burn Ship', type: 'flavor', effect: () => { log("Cruel, but necessary."); addHonorific('The Purifier'); modRep('infamy', 20); } },
+                { text: 'Flee', type: 'flavor', effect: () => { log("You ran to the hills."); } }
+            ]),
+
+            createEvent('canon_meteor', 'The Starfall', 'A meteorite crashes nearby, glowing with strange light.', [
+                { text: 'Harvest (STR)', type: 'check', stat: 'str', dc: 15, success: 'You mined stymetal ore.', fail: 'It burned you.', onSuccess: () => { addHonorific('Star-Caller'); addItem('Star Metal', 'Legendary', 'Ore from the heavens.', 500); }, onFail: () => takeDamage(5) },
+                { text: 'Study (INT)', type: 'check', stat: 'int', dc: 16, success: 'Cosmic secrets revealed.', fail: 'Mind overload.', onSuccess: () => { addHonorific('The Astrologer'); state.stats.int+=2; }, onFail: () => modSanity(-3) },
+                { text: 'Worship', type: 'flavor', effect: () => { modRep('piety', 10); log("A sign from the gods."); } }
+            ]),
+
+            createEvent('canon_sword', 'The Sword in the Stone', 'Legend says only the worthy can pull it.', [
+                { text: 'Pull (STR)', type: 'check', stat: 'str', dc: 20, success: 'IT MOVES! You hold the blade!', fail: 'It does not budge.', onSuccess: () => { addHonorific('Chosen One'); addItem('Excalibur', 'Artifact', 'The Sword of Kings.', 1000); modRep('renown', 100); }, onFail: () => log("You are not the one.") },
+                { text: 'Study (INT)', type: 'check', stat: 'int', dc: 15, success: 'You realize it is a magnetic trick.', fail: 'Just a rock.', onSuccess: () => { addHonorific('The Skeptic'); state.stats.int++; }, onFail: () => {} },
+                { text: 'Ignore', type: 'flavor', effect: () => log("Fairy tales.") }
+            ]),
+
+            createEvent('canon_dopple', 'The Imposter', 'You return home to find... YOURSELF sitting at the table.', [
+                { text: 'Attack (STR)', type: 'check', stat: 'str', dc: 15, success: 'The monster melts into goo.', fail: 'It parries your blow.', onSuccess: () => { addHonorific('Truth-Seer'); }, onFail: () => takeDamage(10) },
+                { text: 'Outsmart (INT)', type: 'check', stat: 'int', dc: 16, success: 'You asked a question only you know.', fail: 'It answers correctly!', onSuccess: () => { addHonorific('Mind-Master'); modSanity(2); }, onFail: () => modSanity(-5) },
+                { text: 'Run', type: 'flavor', effect: () => { log("You fled your own life."); modSanity(-2); } }
+            ]),
+
+            createEvent('canon_fire', 'The Burning Barn', 'A barn is on fire! Children are trapped inside!', [
+                { text: 'Rescue (DEX)', type: 'check', stat: 'dex', dc: 14, success: 'You saved them all!', fail: 'You got burned.', onSuccess: () => { addHonorific('Fire-Walker'); modRep('heroism', 20); }, onFail: () => { takeDamage(8); addTrait('Burn Scars'); } },
+                { text: 'Douse (STR)', type: 'check', stat: 'str', dc: 15, success: 'You organized the bucket line.', fail: 'The fire spreads.', onSuccess: () => { addHonorific('The Savior'); }, onFail: () => log("Tragedy strikes.") },
+                { text: 'Watch', type: 'flavor', effect: () => { log("You did nothing."); modRep('infamy', 10); } }
+            ]),
+
+            createEvent('canon_idol', 'The Cursed Idol', 'You find a golden idol. It whispers to you.', [
+                { text: 'Take it (Will)', type: 'check', stat: 'wis', dc: 18, success: 'You resist the curse and keep the gold.', fail: 'The curse takes hold.', onSuccess: () => { addHonorific('Iron-Will'); state.gold+=200; }, onFail: () => { addTrait('Cursed'); modSanity(-4); } },
+                { text: 'Destroy it', type: 'flavor', effect: () => { log("You smashed the evil."); modRep('piety', 20); } },
+                { text: 'Sell it', type: 'flavor', effect: () => { log("You sold the curse to another."); state.gold+=100; modRep('infamy', 5); } }
+            ]),
+
+            createEvent('canon_griffin', 'The Griffin Egg', 'You find an abandoned griffin egg.', [
+                { text: 'Hatch it (WIS)', type: 'check', stat: 'wis', dc: 16, success: 'It bonds with you!', fail: 'It bites you and flies off.', onSuccess: () => { addHonorific('Griffin-Friend'); addTrait('Pet Griffin'); }, onFail: () => takeDamage(5) },
+                { text: 'Omelette', type: 'flavor', effect: () => { log("Delicious."); state.health+=10; } },
+                { text: 'Sell (200g)', type: 'flavor', effect: () => { state.gold+=200; log("Sold to a wizard."); } }
+            ]),
+
+            createEvent('canon_necro', 'The Necromancer', 'Dead rise from the cemetery!', [
+                { text: 'Smite (STR)', type: 'check', stat: 'str', dc: 15, success: 'You crushed the skeletons.', fail: 'Overwhelmed.', onSuccess: () => { addHonorific('Bone-Crusher'); modRep('renown', 20); }, onFail: () => takeDamage(10) },
+                { text: 'Turn Undead (WIS)', type: 'check', stat: 'wis', dc: 16, success: 'Holy light burns them.', fail: 'Your faith wavered.', onSuccess: () => { addHonorific('Lightbringer'); modRep('piety', 30); }, onFail: () => modSanity(-3) },
+                { text: 'Join', type: 'flavor', effect: () => { log("You offered to help."); addHonorific('The Traitor'); modRep('infamy', 50); } }
+            ])
+        ], 
         Travel: [createEvent('travel_bandit', 'Roadside Ambush', 'Bandits block the path.', [{ text: 'Fight', type: 'check', stat: 'str', dc: 12, success: 'You clear the road.', fail: 'They beat you and take gold.', onSuccess: () => modRep('renown', 2), onFail: () => { takeDamage(5); state.gold = Math.max(0, state.gold - 10); } }, { text: 'Pay Toll (5g)', type: 'flavor', req: (s) => s.gold >= 5, effect: () => { state.gold -= 5; log("Safe but poorer."); } }, { text: 'Run', type: 'check', stat: 'dex', dc: 14, success: 'You escape!', fail: 'They catch you.', onSuccess: () => {}, onFail: () => takeDamage(3) }])],
         Quest: [createEvent('quest_monster', 'The Beast', 'A monster plagues the local farms.', [{ text: 'Slay it', type: 'check', stat: 'str', dc: 15, success: 'The beast falls! (+Renown, +50g)', fail: 'It mauls you.', onSuccess: () => { modRep('renown', 10); state.gold += 50; }, onFail: () => takeDamage(10) }, { text: 'Track it', type: 'check', stat: 'wis', dc: 14, success: 'You find its lair and loot it. (+30g)', fail: 'You get lost.', onSuccess: () => state.gold += 30, onFail: () => {} }, { text: 'Set Trap', type: 'check', stat: 'int', dc: 14, success: 'Smart catch! (+40g)', fail: 'Trap failed.', onSuccess: () => state.gold += 40, onFail: () => {} }])],
         Crime: [createEvent('crime_heist', 'Manor Heist', 'A noble villa is unguarded.', [{ text: 'Rob it', type: 'check', stat: 'dex', dc: 16, success: 'Jackpot! (+100g, +Infamy)', fail: 'Guards! (-HP, Jail)', onSuccess: () => { state.gold += 100; modRep('infamy', 10); }, onFail: () => { takeDamage(10); modRep('infamy', 5); } }, { text: 'Leave', type: 'flavor', effect: () => log("Too risky.") }, { text: 'Tip Guards', type: 'check', stat: 'cha', dc: 12, success: 'Reward! (+10g, +Honor)', fail: 'Ignored.', onSuccess: () => { state.gold+=10; modRep('honor', 5); }, onFail: () => {} }])],
@@ -1833,11 +1982,12 @@
     function renderCreationStats() {
         const container = document.getElementById('creation-stats');
         container.innerHTML = '';
+        const labels = { str: 'STRENGTH', dex: 'DEXTERITY', con: 'CONSTITUTION', int: 'INTELLIGENCE', wis: 'WISDOM', cha: 'CHARISMA' };
         for (let key in state.stats) {
             const val = state.stats[key];
             container.innerHTML += `
                 <div class="bg-white/50 p-2 rounded text-center border border-[#5d4037]">
-                    <div class="text-xs uppercase font-bold">${key}</div>
+                    <div class="text-xs uppercase font-bold">${labels[key]}</div>
                     <div class="text-xl font-medieval">${val}</div>
                     <div class="text-xs text-gray-600">${formatMod(getModifier(val))}</div>
                 </div>`;
@@ -1985,6 +2135,12 @@
         
         const houseTrait = potentialTraits[Math.floor(Math.random() * potentialTraits.length)];
 
+        // Calculate initial population based on tier
+        let startPop = 100;
+        if (tierKey === 'royal') startPop = 15000;
+        else if (tierKey === 'greater') startPop = 5000;
+        else startPop = 200 + Math.floor(Math.random() * 300);
+
         state.house = {
             tier: tierData.name,
             name: houseName,
@@ -1992,8 +2148,18 @@
             motto: houseDetails.motto,
             desc: houseDetails.desc,
             heirloom: houseDetails.heirloom,
-            holding: houseDetails.holding,
-            holdingDesc: houseDetails.holdingDesc,
+            // holdings replaces the single string 'holding'
+            holdings: [
+                { 
+                    name: houseDetails.holding, 
+                    desc: houseDetails.holdingDesc, 
+                    type: 'Ancient Seat', 
+                    level: 1, 
+                    locationIndex: locIndex, // ADDED: Location tracking
+                    population: startPop,
+                    defense: 10 
+                }
+            ],
             treasury: tierData.startGold,
             trait: houseTrait,
             members: []
@@ -2014,6 +2180,12 @@
         grandma.appearance = GeneticEngine.generate(); 
         addHouseMember(grandma.name, 'Female', 'House Member', locIndex, grandma.id);
 
+        // LINK GRANDPARENTS
+        grandpa.spouseId = grandma.id;
+        grandma.spouseId = grandpa.id;
+        grandpa.isMarried = true;
+        grandma.isMarried = true;
+
         const father = addRelationship(getRandomName('Male'), "Father", 80, "Male", "House Member", locIndex, true, true, fatherAge);
         father.appearance = GeneticEngine.mix(grandpa, grandma); // Inherits (High chance due to engine update)
         addHouseMember(father.name, 'Male', 'House Member', locIndex, father.id);
@@ -2021,6 +2193,12 @@
         const mother = addRelationship(getRandomName('Female'), "Mother", 80, "Female", "House Member", locIndex, false, true, motherAge);
         mother.appearance = GeneticEngine.generate(); // Married in
         addHouseMember(mother.name, 'Female', 'House Member', locIndex, mother.id);
+
+        // LINK PARENTS
+        father.spouseId = mother.id;
+        mother.spouseId = father.id;
+        father.isMarried = true;
+        mother.isMarried = true;
 
         // UNCLE/AUNT & COUSIN GENERATION
         addHouseMember(state.name, state.gender, "House Member", state.location, "PLAYER"); 
@@ -2253,8 +2431,17 @@
             motto: houseDetails.motto,
             desc: houseDetails.desc,
             heirloom: houseDetails.heirloom,
-            holding: houseDetails.holding,
-            holdingDesc: houseDetails.holdingDesc,
+            holdings: [
+                { 
+                    name: houseDetails.holding, 
+                    desc: houseDetails.holdingDesc, 
+                    type: 'Manor', 
+                    level: 1, 
+                    locationIndex: state.location, // ADDED: Player's current location
+                    population: 150,
+                    defense: 5 
+                }
+            ],
             treasury: tierData.startGold,
             trait: houseTrait,
             members: []
@@ -2286,6 +2473,9 @@
     function addRelationship(name, relation, friendship, gender, rank, locIndex = null, isBlood = false, isFamily = false, specificAge = null, isKnown = true) {
         const location = locIndex !== null ? locIndex : Math.floor(Math.random() * CITIES.length);
         
+        // DETERMINE AGE FIRST (Moved up for career logic)
+        const age = specificAge !== null ? specificAge : (18 + Math.floor(Math.random()*40));
+
         // NEW: Job Selection Logic based on Rank/Class
         let careerKeys = Object.keys(CAREERS);
         const isNoble = rank.includes("Lord") || rank.includes("Lady") || rank.includes("Sir") || rank.includes("Dame") || rank === "House Member" || rank === "Heir";
@@ -2299,7 +2489,32 @@
         }
 
         const rndJobKey = careerKeys[Math.floor(Math.random() * careerKeys.length)];
-        const rndJob = CAREERS[rndJobKey].name;
+        
+        // UPDATED: Pick rank based on Age
+        const careerData = CAREERS[rndJobKey];
+        const maxRank = careerData.ranks.length - 1;
+        let rankIdx = 0;
+        let rndJob = "Child";
+
+        // Only assign job if old enough (Randomized start age 10-14)
+        if (age >= 10 + Math.floor(Math.random() * 5)) {
+            if (age < 20) {
+                rankIdx = 0; // Apprentice/Entry
+            } else if (age < 30) {
+                // Mostly mid, occasional entry
+                rankIdx = Math.random() > 0.7 ? Math.min(1, maxRank) : 0;
+            } else if (age < 50) {
+                // Mid to High
+                rankIdx = Math.min(Math.floor(Math.random() * (maxRank + 1)), maxRank);
+                if(rankIdx === 0 && Math.random() > 0.2) rankIdx = 1; // Reduce chance of old apprentices
+            } else {
+                // Elder - Mostly Masters
+                rankIdx = Math.random() > 0.3 ? maxRank : Math.min(1, maxRank);
+            }
+            rndJob = careerData.ranks[rankIdx].title;
+        }
+
+        const rndRank = careerData.ranks[rankIdx];
         
         const rndStats = { 
             str: 8 + Math.floor(Math.random()*8),
@@ -2321,7 +2536,7 @@
             friendship: friendship || 0, 
             romance: 0, 
             gender, rank, locationIndex: location,
-            age: specificAge !== null ? specificAge : (18 + Math.floor(Math.random()*40)),
+            age: age, // Use pre-calculated age
             health: "Healthy",
             hp: hpVal,
             maxHp: hpVal,
@@ -2692,6 +2907,9 @@
         try {
             state.age++;
             state.year++;
+            state.flags.lockedInChronicle = true; // Lock the player
+            switchTab('log'); // Force view
+            
             state.interactions = {}; 
             state.activityLog = { socialize: 0, lord: 0, tournament: 0, train: 0, brothel: 0, dungeon: 0, crime: 0, meditate: 0 }; 
             state.rejectedJobs = []; // RESET JOB REJECTIONS
@@ -2700,6 +2918,44 @@
             state.eventQueue = []; 
             
             generateMarket(state.location); // REGENERATE MARKET EVERY YEAR
+
+            // --- HOUSE HOLDINGS UPDATE (New) ---
+            if (state.house && state.house.holdings) {
+                let tax = 0;
+                let popGrowth = 0;
+                
+                state.house.holdings.forEach(h => {
+                    // Update Capacity if legacy data missing
+                    if (!h.capacity) {
+                        const tmpl = HOLDING_TEMPLATES[h.type] || HOLDING_TEMPLATES['Manor'];
+                        h.capacity = tmpl.basePop + (h.level * tmpl.capPerLvl);
+                    }
+
+                    // Taxes: 1 gold per 10 people (approx)
+                    const holdingTax = Math.floor(h.population * 0.1);
+                    tax += holdingTax;
+                    
+                    // Population Growth: 2-5% per year, capped by Holding Size
+                    if (h.population < h.capacity) {
+                        const growthRate = 0.02 + (Math.random() * 0.03);
+                        let newSouls = Math.floor(h.population * growthRate);
+                        // Hard limit check
+                        if (h.population + newSouls > h.capacity) {
+                            newSouls = h.capacity - h.population;
+                        }
+                        h.population += newSouls;
+                        popGrowth += newSouls;
+                    }
+                });
+
+                if (tax > 0) {
+                    state.house.treasury += tax;
+                    // Only log for player if they are in the house
+                    if (state.socialClass === 'House') {
+                       // log(`<strong>House Holdings:</strong> Collected ${tax}g in taxes. Population grew by ${popGrowth}.`);
+                    }
+                }
+            }
 
             state.maxHealth = 10 + getModifier(state.stats.con);
             state.health = Math.min(state.maxHealth, state.health + 5); 
@@ -2719,6 +2975,7 @@
 
             if (state.house && state.house.members.length > 0) {
                 try { checkInheritance(); } catch(e) { console.error("Inheritance Error:", e); }
+                try { simulateHouseAI(); } catch(e) { console.error("House AI Error:", e); }
             }
 
             document.getElementById('year-display').innerText = `Year ${state.year}`;
@@ -2735,8 +2992,30 @@
 
             let ageEvent = null;
 
+            // 0. CANON EVENT (Randomized Decade Check)
+            if (state.age >= 10) {
+                const decadeStart = Math.floor(state.age / 10) * 10;
+                // If no target set, or target belongs to a previous decade (e.g. set for 15, now we are 20), pick new one
+                if (!state.nextCanonAge || state.nextCanonAge < decadeStart) {
+                     const endOfDecade = decadeStart + 9;
+                     // If we start mid-decade (e.g. age 15), pick randomly between 15-19
+                     const range = endOfDecade - state.age + 1;
+                     state.nextCanonAge = state.age + Math.floor(Math.random() * range);
+                     // console.log("Fate has chosen age:", state.nextCanonAge); // Debug
+                }
+            }
+
+            if (!ageEvent && state.age === state.nextCanonAge) {
+                // Select random canon event
+                const pool = POOLS.Canon;
+                if (pool && pool.length > 0) {
+                    ageEvent = pool[Math.floor(Math.random() * pool.length)];
+                    log(`<strong class="text-blue-900">CANON EVENT:</strong> A defining moment approaches...`);
+                }
+            }
+
             // A. Health Complications (Old Age)
-            if (state.age > 60) {
+            if (!ageEvent && state.age > 60) {
                 const risk = (state.age - 60) * 2; 
                 const roll = Math.floor(Math.random() * 100);
                 
@@ -2847,10 +3126,33 @@
                 return; 
             }
 
-            if (r.age > 16) {
+            // NEW: Job Acquisition for Youth
+            if (r.occupation === "Child" && r.age >= 12 && Math.random() < 0.3) {
+                 const jobKey = jobs[Math.floor(Math.random() * jobs.length)];
+                 const career = CAREERS[jobKey];
+                 r.occupation = career.ranks[0].title;
+                 log(`<span style="color:var(--ink)">Career:</span> ${r.name} has begun working as a ${r.occupation}.`);
+            }
+
+            // Existing Job Switching Logic (Modified for logging)
+            if (r.age > 16 && r.occupation !== "Child") {
                 if (Math.random() < 0.05) {
-                     const newJob = CAREERS[jobs[Math.floor(Math.random() * jobs.length)]].name;
-                     r.occupation = newJob;
+                     // UPDATED: Assign specific rank title on job change with Age Logic
+                     const jobKey = jobs[Math.floor(Math.random() * jobs.length)];
+                     const career = CAREERS[jobKey];
+                     
+                     let newRankIdx = 0;
+                     const maxR = career.ranks.length - 1;
+                     
+                     // Older NPCs land higher positions when switching/promoting
+                     if (r.age > 50) newRankIdx = Math.random() > 0.4 ? maxR : Math.min(1, maxR);
+                     else if (r.age > 30) newRankIdx = Math.min(Math.floor(Math.random() * (maxR + 1)), maxR);
+                     
+                     const rank = career.ranks[newRankIdx];
+                     if (r.occupation !== rank.title) {
+                        r.occupation = rank.title;
+                        log(`<span style="color:var(--ink)">Career:</span> ${r.name} is now a ${r.occupation}.`);
+                     }
                 }
             }
             
@@ -2859,7 +3161,29 @@
                 // Marriage Chance (18+, not married)
                 if (r.age >= 18 && !r.isMarried && Math.random() < 0.1) {
                     r.isMarried = true;
-                    // Abstract spouse
+                    
+                    // Generate Spouse
+                    const spouseGender = r.gender === 'Male' ? 'Female' : 'Male';
+                    const spouseName = getRandomName(spouseGender);
+                    
+                    let inLawRel = 'In-Law';
+                    if (r.relation === 'Sibling') inLawRel = r.gender === 'Male' ? 'Sister-in-Law' : 'Brother-in-Law';
+                    else if (r.relation === 'Son') inLawRel = 'Daughter-in-Law';
+                    else if (r.relation === 'Daughter') inLawRel = 'Son-in-Law';
+
+                    const spouse = addRelationship(spouseName, inLawRel, 50, spouseGender, "Commoner", r.locationIndex, false, true, r.age, true);
+                    
+                    // Link Spouses
+                    r.spouseId = spouse.id;
+                    spouse.spouseId = r.id;
+                    spouse.isMarried = true;
+
+                    // Add to house if noble (assumption: they marry into the family or are tracked)
+                    if (state.house) {
+                        addHouseMember(spouseName, spouseGender, "House Member", r.locationIndex, spouse.id);
+                    }
+
+                    log(`<strong style="color:var(--gold)">Marriage:</strong> Your ${r.relation} ${r.name} married ${spouseName}.`);
                 }
 
                 // Child Chance (Married=10%, Single=1%)
@@ -2891,6 +3215,81 @@
                 }
             }
         });
+    }
+
+    function simulateHouseAI() {
+        if (!state.house || state.socialClass !== 'House') return;
+        
+        // Find Ruler
+        const ruler = state.house.members.find(m => 
+            (m.rank.includes('Lord') && !m.rank.includes('Emeritus')) || 
+            (m.rank.includes('Lady') && !m.rank.includes('Dowager'))
+        );
+
+        if (!ruler || ruler.id === 'PLAYER') return; // Player controls house
+
+        const rulerNPC = state.relationships.find(r => r.id === ruler.id);
+        if (!rulerNPC || rulerNPC.health === 'Deceased') return; 
+
+        // AI Logic: Ruler manages assets
+        
+        // 1. Upgrade existing (Priority: Defense or Cap)
+        const holdings = state.house.holdings;
+        const affordableUpgrades = holdings
+            .map((h, i) => ({ index: i, cost: getHoldingUpgradeCost(h.type, h.level), type: h.type, level: h.level, name: h.name }))
+            .filter(u => state.house.treasury >= u.cost + 500); // Buffer
+
+        if (affordableUpgrades.length > 0 && Math.random() < 0.4) {
+            const upgrade = affordableUpgrades[Math.floor(Math.random() * affordableUpgrades.length)];
+            state.house.treasury -= upgrade.cost;
+            
+            const h = state.house.holdings[upgrade.index];
+            h.level++;
+            
+            const tmpl = HOLDING_TEMPLATES[h.type] || HOLDING_TEMPLATES['Manor'];
+            h.capacity = tmpl.basePop + (h.level * tmpl.capPerLvl);
+            h.defense = tmpl.baseDef + (h.level * tmpl.defPerLvl);
+            h.population += Math.floor(tmpl.capPerLvl * 0.1);
+            
+            log(`<strong style="color:var(--royal)">HOUSE:</strong> ${ruler.name} ordered the expansion of <strong>${h.name}</strong> (Lvl ${h.level}).`);
+            return; // One major action per year
+        }
+
+        // 2. Purchase New (Secondary)
+        if (Math.random() < 0.2) {
+            const types = ['Farm', 'Manor', 'Keep'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            const tmpl = HOLDING_TEMPLATES[type];
+            
+            if (state.house.treasury >= tmpl.baseCost + 1500) { 
+                state.house.treasury -= tmpl.baseCost;
+                
+                const descriptor = tmpl.descriptors[Math.floor(Math.random() * tmpl.descriptors.length)];
+                const formats = [`${state.house.name} ${descriptor}`, `The ${descriptor}`, `${descriptor} of ${state.house.name}`];
+                const newName = formats[Math.floor(Math.random() * formats.length)];
+                const desc = tmpl.descText[Math.floor(Math.random() * tmpl.descText.length)];
+
+                state.house.holdings.push({
+                    name: newName,
+                    desc: desc,
+                    type: type,
+                    level: 1,
+                    locationIndex: state.location, 
+                    population: Math.floor(tmpl.basePop * 0.5),
+                    capacity: tmpl.basePop + tmpl.capPerLvl,
+                    defense: tmpl.baseDef + tmpl.defPerLvl
+                });
+                log(`<strong style="color:var(--royal)">HOUSE:</strong> ${ruler.name} commissioned the construction of <strong>${newName}</strong>.`);
+                return;
+            }
+        }
+
+        // 3. Withdraw (Personal Expenses)
+        if (Math.random() < 0.15 && state.house.treasury > 500) {
+            const amt = 50 + Math.floor(Math.random() * 200);
+            state.house.treasury -= amt;
+            log(`<strong style="color:var(--royal)">HOUSE:</strong> ${ruler.name} withdrew ${amt}g from the treasury for courtly expenses.`);
+        }
     }
 
     function processNextEvent() {
@@ -3298,6 +3697,20 @@
     
     function closeNPC() { document.getElementById('npc-modal').classList.add('hidden'); }
     
+    // NEW HELPER: Standardize NPC Name Display with Honorifics
+    function getNPCName(r) {
+        let n = r.name;
+        // Append House Name (If member of player's house)
+        if (state.house && state.house.members && state.house.members.some(m => m.id === r.id)) {
+            n += ` ${state.house.name}`;
+        }
+        // Append Occupational Honorific
+        if (r.occupation) {
+            n += ` the ${r.occupation}`;
+        }
+        return n;
+    }
+
     function openNPC(id) {
         if(state.health <= 0) return; // Guard
         const r = state.relationships.find(x => x.id === id);
@@ -3305,11 +3718,8 @@
         const loc = CITIES[r.locationIndex].name;
         const isKnight = r.rank === 'Sir' || r.rank === 'Dame';
         
-        // Determine Display Name (Include House Name if applicable)
-        let displayName = r.name;
-        if (state.house && state.house.members && state.house.members.some(m => m.id === id)) {
-            displayName += ` ${state.house.name}`;
-        }
+        // Determine Display Name using new helper
+        const displayName = getNPCName(r);
         
         let actions = '';
         
@@ -3532,6 +3942,7 @@
             const newTitle = career.ranks[occ.rankIndex].title;
             log(`<strong class="text-green-800">PROMOTION:</strong> Raised to ${newTitle}!`);
             modRep('renown', 10);
+            addHonorific(newTitle); // ADDED: Update honorific on promotion
         }
     }
 
@@ -3573,7 +3984,12 @@
             const jobData = CAREERS[occ.id].ranks[occ.rankIndex];
             const jobName = CAREERS[occ.id].name;
             
-            const coworkers = state.relationships.filter(r => r.occupation === jobName && r.locationIndex === state.location && r.health !== 'Deceased');
+            // UPDATED: Check for any valid title within this career, or the generic name
+            const career = CAREERS[occ.id];
+            const validTitles = career.ranks.map(k => k.title);
+            validTitles.push(jobName); // Include generic name for legacy/special NPCs
+            
+            const coworkers = state.relationships.filter(r => validTitles.includes(r.occupation) && r.locationIndex === state.location && r.health !== 'Deceased');
             
             let coworkersHtml = '<div class="mt-4 pt-4 border-t border-black/20"><h4 class="font-bold mb-2">Colleagues</h4>';
             if (coworkers.length === 0) {
@@ -3612,15 +4028,24 @@
     function meetCoworker() {
         if(state.health <= 0) return; // Guard
         if(!state.occupation) return;
-        const jobName = CAREERS[state.occupation.id].name;
         
-        const existing = state.relationships.filter(r => r.occupation === jobName && r.locationIndex === state.location && r.health !== 'Deceased');
+        // UPDATED: Use same logic as renderOccupationTab to find existing colleagues
+        const career = CAREERS[state.occupation.id];
+        const jobName = career.name;
+        const validTitles = career.ranks.map(k => k.title);
+        validTitles.push(jobName);
+
+        const existing = state.relationships.filter(r => validTitles.includes(r.occupation) && r.locationIndex === state.location && r.health !== 'Deceased');
         
         if (Math.random() < 0.4 || existing.length === 0) {
              const gender = Math.random() > 0.5 ? 'Male' : 'Female';
              const name = getRandomName(gender);
              const newCo = addRelationship(name, "Colleague", 20, gender, "Commoner", state.location);
-             newCo.occupation = jobName; 
+             
+             // UPDATED: Assign random rank from current career to new colleague
+             const rndRank = career.ranks[Math.floor(Math.random() * career.ranks.length)];
+             newCo.occupation = rndRank.title; 
+             
              log(`You met a new colleague, ${name}.`);
         } else {
              const target = existing[Math.floor(Math.random() * existing.length)];
@@ -3687,6 +4112,8 @@
             log(`<strong>Career:</strong> Started as ${CAREERS[id].ranks[0].title}.`);
         }
         state.flags.employed = true;
+        // ADDED: Set Honorific when joining job
+        addHonorific(CAREERS[id].ranks[state.occupation.rankIndex].title);
         updateUI();
     }
 
@@ -3764,10 +4191,13 @@
             const familyTag = r.isFamily ? `<span class="text-[10px] bg-amber-900 text-white px-1 rounded ml-2">Kin</span>` : '';
             const deadClass = r.health === "Deceased" ? "opacity-50 grayscale" : "";
             
+            // Use helper for consistent naming
+            const displayName = getNPCName(r);
+            
             return `
             <div class="rel-card ${deadClass}" onclick="openNPC('${r.id}')">
                 <div>
-                    <div class="font-bold">${r.name} ${familyTag}</div>
+                    <div class="font-bold">${displayName} ${familyTag}</div>
                     <div class="text-xs opacity-70">${r.relation} • ${r.rank}</div>
                     <div class="text-xs text-amber-900 font-bold">📍 ${locName}</div>
                 </div>
@@ -3783,35 +4213,142 @@
     }
 
     // --- HOUSE & LINEAGE UI ---
-    function donateToHouse() {
-        if(state.health <= 0) return; // Guard
-        const amt = 50;
-        if(state.gold >= amt) {
-            state.gold -= amt;
-            state.house.treasury += amt;
-            log(`You donated ${amt}g to House ${state.house.name}.`);
-            updateUI();
-        } else {
-            showMsg("Insufficient Funds", "You do not have enough gold.");
+    
+    // NEW: Transaction Modal Logic
+    let pendingTransType = null;
+
+    function openTransaction(type) {
+        if(state.health <= 0) return;
+        pendingTransType = type;
+        const title = type === 'donate' ? "Donate to House" : "Withdraw Funds";
+        const max = type === 'donate' ? state.gold : state.house.treasury;
+        
+        document.getElementById('trans-title').innerText = title;
+        document.getElementById('trans-text').innerText = `Enter amount (Max: ${max}g)`;
+        document.getElementById('trans-input').value = "";
+        document.getElementById('trans-input').max = max;
+        document.getElementById('trans-modal').classList.remove('hidden');
+        document.getElementById('trans-input').focus();
+    }
+
+    function confirmTransaction() {
+        const input = document.getElementById('trans-input');
+        const amt = parseInt(input.value);
+        
+        if (!amt || amt <= 0) {
+            closeTransaction();
+            return;
         }
+
+        if (pendingTransType === 'donate') {
+            if (state.gold >= amt) {
+                state.gold -= amt;
+                state.house.treasury += amt;
+                log(`You donated ${amt}g to House ${state.house.name}.`);
+            } else {
+                showMsg("Insufficient Funds", "You do not have that much gold.");
+            }
+        } else if (pendingTransType === 'withdraw') {
+            if (state.house.treasury >= amt) {
+                state.house.treasury -= amt;
+                state.gold += amt;
+                log(`You withdrew ${amt}g from the treasury.`);
+            } else {
+                showMsg("Treasury Low", "The House coffers cannot afford that.");
+            }
+        }
+        
+        closeTransaction();
+        updateUI();
+    }
+
+    function closeTransaction() {
+        document.getElementById('trans-modal').classList.add('hidden');
+        pendingTransType = null;
+    }
+
+    function donateToHouse() {
+        openTransaction('donate');
     }
     
     function withdrawFromHouse() {
-        if(state.health <= 0) return; // Guard
-        const amt = 50;
-        if(state.house.treasury >= amt) {
-            state.house.treasury -= amt;
-            state.gold += amt;
-            log(`You withdrew ${amt}g from the treasury.`);
+        openTransaction('withdraw');
+    }
+
+    // NEW: LORD AUTHORITIES
+    function getHoldingUpgradeCost(type, level) {
+        // Linear scaling based on base cost: Base * Level
+        const tmpl = HOLDING_TEMPLATES[type] || HOLDING_TEMPLATES['Manor'];
+        return Math.floor(tmpl.baseCost * 0.5 * (level + 1));
+    }
+
+    function upgradeHolding(index) {
+        if(state.health <= 0) return;
+        const h = state.house.holdings[index];
+        const tmpl = HOLDING_TEMPLATES[h.type] || HOLDING_TEMPLATES['Manor'];
+        const cost = getHoldingUpgradeCost(h.type, h.level);
+        
+        if (state.house.treasury >= cost) {
+            state.house.treasury -= cost;
+            h.level++;
+            
+            // Apply Template Scaling
+            h.capacity = tmpl.basePop + (h.level * tmpl.capPerLvl);
+            h.defense = tmpl.baseDef + (h.level * tmpl.defPerLvl);
+            
+            // Population boost from construction attraction
+            h.population += Math.floor(tmpl.capPerLvl * 0.1); 
+            
+            log(`Expanded ${h.name} to Level ${h.level}. Defense: ${h.defense}, Capacity: ${h.capacity}.`);
             updateUI();
         } else {
-            showMsg("Treasury Low", "The House coffers are empty.");
+            showMsg("Treasury Low", `You need ${cost}g in the House Treasury.`);
+        }
+    }
+
+    function purchaseHolding(type) {
+        if(state.health <= 0) return;
+        const tmpl = HOLDING_TEMPLATES[type];
+        if(!tmpl) return;
+        const cost = tmpl.baseCost;
+        
+        if (state.house.treasury >= cost) {
+            state.house.treasury -= cost;
+            
+            // Diverse Naming
+            const descriptor = tmpl.descriptors[Math.floor(Math.random() * tmpl.descriptors.length)];
+            
+            const formats = [
+                `${state.house.name} ${descriptor}`,
+                `The ${descriptor}`,
+                `${descriptor} of ${state.house.name}`,
+                `${descriptor} Estate`,
+                `${state.house.name}'s ${descriptor}`
+            ];
+            const newName = formats[Math.floor(Math.random() * formats.length)];
+            
+            const desc = tmpl.descText[Math.floor(Math.random() * tmpl.descText.length)];
+
+            state.house.holdings.push({
+                name: newName,
+                desc: desc,
+                type: type,
+                level: 1,
+                locationIndex: state.location,
+                population: Math.floor(tmpl.basePop * 0.5), // Starts half full
+                capacity: tmpl.basePop + tmpl.capPerLvl, // Level 1 Cap
+                defense: tmpl.baseDef + tmpl.defPerLvl
+            });
+            log(`Purchased a new ${type}: <strong>${newName}</strong>!`);
+            updateUI();
+        } else {
+            showMsg("Treasury Low", `You need ${cost}g in the House Treasury.`);
         }
     }
 
     function renderHouseTab() {
         const container = document.getElementById('house-content');
-        const h = state.house || { name: 'Commoner', tier: 'Common Folk', sigil: '🌾', motto: 'Survival is Victory', heirloom: 'None', treasury: 0, trait: 'Hardy' };
+        const h = state.house || { name: 'Commoner', tier: 'Common Folk', sigil: '🌾', motto: 'Survival is Victory', heirloom: 'None', treasury: 0, trait: 'Hardy', holdings: [] };
         
         // --- HOLDINGS SECTION ---
         let holdingsHtml = '';
@@ -3820,6 +4357,71 @@
         if(state.socialClass === 'House') {
             const isLord = state.class.includes("Lord") || state.class.includes("Lady");
             
+            // BUILD HOLDINGS LIST
+            const holdingsList = (h.holdings || []).map((prop, idx) => {
+                // Ensure properties exist for legacy saves
+                if(!prop.capacity) prop.capacity = prop.population + 100;
+                
+                const upgradeCost = getHoldingUpgradeCost(prop.type, prop.level);
+                // ADDED: City Location Lookup
+                const locName = CITIES[prop.locationIndex] ? CITIES[prop.locationIndex].name : "Unknown Lands";
+
+                let lordControls = '';
+                if (isLord) {
+                    lordControls = `
+                    <div class="mt-2 pt-2 border-t border-black/10 flex justify-end">
+                        <button onclick="upgradeHolding(${idx})" class="choice-btn text-[10px] px-2 py-1 bg-green-900 border-green-950">
+                            Upgrade (${upgradeCost}g)
+                        </button>
+                    </div>`;
+                }
+
+                return `
+                <div class="bg-white/40 p-3 rounded border border-leather/30 text-left mb-2">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-bold text-amber-900">${prop.name}</div>
+                            <div class="text-xs italic opacity-70">${prop.desc}</div>
+                            <div class="text-xs font-bold text-amber-800 mt-1">📍 ${locName}</div> 
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs font-bold bg-amber-100 px-1 rounded border border-amber-200">Lvl ${prop.level} ${prop.type}</div>
+                        </div>
+                    </div>
+                    <div class="mt-2 grid grid-cols-2 text-xs gap-2">
+                        <div class="flex items-center gap-1" title="Population / Capacity"><span class="text-lg">👥</span> <span>${prop.population.toLocaleString()} / ${prop.capacity.toLocaleString()}</span></div>
+                        <div class="flex items-center gap-1 justify-end"><span class="text-lg">🛡️</span> <span>${prop.defense} Def</span></div>
+                    </div>
+                    ${lordControls}
+                </div>`;
+            }).join('');
+
+            // LORD PURCHASE CONTROLS
+            let purchaseHtml = '';
+            if (isLord) {
+                purchaseHtml = `
+                <div class="mt-4 border-t border-black/10 pt-4">
+                    <h4 class="font-bold text-sm mb-2 text-left">Purchase New Holdings</h4>
+                    <div class="flex gap-2 justify-center">
+                        <button onclick="purchaseHolding('Farm')" class="choice-btn text-xs flex-1 flex flex-col items-center p-2">
+                            <span class="text-lg">🌾</span>
+                            <span>Farm</span>
+                            <span class="opacity-70">${HOLDING_TEMPLATES['Farm'].baseCost}g</span>
+                        </button>
+                        <button onclick="purchaseHolding('Manor')" class="choice-btn text-xs flex-1 flex flex-col items-center p-2">
+                            <span class="text-lg">🏡</span>
+                            <span>Manor</span>
+                            <span class="opacity-70">${HOLDING_TEMPLATES['Manor'].baseCost}g</span>
+                        </button>
+                        <button onclick="purchaseHolding('Keep')" class="choice-btn text-xs flex-1 flex flex-col items-center p-2">
+                            <span class="text-lg">🏰</span>
+                            <span>Keep</span>
+                            <span class="opacity-70">${HOLDING_TEMPLATES['Keep'].baseCost}g</span>
+                        </button>
+                    </div>
+                </div>`;
+            }
+
             // SUCCESSION INFO BOX
             const currentLord = state.house.members.find(m => (m.rank.includes('Lord') && !m.rank.includes('Emeritus')) || (m.rank.includes('Lady') && !m.rank.includes('Dowager')));
             const heir = state.house.members.find(m => m.rank === 'Heir');
@@ -3844,21 +4446,24 @@
              holdingsHtml = `
                 <div class="holding-card mt-6">
                     <div class="holding-icon">🏰</div>
-                    <h3 class="font-medieval text-2xl text-amber-900 mb-2">Holdings</h3>
-                    <div class="font-bold text-lg">${h.holding}</div>
-                    <p class="text-sm italic opacity-80 mb-2">${h.holdingDesc}</p>
-                    <div class="text-xs font-bold uppercase tracking-wide text-amber-900 mt-2">Seat of Power in ${CITIES[state.location].name}</div>
+                    <h3 class="font-medieval text-2xl text-amber-900 mb-2">House Assets</h3>
                     
-                    <div class="mt-4 pt-4 border-t border-black/10 flex justify-between items-center">
+                    <div class="mt-4 mb-4 flex justify-between items-center bg-amber-50 p-2 rounded border border-amber-100">
                         <div class="text-left">
-                             <div class="text-xs uppercase font-bold">Treasury</div>
-                             <div class="text-xl font-bold text-amber-900">${h.treasury} Gold</div>
+                             <div class="text-xs uppercase font-bold text-amber-800">Treasury</div>
+                             <div class="text-xl font-bold text-amber-900">${h.treasury.toLocaleString()} Gold</div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="donateToHouse()" class="choice-btn text-xs px-2 py-1">Donate 50g</button>
-                            ${isLord ? `<button onclick="withdrawFromHouse()" class="choice-btn text-xs px-2 py-1 bg-amber-800">Withdraw 50g</button>` : ''}
+                            <button onclick="donateToHouse()" class="choice-btn text-xs px-2 py-1 bg-amber-700 border-amber-900">Donate</button>
+                            ${isLord ? `<button onclick="withdrawFromHouse()" class="choice-btn text-xs px-2 py-1 bg-amber-800 border-amber-950">Withdraw</button>` : ''}
                         </div>
                     </div>
+
+                    <div class="max-h-60 overflow-y-auto pr-1">
+                        ${holdingsList}
+                    </div>
+                    
+                    ${purchaseHtml}
                     ${successionHtml}
                 </div>`;
         }
@@ -3875,9 +4480,6 @@
             }
             if (p.health === "Deceased") extraIcon += `<div class="tree-grave">💀</div>`;
 
-            // Note: Removed gene badges from tree nodes to keep them clean, 
-            // as new mutations are too detailed for the tiny tree node.
-            
             return `
                 <div class="tree-member ${isDead}" onclick="openNPC('${p.id}')">
                     ${bloodBadge}
@@ -3887,17 +4489,41 @@
                 </div>`;
         };
 
+        // HELPER: Render a person AND their spouse if they have one
+        const renderCouple = (p) => {
+            let html = renderNode(p);
+            
+            // Check for linked spouse ID
+            if (p.spouseId) {
+                const spouse = state.relationships.find(r => r.id === p.spouseId);
+                // Only render if spouse exists and isn't already the person passed (safety)
+                if (spouse && spouse.id !== p.id) {
+                    html += renderNode(spouse);
+                    return `<div class="tree-member-group">${html}</div>`;
+                }
+            }
+            return html;
+        };
+
         const renderPlayerNode = () => {
              let extraIcon = '';
              if (state.class.includes("Lord") || state.class.includes("Lady")) extraIcon = `<div class="tree-crown">👑</div>`;
              
-             return `
+             let html = `
                 <div class="tree-member player">
                     <span class="tree-blood">Blood</span>
                     ${extraIcon}
                     <div class="tree-name">${state.name}</div>
                     <div class="tree-role">You</div>
                 </div>`;
+            
+            // Check for Player Spouse
+            const spouse = state.relationships.find(r => r.relation === 'Spouse');
+            if (spouse) {
+                html += renderNode(spouse);
+                return `<div class="tree-member-group">${html}</div>`;
+            }
+            return html;
         };
 
         // Gather Relations by Group
@@ -3914,12 +4540,9 @@
         // Recursive function to render a node and its children (Nieces/Nephews/Grandkids)
         const renderDescendants = (person) => {
             const kids = getKidsOf(person.id);
-            // Check if person is dead to style
-            const isDead = person.health === 'Deceased' ? 'dead' : '';
             
-            // Render the node itself using existing logic
-            // Note: We use the existing logic inside renderNode but call it here
-            const nodeHtml = renderNode(person); 
+            // Render the couple (Person + Spouse)
+            const nodeHtml = renderCouple(person); 
             
             if (kids.length === 0) return `<li>${nodeHtml}</li>`;
             
@@ -3950,20 +4573,28 @@
         `;
 
         // --- BRANCH 2: UNCLES/AUNTS & COUSINS ---
-        // We distribute cousins among Uncles/Aunts for visual cohesiveness
+        // Use renderCouple to show Uncle+Aunt
         let uaBranch = '';
         if (unclesAunts.length > 0) {
             uaBranch = unclesAunts.map(ua => {
-                return `<li>${renderNode(ua)}</li>`;
+                // If this aunt/uncle is the "primary" (blood), render them + spouse
+                // If they are an in-law (married to an uncle/aunt), we skip them here because the blood relative will pull them in via renderCouple
+                // NOTE: 'Aunt' usually generated as blood in setup, but if we add logic for Uncle's wife later, she might be 'Aunt' too.
+                // For now, assuming Uncles/Aunts in list are blood.
+                return `<li>${renderCouple(ua)}</li>`;
             }).join('');
         }
 
         // --- LEVEL 2: PARENTS + UNCLES/AUNTS ---
         let parentsNode = '';
         if (parents.length > 0) {
+            // Filter to just one parent (e.g. Father) to avoid double rendering the couple
+            // Since we linked them, renderCouple(Father) will show Mother.
+            const primaryParent = parents.find(p => p.gender === 'Male') || parents[0];
+            
             parentsNode = `
                 <li>
-                    <div class="tree-member-group">${parents.map(p => renderNode(p)).join('')}</div>
+                    ${renderCouple(primaryParent)}
                     ${playerBranch}
                 </li>
             `;
@@ -3981,11 +4612,13 @@
         let treeStructure = '';
         
         if (grandparents.length > 0) {
-            // Standard Full Tree
+            // Similar logic: Pick Grandfather to render couple
+            const primaryGP = grandparents.find(p => p.gender === 'Male') || grandparents[0];
+            
             treeStructure = `
                 <ul>
                     <li>
-                        <div class="tree-member-group">${grandparents.map(gp => renderNode(gp)).join('')}</div>
+                        ${renderCouple(primaryGP)}
                         <ul>
                             ${parentsNode}
                             ${uaBranch}
@@ -4363,6 +4996,7 @@
             const evt = state.eventQueue.shift();
             renderEvent(evt);
         } else {
+            state.flags.lockedInChronicle = false; // Unlock when queue is empty
             const container = document.getElementById('choices-container');
             container.innerHTML = '';
             const btn = document.createElement('button');
@@ -4420,21 +5054,19 @@
                 document.getElementById(`mod-${key}`).innerText = formatMod(getModifier(val));
             }
 
+            // Honorific Update (UPDATED)
             let displayName = state.name;
-            if (state.occupation) {
-                 const career = CAREERS[state.occupation.id];
-                 const title = career.ranks[state.occupation.rankIndex].title;
-                 // If noble, use House name instead of job title in header? 
-                 // The prompt requested: [First Name] [House Name]
-                 if (state.socialClass === 'House' && state.house) {
-                     displayName = `${state.name} ${state.house.name}`;
-                 } else {
-                     displayName = `${state.name} the ${title}`;
-                 }
-            } else if (state.socialClass === 'House' && state.house) {
-                 // UPDATED: Simply Name + House Name
-                 displayName = `${state.name} ${state.house.name}`;
+            
+            // 1. Append House Name if noble
+            if (state.house) {
+                displayName += ` ${state.house.name}`;
             }
+
+            // 2. Append Honorific (Default: Occupation Title)
+            if (state.primaryHonorific) {
+                displayName += ` the ${state.primaryHonorific}`;
+            }
+
             document.getElementById('display-name').innerText = displayName;
 
             document.getElementById('gold-display').innerText = state.gold;
@@ -4464,6 +5096,21 @@
             } else {
                 geneList.innerHTML = '<span class="italic opacity-50">No distinctive mutations.</span>';
             }
+
+            // RENDER HONORIFICS (NEW)
+            const honList = document.getElementById('honorific-list');
+            if (state.honorifics.length === 0) {
+                honList.innerHTML = '<span class="italic opacity-50">No titles yet.</span>';
+            } else {
+                honList.innerHTML = state.honorifics.map(h => {
+                    const isActive = h === state.primaryHonorific;
+                    const style = isActive 
+                        ? 'bg-[#5d4037] text-[#f4e4bc] border-[#2c1e16] ring-1 ring-[#b8860b]' 
+                        : 'bg-white/50 border-[#5d4037] hover:bg-[#5d4037] hover:text-white text-gray-800';
+                    return `<button onclick="setHonorific('${h}')" class="px-2 py-1 border rounded text-xs transition-colors font-medieval ${style}">${h}</button>`;
+                }).join('');
+            }
+
         } catch(e) { console.error("UI Header Update Failed", e); }
 
         safeRender(renderHouseTab, 'House');
@@ -4487,7 +5134,26 @@
         log(`<strong>New Trait:</strong> ${trait}`);
     }
 
+    // ADDED: Honorific Helpers
+    function addHonorific(title) {
+        if(!state.honorifics.includes(title)) {
+            state.honorifics.push(title);
+        }
+        state.primaryHonorific = title;
+        updateUI();
+    }
+
+    function setHonorific(title) {
+        state.primaryHonorific = title;
+        updateUI();
+    }
+
     function switchTab(tab) {
+        // MODIFIED: Show popup instead of silent failure
+        if (state.flags.lockedInChronicle && tab !== 'log') {
+            document.getElementById('lock-modal').classList.remove('hidden');
+            return; 
+        }
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
         document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
         document.getElementById(`${tab}-tab`).classList.remove('hidden');
