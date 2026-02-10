@@ -5177,6 +5177,48 @@ Elder: [
         
         // Determine Display Name using new helper
         const displayName = getNPCName(r);
+
+        // --- SUCCESSION & CLASS LOGIC ---
+        let successionDisplay = '<span class="opacity-50 text-xs italic">N/A</span>';
+        let socialClassDisplay = r.rank; // Default to stored rank
+
+        // Check if member of player's house for succession calculation
+        if (state.house && state.house.members) {
+            const memberRec = state.house.members.find(m => m.id === r.id);
+            
+            if (memberRec) {
+                // If they are in the house member list, clarify social class
+                socialClassDisplay = `<span class="text-royal font-bold">Noble House</span>`;
+
+                // Find current ruler to calculate line relative to them
+                let ruler = state.house.members.find(m => 
+                    (m.rank.includes('Lord') && !m.rank.includes('Emeritus')) || 
+                    (m.rank.includes('Lady') && !m.rank.includes('Dowager') && !m.rank.includes('Waiting'))
+                );
+
+                // If this NPC IS the ruler
+                if (ruler && ruler.id === r.id) {
+                    successionDisplay = `<span class="text-purple-900 font-bold">👑 Reigning Head</span>`;
+                } else {
+                    // Calculate Line
+                    const line = calculateSuccession(ruler);
+                    const index = line.findIndex(m => m.id === r.id);
+
+                    if (index !== -1) {
+                        if (index === 0) {
+                            successionDisplay = `<span class="text-amber-600 font-bold">Heir Apparent</span>`;
+                        } else {
+                            // Simple ordinal suffix helper
+                            const n = index + 1;
+                            const ord = ["st","nd","rd"][((n+90)%100-10)%10-1]||"th";
+                            successionDisplay = `<span class="font-bold text-amber-900">${n}${ord} in line</span>`;
+                        }
+                    } else {
+                        successionDisplay = `<span class="opacity-50 text-xs">No claim</span>`;
+                    }
+                }
+            }
+        }
         
         let actions = '';
         
@@ -5240,6 +5282,8 @@ Elder: [
                 <div>
                     <p><strong>Health:</strong> ${hpDisplay}</p>
                     <p><strong>Relation:</strong> ${r.relation}</p>
+                    <p><strong>Class:</strong> ${socialClassDisplay}</p>
+                    <p><strong>Claim:</strong> ${successionDisplay}</p>
                 </div>
             </div>
 
