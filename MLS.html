@@ -612,6 +612,19 @@
         </div>
     </div>
 
+    <!-- NEW: Trait Info Modal -->
+    <div id="trait-modal" class="modal-overlay hidden">
+        <div class="modal-box border-amber-900 relative">
+            <button onclick="document.getElementById('trait-modal').classList.add('hidden')" class="absolute top-2 right-4 text-xl font-bold hover:text-red-800">X</button>
+            <h2 id="trait-modal-title" class="text-3xl font-medieval mb-2 text-amber-900">Trait Name</h2>
+            <div class="flex justify-center mb-4">
+                <span id="trait-modal-badge" class="gene-tag text-sm px-3 py-1 shadow-sm">Common</span>
+            </div>
+            <p class="mb-6 italic text-lg leading-relaxed px-4" id="trait-modal-desc">Description goes here.</p>
+            <button onclick="document.getElementById('trait-modal').classList.add('hidden')" class="choice-btn text-center justify-center">Close</button>
+        </div>
+    </div>
+
     <!-- NEW: Fate Lock Modal -->
     <div id="lock-modal" class="modal-overlay hidden">
         <div class="modal-box border-amber-900">
@@ -957,6 +970,34 @@
     { name: "Seer", rarity: "Legendary", desc: "Innate ability to perceive beyond linear time and physical reality." }
     
 ];
+
+    // NEW: DEFINITIONS FOR ACQUIRED TRAITS
+    const TRAIT_LIBRARY = {
+        "Flushed Cheeks": { desc: "You blush easily in social situations.", rarity: "Common" },
+        "Sooty Skin": { desc: "Permanently stained by the forge and hard labor.", rarity: "Common" },
+        "Shifty Look": { desc: "People instinctively distrust you.", rarity: "Uncommon" },
+        "Fine Clothes": { desc: "You dress better than your station suggests.", rarity: "Uncommon" },
+        "Worn Boots": { desc: "You have walked many miles on hard roads.", rarity: "Common" },
+        "Crooked Nose": { desc: "Broken in a fight and never set right.", rarity: "Common" },
+        "Scar: Knuckles": { desc: "Calloused and scarred from many tavern brawls.", rarity: "Common" },
+        "Broken Hand": { desc: "It never healed quite right, aching in the rain.", rarity: "Common" },
+        "Gaunt Face": { desc: "Hunger has hollowed your cheeks.", rarity: "Common" },
+        "Well-Fed": { desc: "You haven't missed a meal in a long time.", rarity: "Common" },
+        "Far-Off Gaze": { desc: "You see things others do not.", rarity: "Rare" },
+        "Muttering": { desc: "You talk to yourself constantly.", rarity: "Common" },
+        "Ink-Stained Hands": { desc: "The mark of a scholar or scribe.", rarity: "Common" },
+        "Stooped Posture": { desc: "Age or burden has bent your back.", rarity: "Common" },
+        "Pale Skin": { desc: "Sickness has leeched your color.", rarity: "Common" },
+        "Scarred Lungs": { desc: "Breathing is difficult after the plague.", rarity: "Uncommon" },
+        "Blue Skin": { desc: "A fey prank gone wrong (or right?).", rarity: "Rare" },
+        "Cursed": { desc: "Bad luck follows you like a shadow.", rarity: "Epic" },
+        "Pet Griffin": { desc: "A loyal, feathered companion bonded to you.", rarity: "Legendary" },
+        "Burn Scars": { desc: "Painful marks from the fire.", rarity: "Uncommon" },
+        "Haunted": { desc: "Something watches you from the shadows.", rarity: "Rare" },
+        "Limp": { desc: "Movement is slow and painful.", rarity: "Common" },
+        "Scarred Face": { desc: "A badge of survival from the arena.", rarity: "Uncommon" },
+        "Paranoid": { desc: "They are out to get you.", rarity: "Uncommon" }
+    };
 
     const GeneticEngine = {
         generate: function(houseName = null, forcedTrait = null) {
@@ -2613,7 +2654,7 @@
         log(`<strong>Year ${state.year}:</strong> You are born in <strong>${CITIES[state.location].name}</strong>. You are of ${app.height} height, with ${app.hair} hair, ${app.eyes} eyes, and ${app.skin} skin.${mutsReadable}`);
         
         if (state.socialClass === 'House') {
-            log(`You are born a ${state.class}. House Bloodline Trait: <strong style="color:var(--royal)">${state.house.trait}</strong>.`);
+            log(`You are born a ${state.class}. Your House's Bloodline Trait is <strong style="color:var(--royal)">${state.house.trait}</strong>.`);
         } else {
             log(`You are born a free commoner.`);
         }
@@ -2930,6 +2971,9 @@
                 let popGrowth = 0;
                 
                 state.house.holdings.forEach(h => {
+                    // RESET UPGRADE FLAG FOR NEW YEAR
+                    h.upgradedThisYear = false;
+
                     // Update Capacity if legacy data missing
                     if (!h.capacity) {
                         const tmpl = HOLDING_TEMPLATES[h.type] || HOLDING_TEMPLATES['Manor'];
@@ -3701,6 +3745,34 @@
     function restartGame() { location.reload(); }
     
     function closeNPC() { document.getElementById('npc-modal').classList.add('hidden'); }
+
+    // NEW: TRAIT POPUP LOGIC
+    function showTraitInfo(name) {
+        let desc = "A distinct feature acquired during your life.";
+        let rarity = "Common";
+        
+        // 1. Check Mutations
+        const mutation = MUTATION_POOL.find(m => m.name === name);
+        if (mutation) {
+            desc = mutation.desc;
+            rarity = mutation.rarity;
+        } 
+        // 2. Check Acquired Traits
+        else if (TRAIT_LIBRARY[name]) {
+            desc = TRAIT_LIBRARY[name].desc;
+            rarity = TRAIT_LIBRARY[name].rarity;
+        }
+
+        document.getElementById('trait-modal-title').innerText = name;
+        document.getElementById('trait-modal-desc').innerText = desc;
+        
+        const badge = document.getElementById('trait-modal-badge');
+        badge.innerText = rarity;
+        // Reset classes and add dynamic styling
+        badge.className = `gene-tag text-sm px-3 py-1 shadow-sm font-bold tracking-wider mut-${rarity.toLowerCase()}`;
+        
+        document.getElementById('trait-modal').classList.remove('hidden');
+    }
     
     // NEW HELPER: Standardize NPC Name Display with Honorifics
     function getNPCName(r) {
@@ -3757,7 +3829,8 @@
         let mutationsHtml = '<span class="italic text-xs opacity-50">None</span>';
         if (ap.mutations && ap.mutations.length > 0) {
             mutationsHtml = ap.mutations.map(m => {
-                return `<span class="gene-tag mut-${m.rarity.toLowerCase()}" title="${m.desc}">${m.name}</span>`;
+                // UPDATED: Added onclick handler for NPC mutations
+                return `<span onclick="showTraitInfo('${m.name}')" class="gene-tag mut-${m.rarity.toLowerCase()} cursor-pointer hover:scale-110 transition-transform" title="Click for info">${m.name}</span>`;
             }).join('');
         }
 
@@ -4290,12 +4363,20 @@
     function upgradeHolding(index) {
         if(state.health <= 0) return;
         const h = state.house.holdings[index];
+        
+        // CHECK LIMIT
+        if (h.upgradedThisYear) {
+            showMsg("Limit Reached", "Work is already underway on this holding. Wait until next year.");
+            return;
+        }
+
         const tmpl = HOLDING_TEMPLATES[h.type] || HOLDING_TEMPLATES['Manor'];
         const cost = getHoldingUpgradeCost(h.type, h.level);
         
         if (state.house.treasury >= cost) {
             state.house.treasury -= cost;
             h.level++;
+            h.upgradedThisYear = true; // SET FLAG
             
             // Apply Template Scaling
             h.capacity = tmpl.basePop + (h.level * tmpl.capPerLvl);
@@ -4380,10 +4461,18 @@
 
                 let lordControls = '';
                 if (isLord) {
+                    // Logic to check limit
+                    const isUpgraded = prop.upgradedThisYear;
+                    const btnClass = isUpgraded 
+                        ? "bg-gray-400 border-gray-500 cursor-not-allowed opacity-50" 
+                        : "bg-green-900 border-green-950 hover:bg-green-800";
+                    const btnText = isUpgraded ? "Upgrading..." : `Upgrade (${upgradeCost}g)`;
+                    const disabledAttr = isUpgraded ? "disabled" : "";
+
                     lordControls = `
                     <div class="mt-2 pt-2 border-t border-black/10 flex justify-end">
-                        <button onclick="upgradeHolding(${idx})" class="choice-btn text-[10px] px-2 py-1 bg-green-900 border-green-950">
-                            Upgrade (${upgradeCost}g)
+                        <button onclick="upgradeHolding(${idx})" ${disabledAttr} class="choice-btn text-[10px] px-2 py-1 ${btnClass}">
+                            ${btnText}
                         </button>
                     </div>`;
                 }
@@ -4918,6 +5007,18 @@
             return;
         }
 
+        // LOCK: Ensure player stays in Chronicle during ANY event interaction (Activities, Quest, etc.)
+        state.flags.lockedInChronicle = true;
+
+        // --- DYNAMIC PROMPT UPDATE ---
+        const promptEl = document.getElementById('decision-prompt');
+        if (promptEl) {
+            promptEl.innerHTML = `
+                <div class="text-xl border-b border-amber-900/20 pb-1 mb-1">${event.title}</div>
+                <div class="text-base font-serif font-normal opacity-90 leading-tight">${event.text}</div>
+            `;
+        }
+
         log(`<strong>${event.title}:</strong> ${event.text}`);
         const container = document.getElementById('choices-container');
         container.innerHTML = '';
@@ -5028,6 +5129,11 @@
             renderEvent(evt);
         } else {
             state.flags.lockedInChronicle = false; // Unlock when queue is empty
+            
+            // --- RESET PROMPT ---
+            const promptEl = document.getElementById('decision-prompt');
+            if (promptEl) promptEl.innerText = "Fate awaits...";
+
             const container = document.getElementById('choices-container');
             container.innerHTML = '';
             const btn = document.createElement('button');
@@ -5117,12 +5223,13 @@
             
             // RENDER PLAYER GENES & APPEARANCE
             const ap = state.appearance;
-            document.getElementById('appearance-display').innerText = `${ap.height}, ${ap.hair} Hair, ${ap.eyes} Eyes, ${ap.skin} Skin`;
+            // UPDATED: Included gender in display
+            document.getElementById('appearance-display').innerText = `${state.gender}, ${ap.height}, ${ap.hair} Hair, ${ap.eyes} Eyes, ${ap.skin} Skin`;
 
             const geneList = document.getElementById('gene-list');
             if (ap.mutations && ap.mutations.length > 0) {
                 geneList.innerHTML = ap.mutations.map(m => {
-                    return `<span class="gene-tag mut-${m.rarity.toLowerCase()}" title="${m.desc}">${m.name}</span>`;
+                    return `<span onclick="showTraitInfo('${m.name}')" class="gene-tag mut-${m.rarity.toLowerCase()} cursor-pointer hover:scale-110 transition-transform" title="Click for info">${m.name}</span>`;
                 }).join('');
             } else {
                 geneList.innerHTML = '<span class="italic opacity-50">No distinctive mutations.</span>';
@@ -5159,9 +5266,14 @@
         state.traits.push(trait);
         const list = document.getElementById('traits-list');
         if (state.traits.length === 1) list.innerHTML = '';
+        
+        // UPDATED: Render as clickable item
         const div = document.createElement('div');
-        div.innerText = `• ${trait}`;
+        div.className = "cursor-pointer hover:bg-amber-900/10 p-1 rounded -ml-1 transition-colors flex items-center gap-2";
+        div.onclick = () => showTraitInfo(trait);
+        div.innerHTML = `<span>• ${trait}</span> <span class="text-[10px] opacity-50">🛈</span>`;
         list.appendChild(div);
+        
         log(`<strong>New Trait:</strong> ${trait}`);
     }
 
