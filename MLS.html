@@ -1668,141 +1668,534 @@
     }
 
     const POOLS = {
-        Infancy: [
-            createEvent('child_0', 'First Breath', 'The world is cold and bright.', [
-                { text: 'Cry', type: 'flavor', effect: () => log("You scream your arrival to the world.") },
-                { text: 'Sleep', type: 'flavor', effect: () => { state.health = Math.min(state.maxHealth, state.health + 1); log("You rest peacefully. (+1 HP)"); } },
-                { text: 'Look Around', type: 'check', stat: 'wis', dc: 10, success: 'Your eyes focus early. (+1 WIS)', fail: 'It is all a blur.', onSuccess: () => state.stats.wis++, onFail: () => {} }
-            ]),
-            createEvent('child_1', 'First Steps', 'You wobble on unsteady legs.', [
-                { text: 'Walk', type: 'check', stat: 'dex', dc: 10, success: 'You walk! (+1 DEX)', fail: 'You fall on your face.', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(1) },
-                { text: 'Crawl', type: 'flavor', effect: () => log("Crawling is faster anyway.") },
-                { text: 'Demand Carry', type: 'check', stat: 'cha', dc: 10, success: 'Parents pick you up. (+1 CHA)', fail: 'They encourage you to try.', onSuccess: () => state.stats.cha++, onFail: () => {} }
-            ]),
-            createEvent('child_2', 'Strange Words', 'You try to mimic the adults.', [
-                { text: 'Speak', type: 'check', stat: 'int', dc: 12, success: 'You say "Mama"! (+1 INT)', fail: 'You just drool.', onSuccess: () => state.stats.int++, onFail: () => {} },
-                { text: 'Babble', type: 'check', stat: 'cha', dc: 10, success: 'Everyone laughs. (+1 CHA)', fail: 'Silence.', onSuccess: () => state.stats.cha++, onFail: () => {} },
-                { text: 'Listen', type: 'check', stat: 'wis', dc: 10, success: 'You understand their tone. (+1 WIS)', fail: 'Noise.', onSuccess: () => state.stats.wis++, onFail: () => {} }
-            ]),
-            createEvent('child_3', 'The Stray Dog', 'A mangy dog approaches you.', [
-                { text: 'Pet it', type: 'check', stat: 'wis', dc: 10, success: 'It licks your face. (+1 WIS)', fail: 'It growls at you.', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-1) },
-                { text: 'Run', type: 'check', stat: 'dex', dc: 10, success: 'Fast escape! (+1 DEX)', fail: 'You trip.', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(1) },
-                { text: 'Bark Back', type: 'check', stat: 'cha', dc: 12, success: 'The dog is confused. (+1 CHA)', fail: 'It barks louder.', onSuccess: () => state.stats.cha++, onFail: () => modSanity(-1) }
-            ]),
-            createEvent('child_5', 'Lost Coin', 'You find a coin in the mud.', [
-                { text: 'Keep it', type: 'flavor', effect: () => { state.gold++; log("Finders keepers. (+1g)"); } },
-                { text: 'Donate', type: 'flavor', effect: () => { modRep('piety', 2); log("The gods see your kindness."); } },
-                { text: 'Buy Sweet', type: 'flavor', effect: () => { state.health++; log("Yum! (+1 HP)"); } }
-            ])
-        ],
-        Childhood: [
-             createEvent('kid_1', 'The Old Oak', 'The great tree in the village square looks climbable.', [
-                { text: 'Climb High', type: 'check', stat: 'dex', dc: 12, success: 'You see the whole world from up here! (+1 DEX)', fail: 'You slip and scrape your knee. (-1 HP)', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(1) },
-                { text: 'Stay Low', type: 'flavor', effect: () => log("You play safely in the roots.") },
-                { text: 'Shake Branch', type: 'check', stat: 'str', dc: 10, success: 'An apple falls! (+1 HP)', fail: 'Nothing happens.', onSuccess: () => state.health++, onFail: () => {} }
-            ]),
-            createEvent('kid_2', 'Mud Pies', 'Heavy rain has turned the road into a playground.', [
-                { text: 'Play', type: 'check', stat: 'con', dc: 10, success: 'You build a magnificent fortress. (+1 CON)', fail: 'You catch a cold. (-2 HP)', onSuccess: () => state.stats.con++, onFail: () => takeDamage(2) },
-                { text: 'Avoid Dirt', type: 'flavor', effect: () => log("You keep your clothes clean, pleasing your parents.") },
-                { text: 'Throw Mud', type: 'check', stat: 'dex', dc: 12, success: 'Splat! Right on a passerby. (+Fun)', fail: 'You hit yourself.', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }
-            ]),
-            createEvent('kid_3', 'The Market Thief', 'You see a man steal an apple.', [
-                { text: 'Yell', type: 'check', stat: 'cha', dc: 10, success: 'The guards catch him! (+Renown)', fail: 'He glares at you and runs.', onSuccess: () => modRep('renown', 5), onFail: () => modSanity(-1) },
-                { text: 'Stay Silent', type: 'flavor', effect: () => log("You pretend you saw nothing.") },
-                { text: 'Trip Him', type: 'check', stat: 'dex', dc: 12, success: 'He falls! Hero! (+Renown, +1 DEX)', fail: 'He steps over you.', onSuccess: () => { modRep('renown', 5); state.stats.dex++; }, onFail: () => {} }
-            ]),
-            createEvent('kid_4', 'Lesson Time', 'An elder offers to teach you letters.', [
-                { text: 'Learn', type: 'check', stat: 'int', dc: 12, success: 'You learn to write your name. (+1 INT)', fail: 'The ink goes everywhere.', onSuccess: () => { state.stats.int++; state.flags.literate = true; }, onFail: () => {} },
-                { text: 'Skip Class', type: 'flavor', effect: () => { state.stats.dex++; log("You ran around outside instead. (+1 DEX)"); } },
-                { text: 'Daydream', type: 'flavor', effect: () => { modSanity(2); log("You imagined dragons. (+Sanity)"); } }
-            ]),
-            createEvent('kid_5', 'Scary Story', 'The older kids tell ghost stories.', [
-                { text: 'Listen', type: 'check', stat: 'wis', dc: 12, success: 'You realize it is just a story. (+1 WIS)', fail: 'Nightmares haunt you. (-Sanity)', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-2) },
-                { text: 'Scare Them', type: 'check', stat: 'cha', dc: 12, success: 'You roar! They scream! (+1 CHA)', fail: 'They laugh at you.', onSuccess: () => state.stats.cha++, onFail: () => {} },
-                { text: 'Leave', type: 'flavor', effect: () => log("Too scary for you.") }
-            ])
-        ],
-        Teen: [
-            createEvent('teen_1', 'First Crush', 'You catch someone looking at you.', [
-                { text: 'Wink', type: 'check', stat: 'cha', dc: 12, success: 'They blush. (+Romance)', fail: 'You have something in your eye?', onSuccess: () => createRandomRel(30), onFail: () => { modSanity(-1); addTrait('Flushed Cheeks'); } },
-                { text: 'Ignore', type: 'flavor', effect: () => log("Focus on your studies.") },
-                { text: 'Write Note', type: 'check', stat: 'int', dc: 12, success: 'They admire your penmanship. (+Romance)', fail: 'Spelling errors ruin it.', onSuccess: () => createRandomRel(25), onFail: () => modRep('renown', -1) }
-            ]),
-            createEvent('teen_2', 'The Dare', 'Jump across the river!', [
-                { text: 'Jump', type: 'check', stat: 'dex', dc: 14, success: 'Perfect landing! (+1 DEX)', fail: 'Splash. Soaked and cold.', onSuccess: () => state.stats.dex++, onFail: () => { takeDamage(1); modSanity(-1); } },
-                { text: 'No way', type: 'flavor', effect: () => log("Cowardice is better than hypothermia.") },
-                { text: 'Find Bridge', type: 'check', stat: 'int', dc: 10, success: 'Work smarter, not harder. (+1 INT)', fail: 'There is no bridge.', onSuccess: () => state.stats.int++, onFail: () => {} }
-            ]),
-            createEvent('teen_3', 'Apprenticeship', 'The Smith needs help with the bellows.', [
-                { text: 'Work hard', type: 'check', stat: 'con', dc: 12, success: 'Muscles ache, pockets heavy. (+5g)', fail: 'You pass out from heat.', onSuccess: () => { state.gold+=5; state.stats.str++; addTrait('Sooty Skin'); }, onFail: () => takeDamage(2) },
-                { text: 'Slack Off', type: 'check', stat: 'cha', dc: 12, success: 'You got paid for doing nothing. (+5g)', fail: 'Caught! Fired.', onSuccess: () => state.gold+=5, onFail: () => modRep('infamy', 1) },
-                { text: 'Ask Questions', type: 'check', stat: 'int', dc: 12, success: 'You learn the trade. (+1 INT)', fail: 'You annoy the Smith.', onSuccess: () => state.stats.int++, onFail: () => {} }
-            ]),
-            createEvent('teen_4', 'Rebellion', 'Your parents forbid you from the festival.', [
-                { text: 'Sneak out', type: 'check', stat: 'dex', dc: 12, success: 'Best night ever! (+Sanity)', fail: 'Caught! Grounded.', onSuccess: () => modSanity(2), onFail: () => modRep('honor', -2) },
-                { text: 'Obey', type: 'flavor', effect: () => { modRep('honor', 2); log("You stay home and sulk."); } },
-                { text: 'Argue', type: 'check', stat: 'cha', dc: 14, success: 'They relent! (+1 CHA)', fail: 'More chores.', onSuccess: () => state.stats.cha++, onFail: () => modSanity(-1) }
-            ]),
-            createEvent('teen_5', 'Bad Crowd', 'Some delinquents invite you to steal.', [
-                { text: 'Join in', type: 'check', stat: 'dex', dc: 14, success: 'You snag a purse. (+10g, +Infamy)', fail: 'Guards!', onSuccess: () => { state.gold+=10; modRep('infamy', 5); addTrait('Shifty Look'); }, onFail: () => { takeDamage(5); modRep('infamy', 5); } },
-                { text: 'Refuse', type: 'flavor', effect: () => log("You walk away.") },
-                { text: 'Preach', type: 'check', stat: 'cha', dc: 14, success: 'They rethink their lives. (+Piety)', fail: 'They beat you up.', onSuccess: () => modRep('piety', 5), onFail: () => takeDamage(3) }
-            ])
-        ],
-        Adult: [
-            createEvent('adult_1', 'Business Opportunity', 'A merchant offers a risky investment.', [
-                { text: 'Invest 50g', type: 'check', stat: 'int', dc: 14, req: s => s.gold >= 50, success: 'Returns are high! (+100g)', fail: 'It was a scam.', onSuccess: () => { state.gold+=100; addTrait('Fine Clothes'); }, onFail: () => { state.gold-=50; addTrait('Worn Boots'); } },
-                { text: 'Decline', type: 'flavor', effect: () => log("Safe money is good money.") },
-                { text: 'Haggle', type: 'check', stat: 'cha', dc: 12, success: 'You talk them into a better deal. (+10g)', fail: 'They leave insulted.', onSuccess: () => state.gold+=10, onFail: () => {} }
-            ]),
-            createEvent('adult_2', 'Tavern Brawl', 'A drunkard swings a stool at you!', [
-                { text: 'Dodge', type: 'check', stat: 'dex', dc: 14, success: 'You weave effortlessly.', fail: 'Bonk. (-HP)', onSuccess: () => state.stats.dex++, onFail: () => { takeDamage(5); addTrait('Crooked Nose'); } },
-                { text: 'Punch', type: 'check', stat: 'str', dc: 12, success: 'Knockout!', fail: 'You break your hand.', onSuccess: () => { modRep('renown', 2); addTrait('Scar: Knuckles'); }, onFail: () => { takeDamage(3); addTrait('Broken Hand'); } },
-                { text: 'Talk Down', type: 'check', stat: 'cha', dc: 14, success: 'He buys you a drink instead. (+Sanity)', fail: 'He hits you mid-sentence.', onSuccess: () => modSanity(2), onFail: () => takeDamage(4) }
-            ]),
-            createEvent('adult_3', 'The Beggar', 'An old veteran asks for alms.', [
-                { text: 'Give 5g', type: 'flavor', req: s => s.gold >= 5, effect: () => { state.gold-=5; modRep('piety', 5); modRep('honor', 2); log("He blesses you."); } },
-                { text: 'Ignore', type: 'flavor', effect: () => log("You walk past.") },
-                { text: 'Ask Story', type: 'check', stat: 'wis', dc: 10, success: 'He shares wisdom of war. (+1 INT)', fail: 'He rambles nonsense.', onSuccess: () => state.stats.int++, onFail: () => {} }
-            ]),
-            createEvent('adult_4', 'Hard Times', 'Famine strikes the land.', [
-                { text: 'Endure', type: 'check', stat: 'con', dc: 14, success: 'You survive on scraps.', fail: 'You grow weak. (-1 CON)', onSuccess: () => {}, onFail: () => { state.stats.con--; takeDamage(5); addTrait('Gaunt Face'); } },
-                { text: 'Buy Food (20g)', type: 'flavor', req: s => s.gold >= 20, effect: () => { state.gold-=20; log("You eat well while others starve."); addTrait('Well-Fed'); } },
-                { text: 'Hunt', type: 'check', stat: 'dex', dc: 14, success: 'You bring home a deer. (+10 Food)', fail: 'You return empty-handed.', onSuccess: () => { state.health = Math.min(state.maxHealth, state.health + 5); }, onFail: () => takeDamage(2) }
-            ]),
-            createEvent('adult_5', 'Strange Artifact', 'You find a glowing stone.', [
-                { text: 'Touch it', type: 'check', stat: 'wis', dc: 15, success: 'Arcane knowledge flows into you. (+1 INT, +1 WIS)', fail: 'It burns your mind! (-Sanity)', onSuccess: () => { state.stats.int++; state.stats.wis++; addTrait('Far-Off Gaze'); }, onFail: () => { modSanity(-5); addTrait('Muttering'); } },
-                { text: 'Sell it', type: 'flavor', effect: () => { state.gold+=50; log("A wizard bought it eagerly."); } },
-                { text: 'Study', type: 'check', stat: 'int', dc: 16, success: 'You decipher its runes. (+1 INT)', fail: 'Headache.', onSuccess: () => state.stats.int++, onFail: () => modSanity(-1) }
-            ])
-        ],
-        Elder: [
-            createEvent('elder_1', 'Bad Back', 'Getting out of bed is a struggle.', [
-                { text: 'Stretch', type: 'check', stat: 'dex', dc: 12, success: 'You pop it back in place.', fail: 'Ouch. (-HP)', onSuccess: () => {}, onFail: () => { takeDamage(2); addTrait('Stooped Posture'); } },
-                { text: 'Rest', type: 'flavor', effect: () => log("You stay in bed today.") },
-                { text: 'Medicine (10g)', type: 'flavor', req: s => s.gold >= 10, effect: () => { state.gold-=10; log("The salve helps immensely."); } }
-            ]),
-            createEvent('elder_2', 'The Youth', 'Kids are playing on your lawn.', [
-                { text: 'Yell', type: 'check', stat: 'cha', dc: 12, success: 'They scatter!', fail: 'They laugh at you.', onSuccess: () => {}, onFail: () => modSanity(-1) },
-                { text: 'Tell Story', type: 'check', stat: 'cha', dc: 14, success: 'They listen, wide-eyed. (+Renown)', fail: 'You forget the point.', onSuccess: () => modRep('renown', 5), onFail: () => {} },
-                { text: 'Watch', type: 'check', stat: 'wis', dc: 10, success: 'You remember your own youth. (+Sanity)', fail: 'It just makes you sad.', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }
-            ]),
-            createEvent('elder_3', 'Legacy', 'You consider your life\'s work.', [
-                { text: 'Write Memoirs', type: 'check', stat: 'int', dc: 14, success: 'A bestseller! (+Renown, +Gold)', fail: 'Ink blotches everywhere.', onSuccess: () => { modRep('renown', 10); state.gold+=20; addTrait('Ink-Stained Hands'); }, onFail: () => {} },
-                { text: 'Teach', type: 'check', stat: 'wis', dc: 12, success: 'You pass on your skills. (+Karma)', fail: 'Students are annoying.', onSuccess: () => modRep('piety', 5), onFail: () => modSanity(-1) },
-                { text: 'Burn it', type: 'flavor', effect: () => { modSanity(5); log("The past is ash. You feel free."); } }
-            ]),
-            createEvent('elder_4', 'Sickness', 'A winter cough settles deep.', [
-                { text: 'Resist', type: 'check', stat: 'con', dc: 14, success: 'You are tough as old leather.', fail: 'You are frail. (-HP)', onSuccess: () => {}, onFail: () => { takeDamage(5); addTrait('Pale Skin'); } },
-                { text: 'Healer (20g)', type: 'flavor', req: s => s.gold >= 20, effect: () => { state.gold-=20; log("You recover fully."); } },
-                { text: 'Pray', type: 'check', stat: 'wis', dc: 12, success: 'You find peace. (+Piety)', fail: 'Silence answers.', onSuccess: () => modRep('piety', 5), onFail: () => {} }
-            ]),
-            createEvent('elder_5', 'Wisdom', 'The village council asks your advice.', [
-                { text: 'Advise', type: 'check', stat: 'wis', dc: 12, success: 'They nod in agreement. (+Renown)', fail: 'You ramble about turnips.', onSuccess: () => modRep('renown', 5), onFail: () => {} },
-                { text: 'Ramble', type: 'flavor', effect: () => { log("You tell them about the good old days."); } },
-                { text: 'Listen', type: 'check', stat: 'int', dc: 14, success: 'You solve their problem. (+Renown)', fail: 'Too complex.', onSuccess: () => modRep('renown', 10), onFail: () => {} }
-            ])
-        ],
+Infancy: [
+    createEvent('child_0', 'First Breath', 'The world is cold and bright.', [
+        { text: 'Cry', type: 'flavor', effect: () => log("You scream your arrival to the world.") },
+        { text: 'Sleep', type: 'flavor', effect: () => { state.health = Math.min(state.maxHealth, state.health + 1); log("You rest peacefully. (+1 HP)"); } },
+        { text: 'Look Around', type: 'check', stat: 'wis', dc: 10, success: 'Your eyes focus early. (+1 WIS)', fail: 'It is all a blur.', onSuccess: () => state.stats.wis++, onFail: () => {} }
+    ]),
+    createEvent('child_1', 'First Steps', 'You wobble on unsteady legs.', [
+        { text: 'Walk', type: 'check', stat: 'dex', dc: 10, success: 'You walk! (+1 DEX)', fail: 'You fall hard.', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(1) },
+        { text: 'Crawl', type: 'flavor', effect: () => log("Low to the ground feels safer.") },
+        { text: 'Refuse', type: 'check', stat: 'wil', dc: 10, success: 'Stubborn resolve. (+1 WIL)', fail: 'You give in.', onSuccess: () => state.stats.wil++, onFail: () => {} }
+    ]),
+    createEvent('child_2', 'Strange Sounds', 'You attempt to shape noise into meaning.', [
+        { text: 'Mimic', type: 'check', stat: 'int', dc: 12, success: 'You form a clear word. (+1 INT)', fail: 'Just drool.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Babble', type: 'check', stat: 'cha', dc: 10, success: 'People smile. (+1 CHA)', fail: 'Awkward silence.', onSuccess: () => state.stats.cha++, onFail: () => {} },
+        { text: 'Listen', type: 'check', stat: 'wis', dc: 10, success: 'You grasp tone and intent. (+1 WIS)', fail: 'Only noise.', onSuccess: () => state.stats.wis++, onFail: () => {} }
+    ]),
+    createEvent('child_3', 'The Stray Dog', 'A mangy dog approaches you.', [
+        { text: 'Pet it', type: 'check', stat: 'wis', dc: 10, success: 'It licks your face. (+1 WIS)', fail: 'It growls.', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-1) },
+        { text: 'Run', type: 'check', stat: 'dex', dc: 10, success: 'Fast escape! (+1 DEX)', fail: 'You trip.', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(1) },
+        { text: 'Bark Back', type: 'check', stat: 'cha', dc: 12, success: 'The dog tilts its head. (+1 CHA)', fail: 'It snaps.', onSuccess: () => state.stats.cha++, onFail: () => modSanity(-1) }
+    ]),
+    createEvent('child_4', 'Bright Fire', 'Flames flicker nearby.', [
+        { text: 'Stare', type: 'check', stat: 'wis', dc: 10, success: 'You memorize the movement. (+1 WIS)', fail: 'It hurts to look.', onSuccess: () => state.stats.wis++, onFail: () => {} },
+        { text: 'Reach', type: 'check', stat: 'dex', dc: 12, success: 'Quick fingers. (+1 DEX)', fail: 'You get burned.', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(2) },
+        { text: 'Cry', type: 'flavor', effect: () => log("The fire frightens you.") }
+    ]),
+    createEvent('child_5', 'Lost Coin', 'You find a coin in the mud.', [
+        { text: 'Keep it', type: 'flavor', effect: () => { state.gold++; log("Finders keepers. (+1g)"); } },
+        { text: 'Offer it', type: 'flavor', effect: () => { modRep('piety', 2); log("A quiet act of goodwill."); } },
+        { text: 'Trade it', type: 'flavor', effect: () => { state.health++; log("A small treat lifts your spirits. (+1 HP)"); } }
+    ]),
+    createEvent('child_6', 'Sudden Noise', 'Something crashes nearby.', [
+        { text: 'Hide', type: 'check', stat: 'dex', dc: 10, success: 'You vanish from sight. (+1 DEX)', fail: 'Too slow.', onSuccess: () => state.stats.dex++, onFail: () => {} },
+        { text: 'Investigate', type: 'check', stat: 'wis', dc: 10, success: 'You understand the cause. (+1 WIS)', fail: 'Confusing chaos.', onSuccess: () => state.stats.wis++, onFail: () => {} },
+        { text: 'Laugh', type: 'check', stat: 'cha', dc: 12, success: 'Your calm spreads. (+1 CHA)', fail: 'No one joins in.', onSuccess: () => state.stats.cha++, onFail: () => {} }
+    ]),
+    createEvent('child_7', 'Soft Song', 'A gentle melody fills the air.', [
+        { text: 'Hum Along', type: 'check', stat: 'cha', dc: 10, success: 'Your voice matches. (+1 CHA)', fail: 'Off-key.', onSuccess: () => state.stats.cha++, onFail: () => {} },
+        { text: 'Listen Closely', type: 'check', stat: 'wis', dc: 10, success: 'You remember it perfectly. (+1 WIS)', fail: 'It fades.', onSuccess: () => state.stats.wis++, onFail: () => {} },
+        { text: 'Clap', type: 'flavor', effect: () => log("Rhythm comes naturally.") }
+    ]),
+    createEvent('child_8', 'Mirror Reflection', 'You see yourself reflected.', [
+        { text: 'Touch', type: 'check', stat: 'int', dc: 10, success: 'You recognize yourself. (+1 INT)', fail: 'Confusing illusion.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Smile', type: 'check', stat: 'cha', dc: 10, success: 'Charm even yourself. (+1 CHA)', fail: 'Awkward stare.', onSuccess: () => state.stats.cha++, onFail: () => {} },
+        { text: 'Ignore', type: 'flavor', effect: () => log("You lose interest quickly.") }
+    ]),
+    createEvent('child_9', 'Cold Rain', 'Rain soaks your clothes.', [
+        { text: 'Endure', type: 'check', stat: 'con', dc: 10, success: 'You tough it out. (+1 CON)', fail: 'You shiver.', onSuccess: () => state.stats.con++, onFail: () => takeDamage(1) },
+        { text: 'Splash', type: 'check', stat: 'cha', dc: 10, success: 'Joy in the storm. (+1 CHA)', fail: 'Just cold.', onSuccess: () => state.stats.cha++, onFail: () => {} },
+        { text: 'Curl Up', type: 'flavor', effect: () => log("You wait for it to pass.") }
+    ]),
+        createEvent('child_10', 'Warm Blanket', 'You are wrapped tightly in cloth.', [
+        { text: 'Relax', type: 'check', stat: 'con', dc: 10, success: 'You rest deeply. (+1 CON)', fail: 'Too tight.', onSuccess: () => state.stats.con++, onFail: () => {} },
+        { text: 'Wiggle Free', type: 'check', stat: 'dex', dc: 10, success: 'You escape! (+1 DEX)', fail: 'Still stuck.', onSuccess: () => state.stats.dex++, onFail: () => {} },
+        { text: 'Cry', type: 'flavor', effect: () => log("Someone rushes to comfort you.") }
+    ]),
+    createEvent('child_11', 'Gentle Hands', 'Someone lifts you carefully.', [
+        { text: 'Reach Out', type: 'check', stat: 'cha', dc: 10, success: 'They smile warmly. (+1 CHA)', fail: 'They reposition you.', onSuccess: () => state.stats.cha++, onFail: () => {} },
+        { text: 'Go Limp', type: 'flavor', effect: () => log("You trust the moment.") },
+        { text: 'Observe', type: 'check', stat: 'wis', dc: 10, success: 'You read their mood. (+1 WIS)', fail: 'Hard to tell.', onSuccess: () => state.stats.wis++, onFail: () => {} }
+    ]),
+    createEvent('child_12', 'Bright Colors', 'Painted toys sway overhead.', [
+        { text: 'Focus', type: 'check', stat: 'int', dc: 10, success: 'Patterns emerge. (+1 INT)', fail: 'Too many colors.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Grab', type: 'check', stat: 'dex', dc: 10, success: 'You catch one! (+1 DEX)', fail: 'Just air.', onSuccess: () => state.stats.dex++, onFail: () => {} },
+        { text: 'Laugh', type: 'check', stat: 'cha', dc: 10, success: 'Joy spreads. (+1 CHA)', fail: 'Quiet moment.', onSuccess: () => state.stats.cha++, onFail: () => {} }
+    ]),
+    createEvent('child_13', 'Distant Thunder', 'The sky rumbles far away.', [
+        { text: 'Startle', type: 'check', stat: 'wis', dc: 10, success: 'You learn caution. (+1 WIS)', fail: 'Fear lingers.', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-1) },
+        { text: 'Sleep Through', type: 'flavor', effect: () => { state.health++; log("You sleep soundly. (+1 HP)"); } },
+        { text: 'Gaze Skyward', type: 'check', stat: 'int', dc: 12, success: 'Curiosity awakens. (+1 INT)', fail: 'Too abstract.', onSuccess: () => state.stats.int++, onFail: () => {} }
+    ]),
+    createEvent('child_14', 'Tasty Mash', 'A spoon approaches your mouth.', [
+        { text: 'Eat', type: 'check', stat: 'con', dc: 10, success: 'Nutritious! (+1 CON)', fail: 'You spit it out.', onSuccess: () => state.stats.con++, onFail: () => {} },
+        { text: 'Refuse', type: 'check', stat: 'wil', dc: 10, success: 'Strong will. (+1 WIL)', fail: 'You relent.', onSuccess: () => state.stats.wil++, onFail: () => {} },
+        { text: 'Play With It', type: 'flavor', effect: () => log("The food ends up everywhere.") }
+    ]),
+    createEvent('child_15', 'Sunlight', 'Warm light spills across the floor.', [
+        { text: 'Crawl Into It', type: 'check', stat: 'dex', dc: 10, success: 'Comfort found. (+1 DEX)', fail: 'Too slow.', onSuccess: () => state.stats.dex++, onFail: () => {} },
+        { text: 'Close Eyes', type: 'check', stat: 'wis', dc: 10, success: 'You savor the warmth. (+1 WIS)', fail: 'Distracted.', onSuccess: () => state.stats.wis++, onFail: () => {} },
+        { text: 'Nap', type: 'flavor', effect: () => { state.health++; log("A peaceful rest. (+1 HP)"); } }
+    ]),
+    createEvent('child_16', 'Rough Floor', 'You tumble onto hard ground.', [
+        { text: 'Brace', type: 'check', stat: 'con', dc: 10, success: 'You endure it. (+1 CON)', fail: 'It hurts.', onSuccess: () => state.stats.con++, onFail: () => takeDamage(1) },
+        { text: 'Cry Loudly', type: 'check', stat: 'cha', dc: 10, success: 'Help arrives fast. (+1 CHA)', fail: 'Delayed response.', onSuccess: () => state.stats.cha++, onFail: () => {} },
+        { text: 'Stay Quiet', type: 'check', stat: 'wil', dc: 10, success: 'Inner strength grows. (+1 WIL)', fail: 'Fear creeps in.', onSuccess: () => state.stats.wil++, onFail: () => modSanity(-1) }
+    ]),
+    createEvent('child_17', 'Moving Shadows', 'Shapes dance on the wall.', [
+        { text: 'Track Them', type: 'check', stat: 'wis', dc: 10, success: 'You predict movement. (+1 WIS)', fail: 'Disorienting.', onSuccess: () => state.stats.wis++, onFail: () => {} },
+        { text: 'Reach Out', type: 'check', stat: 'dex', dc: 12, success: 'Quick hands. (+1 DEX)', fail: 'Nothing there.', onSuccess: () => state.stats.dex++, onFail: () => {} },
+        { text: 'Ignore', type: 'flavor', effect: () => log("They lose their mystery.") }
+    ]),
+    createEvent('child_18', 'Familiar Face', 'A well-known face appears.', [
+        { text: 'Smile', type: 'check', stat: 'cha', dc: 10, success: 'Bond deepens. (+1 CHA)', fail: 'They still smile.', onSuccess: () => state.stats.cha++, onFail: () => {} },
+        { text: 'Study Them', type: 'check', stat: 'int', dc: 10, success: 'You memorize features. (+1 INT)', fail: 'Details slip away.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Reach Up', type: 'flavor', effect: () => log("You seek comfort.") }
+    ]),
+    createEvent('child_19', 'Quiet Night', 'The world grows still.', [
+        { text: 'Listen', type: 'check', stat: 'wis', dc: 10, success: 'You sense safety. (+1 WIS)', fail: 'Uneasy silence.', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-1) },
+        { text: 'Sleep', type: 'flavor', effect: () => { state.health++; log("Deep rest. (+1 HP)"); } },
+        { text: 'Fidget', type: 'check', stat: 'dex', dc: 10, success: 'Restless energy. (+1 DEX)', fail: 'You tire yourself.', onSuccess: () => state.stats.dex++, onFail: () => {} }
+    ])
+],
+Childhood: [
+    createEvent('kid_1', 'The Old Oak', 'The great tree in the square looks climbable.', [
+        { text: 'Climb High', type: 'check', stat: 'dex', dc: 12, success: 'You see the whole world from up here! (+1 DEX)', fail: 'You slip and scrape your knee. (-1 HP)', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(1) },
+        { text: 'Stay Low', type: 'flavor', effect: () => log("You play safely among the roots.") },
+        { text: 'Shake Branch', type: 'check', stat: 'str', dc: 10, success: 'An apple falls! (+1 HP)', fail: 'Nothing happens.', onSuccess: () => state.health++, onFail: () => {} }
+    ]),
+    createEvent('kid_2', 'Mud Pies', 'Heavy rain has turned the road into a playground.', [
+        { text: 'Play', type: 'check', stat: 'con', dc: 10, success: 'You build a mighty mud fortress. (+1 CON)', fail: 'You feel awful later. (-2 HP)', onSuccess: () => state.stats.con++, onFail: () => takeDamage(2) },
+        { text: 'Avoid Dirt', type: 'flavor', effect: () => log("You keep yourself spotless.") },
+        { text: 'Throw Mud', type: 'check', stat: 'dex', dc: 12, success: 'Direct hit! (+Sanity)', fail: 'You slip and fall.', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }
+    ]),
+    createEvent('kid_3', 'The Market Thief', 'You see a man steal an apple.', [
+        { text: 'Yell', type: 'check', stat: 'cha', dc: 10, success: 'The guards catch him! (+Renown)', fail: 'He glares and escapes.', onSuccess: () => modRep('renown', 5), onFail: () => modSanity(-1) },
+        { text: 'Stay Silent', type: 'flavor', effect: () => log("You keep the secret to yourself.") },
+        { text: 'Trip Him', type: 'check', stat: 'dex', dc: 12, success: 'He falls! A small hero is born. (+Renown, +1 DEX)', fail: 'He steps over you.', onSuccess: () => { modRep('renown', 5); state.stats.dex++; }, onFail: () => {} }
+    ]),
+    createEvent('kid_4', 'Lesson Time', 'An elder offers to teach you letters.', [
+        { text: 'Learn', type: 'check', stat: 'int', dc: 12, success: 'You learn to write your name. (+1 INT)', fail: 'Ink stains everything.', onSuccess: () => { state.stats.int++; state.flags.literate = true; }, onFail: () => {} },
+        { text: 'Skip Class', type: 'flavor', effect: () => { state.stats.dex++; log("You explore instead. (+1 DEX)"); } },
+        { text: 'Daydream', type: 'flavor', effect: () => { modSanity(2); log("Your mind wanders to fantastic places. (+Sanity)"); } }
+    ]),
+    createEvent('kid_5', 'Scary Story', 'Older kids tell ghost stories after dark.', [
+        { text: 'Listen', type: 'check', stat: 'wis', dc: 12, success: 'You spot the holes in the tale. (+1 WIS)', fail: 'Nightmares follow. (-Sanity)', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-2) },
+        { text: 'Scare Them', type: 'check', stat: 'cha', dc: 12, success: 'You turn the tables! (+1 CHA)', fail: 'They laugh at you.', onSuccess: () => state.stats.cha++, onFail: () => {} },
+        { text: 'Leave', type: 'flavor', effect: () => log("You decide it is not worth it.") }
+    ]),
+    createEvent('kid_6', 'Broken Cart', 'A merchant’s cart has snapped a wheel.', [
+        { text: 'Help Push', type: 'check', stat: 'str', dc: 10, success: 'Teamwork pays off. (+1 STR)', fail: 'Too heavy.', onSuccess: () => state.stats.str++, onFail: () => {} },
+        { text: 'Watch Closely', type: 'check', stat: 'wis', dc: 10, success: 'You learn how carts work. (+1 WIS)', fail: 'Boring details.', onSuccess: () => state.stats.wis++, onFail: () => {} },
+        { text: 'Sneak Away', type: 'flavor', effect: () => log("Not your problem.") }
+    ]),
+    createEvent('kid_7', 'Thrown Stone', 'Someone challenges you to hit a distant mark.', [
+        { text: 'Take Aim', type: 'check', stat: 'dex', dc: 12, success: 'Bullseye! (+1 DEX)', fail: 'Wide miss.', onSuccess: () => state.stats.dex++, onFail: () => {} },
+        { text: 'Throw Hard', type: 'check', stat: 'str', dc: 10, success: 'Raw power impresses. (+1 STR)', fail: 'It drops short.', onSuccess: () => state.stats.str++, onFail: () => {} },
+        { text: 'Refuse', type: 'flavor', effect: () => log("You decline the challenge.") }
+    ]),
+    createEvent('kid_8', 'Hidden Path', 'You discover a narrow trail behind the buildings.', [
+        { text: 'Explore', type: 'check', stat: 'wis', dc: 10, success: 'You map the shortcut. (+1 WIS)', fail: 'You get lost.', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-1) },
+        { text: 'Mark It', type: 'check', stat: 'int', dc: 10, success: 'You remember it forever. (+1 INT)', fail: 'Details fade.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Ignore It', type: 'flavor', effect: () => log("Better not to wander.") }
+    ]),
+    createEvent('kid_9', 'First Dare', 'You are dared to do something embarrassing.', [
+        { text: 'Accept', type: 'check', stat: 'cha', dc: 12, success: 'Everyone cheers. (+1 CHA)', fail: 'Awkward silence.', onSuccess: () => state.stats.cha++, onFail: () => modSanity(-1) },
+        { text: 'Twist It', type: 'check', stat: 'int', dc: 10, success: 'You turn it clever. (+1 INT)', fail: 'It falls flat.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Walk Away', type: 'flavor', effect: () => log("You keep your dignity.") }
+    ]),
+    createEvent('kid_10', 'Night Watch', 'You stay awake later than usual, listening to the dark.', [
+        { text: 'Stay Alert', type: 'check', stat: 'con', dc: 10, success: 'You endure the fatigue. (+1 CON)', fail: 'You nod off.', onSuccess: () => state.stats.con++, onFail: () => {} },
+        { text: 'Imagine Monsters', type: 'flavor', effect: () => { modSanity(-1); log("Your imagination runs wild."); } },
+        { text: 'Count Stars', type: 'check', stat: 'wis', dc: 10, success: 'You feel calm and small. (+1 WIS)', fail: 'Clouds hide them.', onSuccess: () => state.stats.wis++, onFail: () => {} }
+    ]),
+        createEvent('kid_11', 'Scraped Knee', 'You take a tumble while running.', [
+        { text: 'Shake It Off', type: 'check', stat: 'con', dc: 10, success: 'You barely feel it. (+1 CON)', fail: 'It stings badly.', onSuccess: () => state.stats.con++, onFail: () => takeDamage(1) },
+        { text: 'Laugh It Away', type: 'check', stat: 'cha', dc: 10, success: 'Others laugh with you. (+1 CHA)', fail: 'They wince instead.', onSuccess: () => state.stats.cha++, onFail: () => {} },
+        { text: 'Cry', type: 'flavor', effect: () => log("Someone comforts you.") }
+    ]),
+    createEvent('kid_12', 'Borrowed Tool', 'You sneak a look at an adult’s tools.', [
+        { text: 'Examine', type: 'check', stat: 'int', dc: 10, success: 'You understand their purpose. (+1 INT)', fail: 'Confusing shapes.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Try It', type: 'check', stat: 'dex', dc: 12, success: 'Careful hands. (+1 DEX)', fail: 'Almost drop it.', onSuccess: () => state.stats.dex++, onFail: () => {} },
+        { text: 'Put It Back', type: 'flavor', effect: () => log("Better not risk trouble.") }
+    ]),
+    createEvent('kid_13', 'Street Game', 'Children gather for a noisy game.', [
+        { text: 'Join In', type: 'check', stat: 'dex', dc: 10, success: 'You keep up! (+1 DEX)', fail: 'Too fast.', onSuccess: () => state.stats.dex++, onFail: () => {} },
+        { text: 'Make Rules', type: 'check', stat: 'cha', dc: 10, success: 'They listen to you. (+1 CHA)', fail: 'Arguments erupt.', onSuccess: () => state.stats.cha++, onFail: () => modSanity(-1) },
+        { text: 'Watch', type: 'check', stat: 'wis', dc: 10, success: 'You learn their tricks. (+1 WIS)', fail: 'Hard to follow.', onSuccess: () => state.stats.wis++, onFail: () => {} }
+    ]),
+    createEvent('kid_14', 'Lost Friend', 'You cannot find someone you play with.', [
+        { text: 'Search', type: 'check', stat: 'wis', dc: 10, success: 'You track them down. (+1 WIS)', fail: 'You wander aimlessly.', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-1) },
+        { text: 'Ask Around', type: 'check', stat: 'cha', dc: 10, success: 'Someone helps you. (+1 CHA)', fail: 'No one knows.', onSuccess: () => state.stats.cha++, onFail: () => {} },
+        { text: 'Give Up', type: 'flavor', effect: () => log("You play alone instead.") }
+    ]),
+    createEvent('kid_15', 'Shiny Beetle', 'A colorful insect crawls nearby.', [
+        { text: 'Catch It', type: 'check', stat: 'dex', dc: 12, success: 'You hold it gently. (+1 DEX)', fail: 'It escapes.', onSuccess: () => state.stats.dex++, onFail: () => {} },
+        { text: 'Study It', type: 'check', stat: 'int', dc: 10, success: 'You notice its patterns. (+1 INT)', fail: 'It moves too fast.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Let It Be', type: 'flavor', effect: () => log("Some things are best untouched.") }
+    ]),
+    createEvent('kid_16', 'Raised Voices', 'Adults argue nearby.', [
+        { text: 'Listen Closely', type: 'check', stat: 'wis', dc: 12, success: 'You grasp the tension. (+1 WIS)', fail: 'It makes no sense.', onSuccess: () => state.stats.wis++, onFail: () => {} },
+        { text: 'Hide', type: 'check', stat: 'dex', dc: 10, success: 'You stay unseen. (+1 DEX)', fail: 'They notice you.', onSuccess: () => state.stats.dex++, onFail: () => modSanity(-1) },
+        { text: 'Ignore It', type: 'flavor', effect: () => log("You pretend nothing is wrong.") }
+    ]),
+    createEvent('kid_17', 'Small Errand', 'You are asked to deliver a message.', [
+        { text: 'Deliver Quickly', type: 'check', stat: 'dex', dc: 10, success: 'Fast and reliable. (+1 DEX)', fail: 'You get distracted.', onSuccess: () => state.stats.dex++, onFail: () => {} },
+        { text: 'Remember Exactly', type: 'check', stat: 'int', dc: 10, success: 'Word-perfect. (+1 INT)', fail: 'You forget part of it.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Ask Questions', type: 'check', stat: 'cha', dc: 10, success: 'They appreciate it. (+1 CHA)', fail: 'They wave you off.', onSuccess: () => state.stats.cha++, onFail: () => {} }
+    ]),
+    createEvent('kid_18', 'Hidden Snack', 'You find food saved for later.', [
+        { text: 'Eat It', type: 'check', stat: 'con', dc: 10, success: 'Energy restored. (+1 CON)', fail: 'Stomach ache.', onSuccess: () => state.stats.con++, onFail: () => takeDamage(1) },
+        { text: 'Share It', type: 'check', stat: 'cha', dc: 10, success: 'Friendship grows. (+1 CHA)', fail: 'They decline.', onSuccess: () => state.stats.cha++, onFail: () => {} },
+        { text: 'Leave It', type: 'flavor', effect: () => log("You resist temptation.") }
+    ]),
+    createEvent('kid_19', 'Tall Fence', 'A fence blocks your path.', [
+        { text: 'Climb It', type: 'check', stat: 'str', dc: 10, success: 'You pull yourself over. (+1 STR)', fail: 'Too slick.', onSuccess: () => state.stats.str++, onFail: () => {} },
+        { text: 'Find a Gap', type: 'check', stat: 'wis', dc: 10, success: 'You spot an opening. (+1 WIS)', fail: 'No luck.', onSuccess: () => state.stats.wis++, onFail: () => {} },
+        { text: 'Turn Back', type: 'flavor', effect: () => log("Another route it is.") }
+    ]),
+    createEvent('kid_20', 'Quiet Moment', 'You sit alone with your thoughts.', [
+        { text: 'Reflect', type: 'check', stat: 'wis', dc: 10, success: 'You feel steadier. (+1 WIS)', fail: 'Thoughts tangle.', onSuccess: () => state.stats.wis++, onFail: () => {} },
+        { text: 'Plan Ahead', type: 'check', stat: 'int', dc: 10, success: 'You imagine futures. (+1 INT)', fail: 'Too abstract.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Hum Softly', type: 'flavor', effect: () => { modSanity(1); log("A calm settles in."); } }
+    ])
+],
+ Teen: [
+    createEvent('teen_1', 'First Crush', 'You catch someone looking at you.', [
+        { text: 'Wink', type: 'check', stat: 'cha', dc: 12, success: 'They blush. (+Romance)', fail: 'Awkward moment.', onSuccess: () => createRandomRel(30), onFail: () => { modSanity(-1); addTrait('Flushed Cheeks'); } },
+        { text: 'Ignore', type: 'flavor', effect: () => log("You pretend not to notice.") },
+        { text: 'Write Note', type: 'check', stat: 'int', dc: 12, success: 'Well-written and charming. (+Romance)', fail: 'The message is unclear.', onSuccess: () => createRandomRel(25), onFail: () => modRep('renown', -1) }
+    ]),
+    createEvent('teen_2', 'The Dare', 'Jump across the river!', [
+        { text: 'Jump', type: 'check', stat: 'dex', dc: 14, success: 'Perfect landing! (+1 DEX)', fail: 'Splash. Soaked and cold.', onSuccess: () => state.stats.dex++, onFail: () => { takeDamage(1); modSanity(-1); } },
+        { text: 'Refuse', type: 'flavor', effect: () => log("You decide it is not worth it.") },
+        { text: 'Find Another Way', type: 'check', stat: 'int', dc: 10, success: 'A clever route. (+1 INT)', fail: 'No alternative presents itself.', onSuccess: () => state.stats.int++, onFail: () => {} }
+    ]),
+    createEvent('teen_3', 'Apprenticeship', 'The smith needs help with the bellows.', [
+        { text: 'Work Hard', type: 'check', stat: 'con', dc: 12, success: 'Grueling work pays off. (+5g, +1 STR)', fail: 'You collapse from exhaustion.', onSuccess: () => { state.gold += 5; state.stats.str++; addTrait('Sooty Skin'); }, onFail: () => takeDamage(2) },
+        { text: 'Slack Off', type: 'check', stat: 'cha', dc: 12, success: 'You still get paid. (+5g)', fail: 'Caught and dismissed.', onSuccess: () => state.gold += 5, onFail: () => modRep('infamy', 1) },
+        { text: 'Ask Questions', type: 'check', stat: 'int', dc: 12, success: 'You learn the basics of the trade. (+1 INT)', fail: 'Your curiosity annoys.', onSuccess: () => state.stats.int++, onFail: () => {} }
+    ]),
+    createEvent('teen_4', 'Curfew Bell', 'The town bell rings, signaling the end of festivities.', [
+        { text: 'Sneak Around', type: 'check', stat: 'dex', dc: 12, success: 'A thrilling night. (+Sanity)', fail: 'You are noticed.', onSuccess: () => modSanity(2), onFail: () => modRep('honor', -2) },
+        { text: 'Head Back', type: 'flavor', effect: () => { modRep('honor', 2); log("You play it safe."); } },
+        { text: 'Talk Your Way Out', type: 'check', stat: 'cha', dc: 14, success: 'You are let go. (+1 CHA)', fail: 'Extra chores assigned.', onSuccess: () => state.stats.cha++, onFail: () => modSanity(-1) }
+    ]),
+    createEvent('teen_5', 'Bad Crowd', 'Some delinquents invite you to steal.', [
+        { text: 'Join In', type: 'check', stat: 'dex', dc: 14, success: 'You grab some coin. (+10g, +Infamy)', fail: 'Guards intervene.', onSuccess: () => { state.gold += 10; modRep('infamy', 5); addTrait('Shifty Look'); }, onFail: () => { takeDamage(5); modRep('infamy', 5); } },
+        { text: 'Refuse', type: 'flavor', effect: () => log("You keep your distance.") },
+        { text: 'Lecture Them', type: 'check', stat: 'cha', dc: 14, success: 'They hesitate. (+Piety)', fail: 'They rough you up.', onSuccess: () => modRep('piety', 5), onFail: () => takeDamage(3) }
+    ]),
+    createEvent('teen_6', 'Late Study', 'You stay up late practicing a skill.', [
+        { text: 'Push Through', type: 'check', stat: 'con', dc: 12, success: 'Progress at a cost. (+1 CON)', fail: 'Burnout hits.', onSuccess: () => state.stats.con++, onFail: () => modSanity(-1) },
+        { text: 'Focus Smart', type: 'check', stat: 'int', dc: 12, success: 'Efficient learning. (+1 INT)', fail: 'Little sticks.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Quit Early', type: 'flavor', effect: () => log("You decide rest matters more.") }
+    ]),
+    createEvent('teen_7', 'Public Performance', 'You are pushed toward the center of attention.', [
+        { text: 'Embrace It', type: 'check', stat: 'cha', dc: 12, success: 'The crowd loves you. (+1 CHA)', fail: 'You freeze.', onSuccess: () => state.stats.cha++, onFail: () => modSanity(-1) },
+        { text: 'Deflect', type: 'check', stat: 'int', dc: 10, success: 'You redirect smoothly. (+1 INT)', fail: 'Still awkward.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Disappear', type: 'check', stat: 'dex', dc: 10, success: 'You slip away unseen. (+1 DEX)', fail: 'Too slow.', onSuccess: () => state.stats.dex++, onFail: () => {} }
+    ]),
+    createEvent('teen_8', 'Secret Meeting', 'You overhear talk of something hidden.', [
+        { text: 'Investigate', type: 'check', stat: 'wis', dc: 12, success: 'You piece things together. (+1 WIS)', fail: 'Confusing whispers.', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-1) },
+        { text: 'Spread Rumor', type: 'check', stat: 'cha', dc: 12, success: 'Your story spreads. (+Renown)', fail: 'No one listens.', onSuccess: () => modRep('renown', 3), onFail: () => {} },
+        { text: 'Ignore It', type: 'flavor', effect: () => log("You mind your own business.") }
+    ]),
+    createEvent('teen_9', 'Street Scuffle', 'Tempers flare over a small insult.', [
+        { text: 'Fight Back', type: 'check', stat: 'str', dc: 12, success: 'You hold your ground. (+1 STR)', fail: 'You take a hit.', onSuccess: () => state.stats.str++, onFail: () => takeDamage(2) },
+        { text: 'Talk It Down', type: 'check', stat: 'cha', dc: 12, success: 'The tension breaks. (+1 CHA)', fail: 'Words fail.', onSuccess: () => state.stats.cha++, onFail: () => modSanity(-1) },
+        { text: 'Walk Away', type: 'flavor', effect: () => log("You refuse to escalate.") }
+    ]),
+    createEvent('teen_10', 'Quiet Resolve', 'You reflect on who you want to become.', [
+        { text: 'Train Body', type: 'check', stat: 'str', dc: 10, success: 'Strength grows. (+1 STR)', fail: 'Little change.', onSuccess: () => state.stats.str++, onFail: () => {} },
+        { text: 'Train Mind', type: 'check', stat: 'int', dc: 10, success: 'Clarity sharpens. (+1 INT)', fail: 'Distracted thoughts.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Train Spirit', type: 'check', stat: 'wis', dc: 10, success: 'Inner calm settles. (+1 WIS)', fail: 'Restless night.', onSuccess: () => state.stats.wis++, onFail: () => {} }
+    ]),
+        createEvent('teen_11', 'First Job', 'You are offered a small paid task.', [
+        { text: 'Accept Eagerly', type: 'check', stat: 'con', dc: 12, success: 'Hard work earns respect. (+10g, +1 CON)', fail: 'You tire quickly.', onSuccess: () => { state.gold += 10; state.stats.con++; }, onFail: () => takeDamage(1) },
+        { text: 'Negotiate Pay', type: 'check', stat: 'cha', dc: 12, success: 'They agree to more. (+15g)', fail: 'Offer withdrawn.', onSuccess: () => state.gold += 15, onFail: () => modRep('renown', -1) },
+        { text: 'Decline', type: 'flavor', effect: () => log("You decide your time is worth more.") }
+    ]),
+    createEvent('teen_12', 'Rumor About You', 'Whispers follow you through town.', [
+        { text: 'Confront It', type: 'check', stat: 'cha', dc: 14, success: 'You shut it down. (+Renown)', fail: 'It spreads faster.', onSuccess: () => modRep('renown', 5), onFail: () => modSanity(-2) },
+        { text: 'Lean Into It', type: 'check', stat: 'cha', dc: 12, success: 'You control the narrative. (+Infamy)', fail: 'It turns cruel.', onSuccess: () => modRep('infamy', 3), onFail: () => modSanity(-1) },
+        { text: 'Ignore It', type: 'flavor', effect: () => log("You hope it fades with time.") }
+    ]),
+    createEvent('teen_13', 'Mentor’s Advice', 'An older figure offers guidance.', [
+        { text: 'Listen Closely', type: 'check', stat: 'wis', dc: 12, success: 'Wisdom sinks in. (+1 WIS)', fail: 'It feels irrelevant.', onSuccess: () => state.stats.wis++, onFail: () => {} },
+        { text: 'Ask Questions', type: 'check', stat: 'int', dc: 12, success: 'You gain clarity. (+1 INT)', fail: 'You overwhelm them.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Dismiss It', type: 'flavor', effect: () => log("You trust your own instincts.") }
+    ]),
+    createEvent('teen_14', 'Festival Night', 'Music and lanterns fill the streets.', [
+        { text: 'Dance', type: 'check', stat: 'dex', dc: 12, success: 'You move effortlessly. (+1 DEX)', fail: 'Clumsy steps.', onSuccess: () => state.stats.dex++, onFail: () => modSanity(-1) },
+        { text: 'Flirt', type: 'check', stat: 'cha', dc: 12, success: 'Sparks fly. (+Romance)', fail: 'Rejection stings.', onSuccess: () => createRandomRel(20), onFail: () => modSanity(-2) },
+        { text: 'Watch Lights', type: 'check', stat: 'wis', dc: 10, success: 'You feel at peace. (+Sanity)', fail: 'You feel distant.', onSuccess: () => modSanity(2), onFail: () => {} }
+    ]),
+    createEvent('teen_15', 'Crossed Line', 'You break a rule you were warned about.', [
+        { text: 'Lie About It', type: 'check', stat: 'cha', dc: 14, success: 'They believe you. (+Infamy)', fail: 'Caught red-handed.', onSuccess: () => modRep('infamy', 3), onFail: () => modRep('honor', -3) },
+        { text: 'Confess', type: 'check', stat: 'wis', dc: 12, success: 'Honesty softens punishment. (+Honor)', fail: 'Disappointment cuts deep.', onSuccess: () => modRep('honor', 3), onFail: () => modSanity(-2) },
+        { text: 'Run', type: 'check', stat: 'dex', dc: 12, success: 'You escape consequences. (+1 DEX)', fail: 'You are stopped.', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(2) }
+    ]),
+    createEvent('teen_16', 'Skill Rival', 'Someone challenges you openly.', [
+        { text: 'Compete', type: 'check', stat: 'str', dc: 12, success: 'You prove yourself. (+1 STR, +Renown)', fail: 'You are outmatched.', onSuccess: () => { state.stats.str++; modRep('renown', 3); }, onFail: () => modSanity(-1) },
+        { text: 'Outthink Them', type: 'check', stat: 'int', dc: 12, success: 'You win cleverly. (+1 INT)', fail: 'They mock you.', onSuccess: () => state.stats.int++, onFail: () => modRep('renown', -1) },
+        { text: 'Decline', type: 'flavor', effect: () => log("You refuse to play their game.") }
+    ]),
+    createEvent('teen_17', 'Trusted Secret', 'Someone confides in you.', [
+        { text: 'Keep It', type: 'check', stat: 'wis', dc: 10, success: 'Trust deepens. (+Honor)', fail: 'It weighs on you.', onSuccess: () => modRep('honor', 3), onFail: () => modSanity(-1) },
+        { text: 'Share It', type: 'check', stat: 'cha', dc: 12, success: 'It spreads carefully. (+Renown)', fail: 'Betrayal is noticed.', onSuccess: () => modRep('renown', 2), onFail: () => modRep('honor', -3) },
+        { text: 'Avoid Them', type: 'flavor', effect: () => log("You distance yourself.") }
+    ]),
+    createEvent('teen_18', 'Night Patrol', 'You help watch the streets after dark.', [
+        { text: 'Stay Alert', type: 'check', stat: 'wis', dc: 12, success: 'You spot trouble early. (+1 WIS)', fail: 'Eyes grow heavy.', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-1) },
+        { text: 'Show Bravery', type: 'check', stat: 'str', dc: 12, success: 'You scare off danger. (+Renown)', fail: 'You are shaken.', onSuccess: () => modRep('renown', 3), onFail: () => takeDamage(2) },
+        { text: 'Slack Off', type: 'flavor', effect: () => log("Nothing happens… hopefully.") }
+    ]),
+    createEvent('teen_19', 'Unexpected Loss', 'Something important to you is gone.', [
+        { text: 'Search Everywhere', type: 'check', stat: 'wis', dc: 12, success: 'You recover it. (+Sanity)', fail: 'It is truly lost.', onSuccess: () => modSanity(2), onFail: () => modSanity(-3) },
+        { text: 'Let Go', type: 'check', stat: 'wis', dc: 10, success: 'You accept it. (+1 WIS)', fail: 'Regret lingers.', onSuccess: () => state.stats.wis++, onFail: () => {} },
+        { text: 'Blame Someone', type: 'check', stat: 'cha', dc: 12, success: 'They apologize. (+Infamy)', fail: 'It backfires.', onSuccess: () => modRep('infamy', 2), onFail: () => modRep('renown', -2) }
+    ]),
+    createEvent('teen_20', 'Defining Choice', 'You realize this moment will shape you.', [
+        { text: 'Choose Discipline', type: 'check', stat: 'con', dc: 12, success: 'You harden your resolve. (+1 CON)', fail: 'Doubt creeps in.', onSuccess: () => state.stats.con++, onFail: () => modSanity(-1) },
+        { text: 'Choose Ambition', type: 'check', stat: 'int', dc: 12, success: 'You set bold goals. (+1 INT)', fail: 'Plans feel hollow.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Choose Compassion', type: 'check', stat: 'wis', dc: 12, success: 'You vow to care. (+1 WIS)', fail: 'The world feels cold.', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-1) }
+    ])
+],
+Adult: [
+    createEvent('adult_1', 'Business Opportunity', 'A merchant offers a risky investment.', [
+        { text: 'Invest 50g', type: 'check', stat: 'int', dc: 14, req: s => s.gold >= 50, success: 'Returns are high! (+100g)', fail: 'It was a scam.', onSuccess: () => { state.gold += 100; addTrait('Fine Clothes'); }, onFail: () => { state.gold -= 50; addTrait('Worn Boots'); } },
+        { text: 'Decline', type: 'flavor', effect: () => log("You keep your coin safe.") },
+        { text: 'Haggle', type: 'check', stat: 'cha', dc: 12, success: 'You squeeze out extra value. (+10g)', fail: 'Talks collapse.', onSuccess: () => state.gold += 10, onFail: () => {} }
+    ]),
+    createEvent('adult_2', 'Tavern Brawl', 'A drunkard swings a stool at you!', [
+        { text: 'Dodge', type: 'check', stat: 'dex', dc: 14, success: 'You slip aside cleanly. (+1 DEX)', fail: 'Bonk. (-HP)', onSuccess: () => state.stats.dex++, onFail: () => { takeDamage(5); addTrait('Crooked Nose'); } },
+        { text: 'Punch', type: 'check', stat: 'str', dc: 12, success: 'Knockout!', fail: 'You injure your hand.', onSuccess: () => { modRep('renown', 2); addTrait('Scar: Knuckles'); }, onFail: () => { takeDamage(3); addTrait('Broken Hand'); } },
+        { text: 'Talk Down', type: 'check', stat: 'cha', dc: 14, success: 'The fight dissolves. (+Sanity)', fail: 'He swings mid-sentence.', onSuccess: () => modSanity(2), onFail: () => takeDamage(4) }
+    ]),
+    createEvent('adult_3', 'The Beggar', 'A weathered veteran asks for alms.', [
+        { text: 'Give 5g', type: 'flavor', req: s => s.gold >= 5, effect: () => { state.gold -= 5; modRep('piety', 5); modRep('honor', 2); log("A quiet blessing follows you."); } },
+        { text: 'Ignore', type: 'flavor', effect: () => log("You keep walking.") },
+        { text: 'Ask Story', type: 'check', stat: 'wis', dc: 10, success: 'Hard-earned wisdom is shared. (+1 INT)', fail: 'Rambling tales.', onSuccess: () => state.stats.int++, onFail: () => {} }
+    ]),
+    createEvent('adult_4', 'Hard Times', 'Famine grips the land.', [
+        { text: 'Endure', type: 'check', stat: 'con', dc: 14, success: 'You survive on little.', fail: 'You grow gaunt.', onSuccess: () => {}, onFail: () => { state.stats.con--; takeDamage(5); addTrait('Gaunt Face'); } },
+        { text: 'Buy Food (20g)', type: 'flavor', req: s => s.gold >= 20, effect: () => { state.gold -= 20; addTrait('Well-Fed'); log("You keep your strength."); } },
+        { text: 'Hunt', type: 'check', stat: 'dex', dc: 14, success: 'Fresh meat sustains you. (+HP)', fail: 'You return injured.', onSuccess: () => { state.health = Math.min(state.maxHealth, state.health + 5); }, onFail: () => takeDamage(2) }
+    ]),
+    createEvent('adult_5', 'Strange Artifact', 'You find a faintly glowing stone.', [
+        { text: 'Touch It', type: 'check', stat: 'wis', dc: 15, success: 'Hidden truths surface. (+1 INT, +1 WIS)', fail: 'Your mind recoils.', onSuccess: () => { state.stats.int++; state.stats.wis++; addTrait('Far-Off Gaze'); }, onFail: () => { modSanity(-5); addTrait('Muttering'); } },
+        { text: 'Sell It', type: 'flavor', effect: () => { state.gold += 50; log("A mage pays well."); } },
+        { text: 'Study It', type: 'check', stat: 'int', dc: 16, success: 'You decode its nature. (+1 INT)', fail: 'Splitting headache.', onSuccess: () => state.stats.int++, onFail: () => modSanity(-1) }
+    ]),
+    createEvent('adult_6', 'Contract Work', 'A short-term job promises quick pay.', [
+        { text: 'Accept', type: 'check', stat: 'con', dc: 12, success: 'The work is done. (+15g)', fail: 'You overextend yourself.', onSuccess: () => state.gold += 15, onFail: () => takeDamage(2) },
+        { text: 'Negotiate', type: 'check', stat: 'cha', dc: 12, success: 'Better terms secured. (+20g)', fail: 'They hire someone else.', onSuccess: () => state.gold += 20, onFail: () => {} },
+        { text: 'Decline', type: 'flavor', effect: () => log("You pass on the offer.") }
+    ]),
+    createEvent('adult_7', 'Road Ambush', 'Bandits block the road ahead.', [
+        { text: 'Fight', type: 'check', stat: 'str', dc: 14, success: 'They scatter. (+Renown)', fail: 'You are wounded.', onSuccess: () => modRep('renown', 3), onFail: () => takeDamage(6) },
+        { text: 'Flee', type: 'check', stat: 'dex', dc: 14, success: 'You escape unharmed.', fail: 'An arrow grazes you.', onSuccess: () => {}, onFail: () => takeDamage(3) },
+        { text: 'Parley', type: 'check', stat: 'cha', dc: 14, success: 'They let you pass. (+Honor)', fail: 'They demand coin.', onSuccess: () => modRep('honor', 2), onFail: () => state.gold = Math.max(0, state.gold - 10) }
+    ]),
+    createEvent('adult_8', 'Political Favor', 'A minor official requests discreet help.', [
+        { text: 'Assist', type: 'check', stat: 'int', dc: 13, success: 'You gain influence. (+Renown)', fail: 'It backfires.', onSuccess: () => modRep('renown', 4), onFail: () => modRep('infamy', 2) },
+        { text: 'Refuse', type: 'flavor', effect: () => log("You avoid entanglement.") },
+        { text: 'Exploit', type: 'check', stat: 'cha', dc: 14, success: 'You extract payment. (+25g)', fail: 'They shut you out.', onSuccess: () => state.gold += 25, onFail: () => {} }
+    ]),
+    createEvent('adult_9', 'Lingering Injury', 'An old wound flares painfully.', [
+        { text: 'Push Through', type: 'check', stat: 'con', dc: 14, success: 'You endure it. (+1 CON)', fail: 'Pain slows you.', onSuccess: () => state.stats.con++, onFail: () => takeDamage(2) },
+        { text: 'Rest', type: 'flavor', effect: () => { state.health = Math.min(state.maxHealth, state.health + 3); log("Time heals you."); } },
+        { text: 'Seek Remedy', type: 'check', stat: 'wis', dc: 12, success: 'You find relief. (+Sanity)', fail: 'No improvement.', onSuccess: () => modSanity(2), onFail: () => {} }
+    ]),
+    createEvent('adult_10', 'Crossroads', 'You pause to reassess your direction.', [
+        { text: 'Pursue Wealth', type: 'check', stat: 'int', dc: 10, success: 'Plans sharpen. (+1 INT)', fail: 'Doubts linger.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Pursue Power', type: 'check', stat: 'str', dc: 10, success: 'Resolve hardens. (+1 STR)', fail: 'Motivation fades.', onSuccess: () => state.stats.str++, onFail: () => {} },
+        { text: 'Pursue Peace', type: 'check', stat: 'wis', dc: 10, success: 'Calm settles in. (+1 WIS)', fail: 'Restlessness remains.', onSuccess: () => state.stats.wis++, onFail: () => {} }
+    ]),
+        createEvent('adult_11', 'Market Fire', 'A sudden blaze erupts among crowded stalls.', [
+        { text: 'Help Others', type: 'check', stat: 'str', dc: 13, success: 'You pull people to safety. (+Honor)', fail: 'You suffer burns.', onSuccess: () => modRep('honor', 3), onFail: () => { takeDamage(4); addTrait('Burn Scars'); } },
+        { text: 'Save Goods', type: 'check', stat: 'dex', dc: 13, success: 'You salvage valuables. (+20g)', fail: 'Smoke overwhelms you.', onSuccess: () => state.gold += 20, onFail: () => takeDamage(2) },
+        { text: 'Slip Away', type: 'flavor', effect: () => log("You vanish before blame can fall.") }
+    ]),
+
+    createEvent('adult_12', 'Old Rival', 'Someone from your past confronts you publicly.', [
+        { text: 'Challenge Them', type: 'check', stat: 'str', dc: 14, success: 'You assert dominance. (+Renown)', fail: 'You are humiliated.', onSuccess: () => modRep('renown', 3), onFail: () => modRep('infamy', 2) },
+        { text: 'Outwit Them', type: 'check', stat: 'int', dc: 13, success: 'You expose their lies.', fail: 'Your words falter.', onSuccess: () => modRep('honor', 2), onFail: () => {} },
+        { text: 'Let It Go', type: 'check', stat: 'wis', dc: 12, success: 'Peace feels earned. (+Sanity)', fail: 'Bitterness lingers.', onSuccess: () => modSanity(2), onFail: () => modSanity(-1) }
+    ]),
+
+    createEvent('adult_13', 'Traveling Healer', 'A wandering healer offers unconventional aid.', [
+        { text: 'Submit to Treatment', type: 'check', stat: 'con', dc: 12, success: 'Your body feels renewed. (+HP)', fail: 'Side effects linger.', onSuccess: () => state.health = Math.min(state.maxHealth, state.health + 6), onFail: () => addTrait('Strange Rash') },
+        { text: 'Ask Questions', type: 'check', stat: 'wis', dc: 12, success: 'You learn herbal lore. (+1 WIS)', fail: 'Conflicting advice.', onSuccess: () => state.stats.wis++, onFail: () => {} },
+        { text: 'Refuse', type: 'flavor', effect: () => log("You trust your own resilience.") }
+    ]),
+
+    createEvent('adult_14', 'Night Watch', 'You are asked to guard a district overnight.', [
+        { text: 'Stay Alert', type: 'check', stat: 'wis', dc: 13, success: 'Trouble never comes. (+Renown)', fail: 'You miss something.', onSuccess: () => modRep('renown', 2), onFail: () => modRep('infamy', 1) },
+        { text: 'Confront Suspicion', type: 'check', stat: 'cha', dc: 13, success: 'You defuse tensions.', fail: 'Words escalate.', onSuccess: () => modRep('honor', 2), onFail: () => takeDamage(2) },
+        { text: 'Doze Off', type: 'flavor', effect: () => addTrait('Heavy Sleeper') }
+    ]),
+
+    createEvent('adult_15', 'Forbidden Book', 'You discover a book others avoid.', [
+        { text: 'Read It', type: 'check', stat: 'int', dc: 15, success: 'Dark knowledge sharpens you. (+1 INT)', fail: 'The words gnaw at you.', onSuccess: () => state.stats.int++, onFail: () => modSanity(-3) },
+        { text: 'Burn It', type: 'flavor', effect: () => { modRep('piety', 3); log("The smoke feels cleansing."); } },
+        { text: 'Sell It Quietly', type: 'check', stat: 'cha', dc: 14, success: 'A collector pays well. (+30g)', fail: 'You attract suspicion.', onSuccess: () => state.gold += 30, onFail: () => modRep('infamy', 1) }
+    ]),
+
+    createEvent('adult_16', 'Rumor Mill', 'Your name circulates in whispered conversations.', [
+        { text: 'Lean Into It', type: 'check', stat: 'cha', dc: 12, success: 'Your mystique grows. (+Renown)', fail: 'Rumors twist.', onSuccess: () => modRep('renown', 2), onFail: () => modRep('infamy', 2) },
+        { text: 'Correct the Record', type: 'check', stat: 'int', dc: 12, success: 'Truth prevails. (+Honor)', fail: 'No one listens.', onSuccess: () => modRep('honor', 2), onFail: () => {} },
+        { text: 'Ignore It', type: 'flavor', effect: () => log("You let gossip burn itself out.") }
+    ]),
+
+    createEvent('adult_17', 'Debt Called In', 'An old obligation comes due.', [
+        { text: 'Pay (25g)', type: 'flavor', req: s => s.gold >= 25, effect: () => { state.gold -= 25; modRep('honor', 3); } },
+        { text: 'Delay', type: 'check', stat: 'cha', dc: 13, success: 'You buy time.', fail: 'Pressure mounts.', onSuccess: () => {}, onFail: () => modRep('infamy', 2) },
+        { text: 'Intimidate', type: 'check', stat: 'str', dc: 14, success: 'They back off. (+Renown)', fail: 'They bring help.', onSuccess: () => modRep('renown', 2), onFail: () => takeDamage(3) }
+    ]),
+
+    createEvent('adult_18', 'Hunting Mishap', 'A routine hunt turns dangerous.', [
+        { text: 'Finish the Hunt', type: 'check', stat: 'dex', dc: 14, success: 'You bring back a prize. (+Food, +Renown)', fail: 'You are mauled.', onSuccess: () => modRep('renown', 2), onFail: () => { takeDamage(5); addTrait('Animal Bite Scar'); } },
+        { text: 'Retreat Carefully', type: 'check', stat: 'wis', dc: 12, success: 'You escape unharmed.', fail: 'You stumble.', onSuccess: () => {}, onFail: () => takeDamage(2) },
+        { text: 'Abandon the Hunt', type: 'flavor', effect: () => log("Some prey is not worth the risk.") }
+    ]),
+
+    createEvent('adult_19', 'Unexpected Inheritance', 'A distant relation leaves you something small.', [
+        { text: 'Accept Graciously', type: 'flavor', effect: () => { state.gold += 20; addTrait('Family Keepsake'); } },
+        { text: 'Investigate', type: 'check', stat: 'int', dc: 13, success: 'You uncover hidden value. (+40g)', fail: 'Nothing more is found.', onSuccess: () => state.gold += 40, onFail: () => {} },
+        { text: 'Decline', type: 'check', stat: 'wis', dc: 10, success: 'Peace of mind. (+Sanity)', fail: 'Lingering regret.', onSuccess: () => modSanity(2), onFail: () => modSanity(-1) }
+    ]),
+
+    createEvent('adult_20', 'Moment of Reflection', 'A quiet night invites honesty with yourself.', [
+        { text: 'Recall Triumphs', type: 'check', stat: 'cha', dc: 10, success: 'Confidence swells. (+1 CHA)', fail: 'Doubts creep in.', onSuccess: () => state.stats.cha++, onFail: () => {} },
+        { text: 'Confront Regrets', type: 'check', stat: 'wis', dc: 12, success: 'You make peace. (+Sanity)', fail: 'Old wounds reopen.', onSuccess: () => modSanity(3), onFail: () => modSanity(-2) },
+        { text: 'Plan the Future', type: 'check', stat: 'int', dc: 12, success: 'A clear path forms. (+1 INT)', fail: 'Uncertainty remains.', onSuccess: () => state.stats.int++, onFail: () => {} }
+    ])
+],
+Elder: [
+    createEvent('elder_1', 'Bad Back', 'Getting out of bed is a struggle.', [
+        { text: 'Stretch', type: 'check', stat: 'dex', dc: 12, success: 'You loosen up slowly.', fail: 'A sharp pain shoots through you.', onSuccess: () => {}, onFail: () => { takeDamage(2); addTrait('Stooped Posture'); } },
+        { text: 'Rest', type: 'flavor', effect: () => log("You decide today is for rest.") },
+        { text: 'Medicine (10g)', type: 'flavor', req: s => s.gold >= 10, effect: () => { state.gold -= 10; log("The salve dulls the pain."); } }
+    ]),
+    createEvent('elder_2', 'The Youth', 'Children are playing noisily nearby.', [
+        { text: 'Yell', type: 'check', stat: 'cha', dc: 12, success: 'They scatter in a panic.', fail: 'They mock you.', onSuccess: () => {}, onFail: () => modSanity(-1) },
+        { text: 'Tell Story', type: 'check', stat: 'cha', dc: 14, success: 'They listen in awe. (+Renown)', fail: 'You lose your train of thought.', onSuccess: () => modRep('renown', 5), onFail: () => {} },
+        { text: 'Watch Quietly', type: 'check', stat: 'wis', dc: 10, success: 'Memories warm you. (+Sanity)', fail: 'Nostalgia stings.', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }
+    ]),
+    createEvent('elder_3', 'Legacy', 'You reflect on what you will leave behind.', [
+        { text: 'Write Memoirs', type: 'check', stat: 'int', dc: 14, success: 'Your life fills many pages. (+Renown, +Gold)', fail: 'The words won’t come.', onSuccess: () => { modRep('renown', 10); state.gold += 20; addTrait('Ink-Stained Hands'); }, onFail: () => {} },
+        { text: 'Teach', type: 'check', stat: 'wis', dc: 12, success: 'Hard-earned lessons are passed on. (+Piety)', fail: 'Patience runs thin.', onSuccess: () => modRep('piety', 5), onFail: () => modSanity(-1) },
+        { text: 'Let Go', type: 'flavor', effect: () => { modSanity(5); log("You release the past."); } }
+    ]),
+    createEvent('elder_4', 'Sickness', 'A deep cough lingers in your chest.', [
+        { text: 'Resist', type: 'check', stat: 'con', dc: 14, success: 'You weather the illness.', fail: 'It drains you.', onSuccess: () => {}, onFail: () => { takeDamage(5); addTrait('Pale Skin'); } },
+        { text: 'Healer (20g)', type: 'flavor', req: s => s.gold >= 20, effect: () => { state.gold -= 20; log("You recover with care."); } },
+        { text: 'Pray', type: 'check', stat: 'wis', dc: 12, success: 'You find calm acceptance. (+Piety)', fail: 'No answer comes.', onSuccess: () => modRep('piety', 5), onFail: () => {} }
+    ]),
+    createEvent('elder_5', 'Wisdom', 'The council seeks your guidance.', [
+        { text: 'Advise', type: 'check', stat: 'wis', dc: 12, success: 'Your words carry weight. (+Renown)', fail: 'They seem unconvinced.', onSuccess: () => modRep('renown', 5), onFail: () => {} },
+        { text: 'Ramble', type: 'flavor', effect: () => log("You drift through old stories.") },
+        { text: 'Listen Carefully', type: 'check', stat: 'int', dc: 14, success: 'You untangle the issue. (+Renown)', fail: 'It is too tangled.', onSuccess: () => modRep('renown', 10), onFail: () => {} }
+    ]),
+    createEvent('elder_6', 'Fading Strength', 'Simple tasks feel heavier than before.', [
+        { text: 'Push Through', type: 'check', stat: 'con', dc: 12, success: 'You prove you still can. (+Sanity)', fail: 'You overdo it.', onSuccess: () => modSanity(1), onFail: () => takeDamage(2) },
+        { text: 'Ask for Help', type: 'flavor', effect: () => log("You accept your limits.") },
+        { text: 'Change Routine', type: 'check', stat: 'int', dc: 10, success: 'You adapt wisely. (+1 INT)', fail: 'Old habits persist.', onSuccess: () => state.stats.int++, onFail: () => {} }
+    ]),
+    createEvent('elder_7', 'Old Rival', 'You encounter someone from long ago.', [
+        { text: 'Make Peace', type: 'check', stat: 'cha', dc: 12, success: 'Bitterness fades. (+Sanity)', fail: 'Old wounds reopen.', onSuccess: () => modSanity(2), onFail: () => modSanity(-2) },
+        { text: 'Ignore', type: 'flavor', effect: () => log("Some things are better left alone.") },
+        { text: 'Reminisce', type: 'check', stat: 'wis', dc: 12, success: 'You gain perspective. (+1 WIS)', fail: 'Memories hurt.', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-1) }
+    ]),
+    createEvent('elder_8', 'Quiet Days', 'Your days grow slower and quieter.', [
+        { text: 'Embrace Stillness', type: 'check', stat: 'wis', dc: 10, success: 'Peace settles in. (+1 WIS)', fail: 'Restlessness creeps in.', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-1) },
+        { text: 'Seek Distraction', type: 'check', stat: 'int', dc: 10, success: 'Your mind stays sharp. (+1 INT)', fail: 'It feels hollow.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Sleep More', type: 'flavor', effect: () => log("You let time pass gently.") }
+    ]),
+    createEvent('elder_9', 'Final Project', 'One last task weighs on your mind.', [
+        { text: 'Finish It', type: 'check', stat: 'con', dc: 14, success: 'You see it done. (+Renown)', fail: 'It remains unfinished.', onSuccess: () => modRep('renown', 8), onFail: () => modSanity(-1) },
+        { text: 'Delegate', type: 'check', stat: 'cha', dc: 12, success: 'Others carry it forward. (+Honor)', fail: 'They misunderstand.', onSuccess: () => modRep('honor', 3), onFail: () => {} },
+        { text: 'Abandon It', type: 'flavor', effect: () => log("You decide it no longer matters.") }
+    ]),
+    createEvent('elder_10', 'Closing Reflections', 'You sit quietly with your thoughts.', [
+        { text: 'Seek Meaning', type: 'check', stat: 'wis', dc: 12, success: 'You feel content. (+Sanity)', fail: 'Questions linger.', onSuccess: () => modSanity(3), onFail: () => {} },
+        { text: 'Count Blessings', type: 'check', stat: 'int', dc: 10, success: 'Gratitude fills you. (+Piety)', fail: 'It feels forced.', onSuccess: () => modRep('piety', 3), onFail: () => {} },
+        { text: 'Simply Rest', type: 'flavor', effect: () => log("You close your eyes and breathe.") }
+    ]),
+        createEvent('elder_11', 'Old Friends', 'You meet a friend from decades past.', [
+        { text: 'Share Memories', type: 'check', stat: 'cha', dc: 12, success: 'Laughter warms your heart. (+Sanity)', fail: 'Stories falter.', onSuccess: () => modSanity(3), onFail: () => modSanity(-1) },
+        { text: 'Listen', type: 'check', stat: 'wis', dc: 12, success: 'You gain insight. (+1 WIS)', fail: 'The tales confuse you.', onSuccess: () => state.stats.wis++, onFail: () => {} },
+        { text: 'Walk Away', type: 'flavor', effect: () => log("Time has changed you both.")}
+    ]),
+
+    createEvent('elder_12', 'Stormy Night', 'Thunder shakes the old roof.', [
+        { text: 'Reassure Yourself', type: 'check', stat: 'wis', dc: 12, success: 'You feel safe inside. (+Sanity)', fail: 'Fear lingers.', onSuccess: () => modSanity(2), onFail: () => modSanity(-1) },
+        { text: 'Inspect Damage', type: 'check', stat: 'dex', dc: 14, success: 'Repairs are minor. (+1 DEX)', fail: 'A beam falls.', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(3) },
+        { text: 'Stay in Bed', type: 'flavor', effect: () => log("You let the storm pass overhead.")}
+    ]),
+
+    createEvent('elder_13', 'Local Ceremony', 'The village honors your years of service.', [
+        { text: 'Attend Proudly', type: 'check', stat: 'cha', dc: 12, success: 'Applause warms your soul. (+Renown)', fail: 'You fumble words.', onSuccess: () => modRep('renown', 5), onFail: () => {} },
+        { text: 'Observe Silently', type: 'check', stat: 'wis', dc: 10, success: 'You appreciate traditions. (+Piety)', fail: 'Distracted thoughts.', onSuccess: () => modRep('piety', 3), onFail: () => {} },
+        { text: 'Skip It', type: 'flavor', effect: () => log("Some honors feel distant.")}
+    ]),
+
+    createEvent('elder_14', 'Unexpected Visitor', 'Someone seeks your advice unexpectedly.', [
+        { text: 'Help Generously', type: 'check', stat: 'wis', dc: 12, success: 'You guide them well. (+Renown)', fail: 'Advice misfires.', onSuccess: () => modRep('renown', 5), onFail: () => {} },
+        { text: 'Cautious Counsel', type: 'check', stat: 'int', dc: 12, success: 'Your guidance is careful and useful. (+1 INT)', fail: 'They misunderstand.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Turn Away', type: 'flavor', effect: () => log("You choose solitude over obligation.")}
+    ]),
+
+    createEvent('elder_15', 'Memory Lane', 'You wander familiar streets from your youth.', [
+        { text: 'Recall Details', type: 'check', stat: 'int', dc: 12, success: 'Memories sharpen your mind. (+1 INT)', fail: 'Some memories confuse you.', onSuccess: () => state.stats.int++, onFail: () => modSanity(-1) },
+        { text: 'Relive Joys', type: 'check', stat: 'wis', dc: 10, success: 'Nostalgia soothes you. (+Sanity)', fail: 'Bittersweet feelings arise.', onSuccess: () => modSanity(2), onFail: () => modSanity(-1) },
+        { text: 'Avoid Old Haunts', type: 'flavor', effect: () => log("Not all paths are worth treading.")}
+    ]),
+
+    createEvent('elder_16', 'A Gift', 'A young villager offers you something small.', [
+        { text: 'Accept Graciously', type: 'flavor', effect: () => { modRep('honor', 2); log("The gesture warms your heart."); } },
+        { text: 'Teach Them', type: 'check', stat: 'wis', dc: 12, success: 'You give more than a gift. (+Piety)', fail: 'They do not understand.', onSuccess: () => modRep('piety', 3), onFail: () => {} },
+        { text: 'Decline Politely', type: 'check', stat: 'cha', dc: 12, success: 'You avoid burden. (+Sanity)', fail: 'They feel slighted.', onSuccess: () => modSanity(1), onFail: () => modRep('infamy', 1) }
+    ]),
+
+    createEvent('elder_17', 'Minor Mishap', 'A small accident reminds you of your age.', [
+        { text: 'Recover Gracefully', type: 'check', stat: 'dex', dc: 12, success: 'You rise unshaken. (+1 DEX)', fail: 'You stumble awkwardly.', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(2) },
+        { text: 'Call for Aid', type: 'flavor', effect: () => log("Help arrives without fuss.") },
+        { text: 'Ignore It', type: 'check', stat: 'con', dc: 10, success: 'Pain is minor. (+Sanity)', fail: 'Aches linger.', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }
+    ]),
+
+    createEvent('elder_18', 'Evening Reflection', 'You watch the sunset in silence.', [
+        { text: 'Meditate', type: 'check', stat: 'wis', dc: 12, success: 'A deep calm fills you. (+Sanity)', fail: 'Thoughts wander restlessly.', onSuccess: () => modSanity(3), onFail: () => modSanity(-1) },
+        { text: 'Recall Achievements', type: 'check', stat: 'int', dc: 12, success: 'You feel proud. (+Renown)', fail: 'Regrets creep in.', onSuccess: () => modRep('renown', 5), onFail: () => modSanity(-1) },
+        { text: 'Simply Watch', type: 'flavor', effect: () => log("The colors fade into memory.")}
+    ]),
+
+    createEvent('elder_19', 'Final Advice', 'Someone asks your last words of guidance.', [
+        { text: 'Speak from Experience', type: 'check', stat: 'wis', dc: 12, success: 'They learn well. (+Piety, +Renown)', fail: 'Your meaning is lost.', onSuccess: () => { modRep('piety', 3); modRep('renown', 3); }, onFail: () => {} },
+        { text: 'Offer Simple Truths', type: 'check', stat: 'int', dc: 10, success: 'They understand clearly. (+1 INT)', fail: 'They misunderstand.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Say Nothing', type: 'flavor', effect: () => log("Silence speaks volumes.")}
+    ]),
+
+    createEvent('elder_20', 'Twilight Rest', 'You lie down as the day ends.', [
+        { text: 'Reflect Peacefully', type: 'check', stat: 'wis', dc: 12, success: 'Contentment fills you. (+Sanity)', fail: 'Unresolved thoughts trouble you.', onSuccess: () => modSanity(3), onFail: () => modSanity(-1) },
+        { text: 'Dream of Youth', type: 'check', stat: 'int', dc: 10, success: 'Memory sharpens. (+1 INT)', fail: 'Fleeting visions fade.', onSuccess: () => state.stats.int++, onFail: () => {} },
+        { text: 'Simply Sleep', type: 'flavor', effect: () => log("The world drifts away gently.")}
+    ])
+],
         Permission: [
             createEvent('perm_ask', 'Permission to Leave', 'You wish to travel, but you are young.', [
                 { text: 'Ask Parents', type: 'check', stat: 'cha', dc: 12, success: 'They agree to let you go. The family moves with you.', fail: 'They forbid it.', 
