@@ -1041,14 +1041,15 @@
     // ===== LEGENDARY (myth-tier, almost unique) =====
     { name: "Seer", rarity: "Legendary", desc: "Innate ability to perceive beyond linear time and physical reality." },
 
-    // ===== DEFECTS (Inbreeding/Bad Luck) =====
-    { name: "Habsburg Jaw", rarity: "Defect", desc: "A painfully prominent underbite." },
-    { name: "Hemophilia", rarity: "Defect", desc: "Blood does not clot. Injuries are dangerous." },
-    { name: "Clubfoot", rarity: "Defect", desc: "A twisted foot making walking difficult." },
-    { name: "Frail Body", rarity: "Defect", desc: "Bones break like dry twigs." },
-    { name: "Slow Mind", rarity: "Defect", desc: "Thoughts move through molasses." },
-    { name: "Bleeder", rarity: "Defect", desc: "Constant nosebleeds and bruising." },
-    { name: "Hunchback", rarity: "Defect", desc: "A curvature of the spine." }
+    // ===== DEFECTS (Inbreeding/Bad Luck) - NOW WITH STAT IMPACTS =====
+    { name: "Habsburg Jaw", rarity: "Defect", desc: "A painfully prominent underbite. (-2 CHA)", stats: { cha: -2 } },
+    { name: "Hemophilia", rarity: "Defect", desc: "Blood does not clot. (-2 CON)", stats: { con: -2 } },
+    { name: "Clubfoot", rarity: "Defect", desc: "A twisted foot. (-2 DEX)", stats: { dex: -2 } },
+    { name: "Frail Body", rarity: "Defect", desc: "Bones break like dry twigs. (-2 STR)", stats: { str: -2 } },
+    { name: "Slow Mind", rarity: "Defect", desc: "Thoughts move through molasses. (-2 INT)", stats: { int: -2 } },
+    { name: "Bleeder", rarity: "Defect", desc: "Constant nosebleeds. (-1 CON, -1 CHA)", stats: { con: -1, cha: -1 } },
+    { name: "Hunchback", rarity: "Defect", desc: "A curvature of the spine. (-1 DEX, -1 CHA)", stats: { dex: -1, cha: -1 } },
+    { name: "Weak Lungs", rarity: "Defect", desc: "Breathing is a labor. (-2 CON)", stats: { con: -2 } }
 ];
 
     // NEW: DEFINITIONS FOR ACQUIRED TRAITS
@@ -1080,10 +1081,24 @@
     };
 
     const GeneticEngine = {
+        getRandomMutation: function() {
+            const roll = Math.random();
+            let tier = 'Common';
+            if (roll > 0.99) tier = 'Legendary';
+            else if (roll > 0.96) tier = 'Epic';
+            else if (roll > 0.85) tier = 'Rare';
+            else if (roll > 0.60) tier = 'Uncommon';
+            
+            // Explicitly filter for non-defects just in case
+            const pool = MUTATION_POOL.filter(m => m.rarity === tier);
+            if(pool.length > 0) return pool[Math.floor(Math.random() * pool.length)];
+            return MUTATION_POOL[0]; // Fallback to first common
+        },
+
         generate: function(houseName = null, forcedTrait = null) {
             let look = {};
             
-            // 1. Base Appearance (House Template or Random)
+            // 1. Base Appearance
             if (houseName && HOUSE_PHENOTYPES[houseName]) {
                 look = { ...HOUSE_PHENOTYPES[houseName] };
             } else {
@@ -1092,14 +1107,12 @@
                 look.skin = COSMETICS.skin[Math.floor(Math.random() * COSMETICS.skin.length)];
             }
             
-            // Height is always random/independent of House template
             look.height = COSMETICS.height[Math.floor(Math.random() * COSMETICS.height.length)];
 
             let mutations = [];
             
-            // 2. Forced Trait Logic (House Generation)
+            // 2. Forced Trait Logic
             if (forcedTrait) {
-                // If the trait is a mutation, force it
                 const mut = MUTATION_POOL.find(m => m.name === forcedTrait);
                 if (mut) {
                     mutations.push(mut);
@@ -1110,22 +1123,22 @@
                 }
             }
 
-            // 3. Random Mutation (Only if no mutation exists - LIMIT 1)
-            if (mutations.length === 0 && Math.random() < 0.25) { 
-                const roll = Math.random();
-                let tier = 'Common';
-                if (roll > 0.99) tier = 'Legendary';
-                else if (roll > 0.96) tier = 'Epic';
-                else if (roll > 0.85) tier = 'Rare';
-                else if (roll > 0.60) tier = 'Uncommon';
-                
-                const pool = MUTATION_POOL.filter(m => m.rarity === tier);
-                if(pool.length > 0) {
-                    mutations.push(pool[Math.floor(Math.random() * pool.length)]);
+            // 3. Guaranteed Mutation (Minimum 1)
+            if (mutations.length === 0) { 
+                mutations.push(this.getRandomMutation());
+            }
+            
+            // 4. Rare Chance for 2nd Mutation (20%) - UPDATED
+            // Applies to all generated characters (NPCs included)
+            if (mutations.length < 2 && Math.random() < 0.20) {
+                let m2 = this.getRandomMutation();
+                // Avoid duplicates
+                if (m2.name !== mutations[0].name) {
+                    mutations.push(m2);
                 }
             }
             
-            return { ...look, mutations };
+            return { ...look, mutations, defect: null };
         },
         
         // Inheritance Logic
@@ -1133,17 +1146,43 @@
             const fGenes = father.appearance || this.generate();
             const mGenes = mother.appearance || this.generate();
             
-            const hair = Math.random() > 0.5 ? fGenes.hair : mGenes.hair;
-            const eyes = Math.random() > 0.5 ? fGenes.eyes : mGenes.eyes;
-            const skin = Math.random() > 0.5 ? fGenes.skin : mGenes.skin;
+            // --- NEW: GRANDPARENT LOOKUP ---
+            // Try to find grandparents via IDs stored on parents
+            const grandparents = [];
+            const findRel = (id) => state.relationships.find(r => r.id === id);
+
+            if (father.fatherId) grandparents.push(findRel(father.fatherId));
+            if (father.motherId) grandparents.push(findRel(father.motherId));
+            if (mother.fatherId) grandparents.push(findRel(mother.fatherId));
+            if (mother.motherId) grandparents.push(findRel(mother.motherId));
+
+            // Filter out any undefined lookups
+            const validGrandparents = grandparents.filter(gp => gp && gp.appearance);
+
+            // Helper: 10% Chance to pull from Grandparent, else 50/50 Parents
+            const inherit = (trait) => {
+                // Rare Grandparent Pull (10%)
+                if (validGrandparents.length > 0 && Math.random() < 0.10) {
+                    const gp = validGrandparents[Math.floor(Math.random() * validGrandparents.length)];
+                    return gp.appearance[trait];
+                }
+                // Standard Parent Split
+                return Math.random() > 0.5 ? fGenes[trait] : mGenes[trait];
+            };
+
+            const hair = inherit('hair');
+            const eyes = inherit('eyes');
+            const skin = inherit('skin');
+            
+            // Height logic: 50/50 parents usually
             const height = Math.random() > 0.5 ? (fGenes.height || 'Average') : (mGenes.height || 'Average');
             
             let mutations = [];
             
-            // 1. High Inheritance from Parents (80% chance)
+            // 1. Inheritance from Parents (High Chance)
             const parentMutations = [...(fGenes.mutations || []), ...(mGenes.mutations || [])];
             
-            // Filter unique mutations from parents
+            // Deduplicate
             const uniqueParentMutations = [];
             const seen = new Set();
             for (const m of parentMutations) {
@@ -1163,12 +1202,31 @@
                 }
             }
             
-            // 2. INCEST LOGIC: Defect Generation
-            // Check if both parents are blood relatives of the player (implies they are related to each other)
-            // Or if both belong to the Player's House Members list and share a last name (simplified check via isBlood/House Member)
+            // 2. Guaranteed Mutation (If none inherited)
+            if (mutations.length === 0) {
+                 mutations.push(this.getRandomMutation());
+            }
+
+            // 3. Rare Chance for 2nd Mutation (20%) - UPDATED
+            // Can be inherited (if another avail) or new
+            if (mutations.length < 2 && Math.random() < 0.20) {
+                 const remainingParents = uniqueParentMutations.filter(m => !mutations.includes(m));
+                 
+                 // Prefer inheritance if available (50/50), otherwise random
+                 if (remainingParents.length > 0 && Math.random() < 0.5) {
+                     mutations.push(remainingParents[Math.floor(Math.random() * remainingParents.length)]);
+                 } else {
+                     let m2 = this.getRandomMutation();
+                     if (!mutations.some(m => m.name === m2.name)) {
+                         mutations.push(m2);
+                     }
+                 }
+            }
+            
+            // 4. INCEST LOGIC: Defect Generation (Separate Slot)
+            let defect = null;
             let isIncest = false;
             
-            // If both are marked as 'isBlood' relative to player, or one is Player and other is Blood
             const fBlood = father.isBlood || father.id === 'PLAYER';
             const mBlood = mother.isBlood || mother.id === 'PLAYER';
             
@@ -1178,19 +1236,11 @@
             if (isIncest && Math.random() < 0.35) {
                 const defects = MUTATION_POOL.filter(m => m.rarity === 'Defect');
                 if (defects.length > 0) {
-                    mutations.push(defects[Math.floor(Math.random() * defects.length)]);
+                    defect = defects[Math.floor(Math.random() * defects.length)];
                 }
             }
-            
-            // 3. Random new mutation (5% chance) ONLY if no mutation yet (Limit 1)
-            if(mutations.length === 0 && Math.random() < 0.05) {
-                 const newGen = this.generate();
-                 if(newGen.mutations.length > 0) {
-                     mutations.push(newGen.mutations[0]);
-                 }
-            }
 
-            return { hair, eyes, skin, height, mutations };
+            return { hair, eyes, skin, height, mutations, defect };
         }
     };
 
@@ -1232,7 +1282,7 @@
         age: 0,
         year: 1200,
         stats: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
-        appearance: { hair: "Brown", eyes: "Brown", skin: "Fair", height: "Average", mutations: [] }, // NEW: Appearance Object
+        appearance: { hair: "Brown", eyes: "Brown", skin: "Fair", height: "Average", mutations: [], defect: null }, // Added defect slot
         genes: [], // Legacy/Unused or purely strictly internal ID tracking if needed, but appearance.mutations is main
         reputation: { renown: 0, honor: 0, piety: 0, infamy: 0 },
         gold: 0,
@@ -2581,6 +2631,10 @@ Elder: [
         const fatherAge = 20 + Math.floor(Math.random() * 21);
         const motherAge = 18 + Math.floor(Math.random() * 21);
         const gpAge = Math.max(fatherAge, motherAge) + 20 + Math.floor(Math.random() * 21);
+
+        // --- NEW: INCEST SPAWN CHANCE (5%) ---
+        // If this hits, the parents are related (Mother is blood-related instead of married-in)
+        const isIncestSpawn = Math.random() < 0.05; 
         
         let houseNameForGenes = null;
         
@@ -2589,8 +2643,11 @@ Elder: [
             state.house = null;
             state.class = "Commoner";
             // Parents MUST be created to have genes
+            // Father is always blood (lineage starter for commoner context), Mother is usually not.
+            // If isIncestSpawn is true, Mother is marked isBlood: true (implying sister/cousin)
             const dad = tryAddParent("Father", "Male", "Commoner", locIndex, fatherAge);
             const mom = tryAddParent("Mother", "Female", "Commoner", locIndex, motherAge);
+            if (isIncestSpawn) mom.isBlood = true; 
             
             // SIBLING GENERATION (0-3)
             const numSiblings = Math.floor(Math.random() * 4);
@@ -2717,13 +2774,38 @@ Elder: [
         grandpa.isMarried = true;
         grandma.isMarried = true;
 
-        const father = addRelationship(getRandomName('Male'), "Father", 80, "Male", "House Member", locIndex, true, true, fatherAge);
-        father.appearance = GeneticEngine.mix(grandpa, grandma); // Inherits (High chance due to engine update)
-        addHouseMember(father.name, 'Male', 'House Member', locIndex, father.id);
+        // --- NEW: DETERMINE BLOODLINE CARRIER (Patrilineal vs Matrilineal) ---
+        // 50% Chance the mother is the heir instead of the father
+        const isMatrilineal = Math.random() < 0.5;
+        let father, mother;
 
-        const mother = addRelationship(getRandomName('Female'), "Mother", 80, "Female", "House Member", locIndex, false, true, motherAge);
-        mother.appearance = GeneticEngine.generate(); // Married in
-        addHouseMember(mother.name, 'Female', 'House Member', locIndex, mother.id);
+        if (isMatrilineal) {
+            // Mother is the Blood Descendant
+            mother = addRelationship(getRandomName('Female'), "Mother", 80, "Female", "House Member", locIndex, true, true, motherAge);
+            mother.fatherId = grandpa.id;
+            mother.motherId = grandma.id;
+            mother.appearance = GeneticEngine.mix(grandpa, grandma); // Inherits from House Founders
+            addHouseMember(mother.name, 'Female', 'House Member', locIndex, mother.id);
+
+            // Father Married In
+            father = addRelationship(getRandomName('Male'), "Father", 80, "Male", "House Member", locIndex, false, true, fatherAge);
+            father.appearance = GeneticEngine.generate(); // Outsider genes
+            if (isIncestSpawn) father.isBlood = true; // Incest: Spouse is also kin
+            addHouseMember(father.name, 'Male', 'House Member', locIndex, father.id);
+        } else {
+            // Father is the Blood Descendant (Standard)
+            father = addRelationship(getRandomName('Male'), "Father", 80, "Male", "House Member", locIndex, true, true, fatherAge);
+            father.fatherId = grandpa.id;
+            father.motherId = grandma.id;
+            father.appearance = GeneticEngine.mix(grandpa, grandma); // Inherits from House Founders
+            addHouseMember(father.name, 'Male', 'House Member', locIndex, father.id);
+
+            // Mother Married In
+            mother = addRelationship(getRandomName('Female'), "Mother", 80, "Female", "House Member", locIndex, false, true, motherAge);
+            mother.appearance = GeneticEngine.generate(); // Outsider genes
+            if (isIncestSpawn) mother.isBlood = true; // Incest: Spouse is also kin
+            addHouseMember(mother.name, 'Female', 'House Member', locIndex, mother.id);
+        }
 
         // LINK PARENTS
         father.spouseId = mother.id;
@@ -3113,8 +3195,27 @@ Elder: [
         
         // Apply genes
         state.appearance = GeneticEngine.mix(father, mother);
+
+        // --- NEW: DEFECT APPLICATION ---
+        // If both parents are blood (triggered by the 5% spawn chance), Force a Defect
+        if (father && mother && father.isBlood && mother.isBlood) {
+            const defects = MUTATION_POOL.filter(m => m.rarity === 'Defect');
+            const defect = defects[Math.floor(Math.random() * defects.length)];
+            
+            // Set in distinct slot
+            state.appearance.defect = defect;
+            
+            // Apply Penalty
+            if (defect.stats) {
+                for (let stat in defect.stats) {
+                    state.stats[stat] = Math.max(3, state.stats[stat] + defect.stats[stat]);
+                }
+            }
+            // Flavor update to parents
+            mother.relation += " (Kin)";
+        }
         
-        // STATS NO LONGER MODIFIED BY GENES
+        // STATS NO LONGER MODIFIED BY GENES (Except Defects now)
         // Base stats are purely from the random roll/standard array
         
         const conMod = getModifier(state.stats.con);
@@ -4111,13 +4212,21 @@ Elder: [
                     
                     // Create the child
                     const child = addRelationship(childName, childRel, 50, gender, "House Member", r.locationIndex, true, true, 0);
-                    child.parentId = r.id; // LINK TO PARENT
+                    child.parentId = r.id; // LINK TO PARENT (Legacy)
                     
-                    // INHERIT GENES (From this parent + Random Spouse)
-                    // We treat the spouse as having random genes
-                    const spouseDummy = { appearance: GeneticEngine.generate() };
+                    // --- NEW: LINK BOTH PARENTS FOR GENETICS ---
+                    // Determine IDs based on who 'r' is (Male/Female)
+                    const spouseObj = state.relationships.find(x => x.id === r.spouseId);
+                    if (spouseObj) {
+                        child.fatherId = r.gender === 'Male' ? r.id : spouseObj.id;
+                        child.motherId = r.gender === 'Female' ? r.id : spouseObj.id;
+                    }
+
+                    // INHERIT GENES (From this parent + Spouse)
+                    // We treat the spouse as having random genes if they aren't fully defined, but here they usually are
+                    const spouseGenes = spouseObj || { appearance: GeneticEngine.generate() };
                     
-                    child.appearance = GeneticEngine.mix(r, spouseDummy);
+                    child.appearance = GeneticEngine.mix(r, spouseGenes);
 
                     // Add to house members if applicable
                     if (state.house) {
@@ -4145,6 +4254,55 @@ Elder: [
 
         const rulerNPC = state.relationships.find(r => r.id === ruler.id);
         if (!rulerNPC || rulerNPC.health === 'Deceased') return; 
+
+        // --- NEW: AGE 16 CAREER DEMAND ---
+        if (state.age === 16 && !state.occupation) {
+            state.eventQueue.unshift({
+                id: 'house_career_demand',
+                title: 'Family Expectations',
+                text: `Lord ${rulerNPC.name} summons you to the solar. The hearth fire crackles, but their gaze is cold.<br><br>"You are sixteen now, ${state.name}. It is time you contributed to the House's legacy. I expect you to take up a vocation befitting your station. Do not idle away your bloodline."`,
+                choices: [
+                    { 
+                        text: 'Seek Knighthood', 
+                        type: 'flavor', 
+                        effect: () => { 
+                            modRel(rulerNPC.id, 10);
+                            log("You bowed and promised to pursue the path of the sword.");
+                            attemptJob('knight'); 
+                        } 
+                    },
+                    { 
+                        text: 'Study Diplomacy', 
+                        type: 'flavor', 
+                        effect: () => { 
+                            modRel(rulerNPC.id, 10);
+                            log("You vowed to serve the House with words and wit.");
+                            attemptJob('diplomat'); 
+                        } 
+                    },
+                    { 
+                        text: 'Serve the Faith', 
+                        type: 'flavor', 
+                        effect: () => { 
+                            modRel(rulerNPC.id, 5);
+                            log("You chose to represent the House within the Clergy.");
+                            attemptJob('clergy'); 
+                        } 
+                    },
+                    { 
+                        text: 'Refuse', 
+                        type: 'flavor', 
+                        effect: () => { 
+                            modRel(rulerNPC.id, -30); 
+                            modRep('infamy', 5);
+                            log(`<span style="color:var(--failure)">DISAPPOINTMENT:</span> You refused the Lord's command. "Useless," they mutter. Your standing in the House falls.`); 
+                        } 
+                    }
+                ]
+            });
+            return; // Priority Event - Skip other AI actions this turn
+        }
+        // ---------------------------------
 
         // AI Logic: Ruler manages assets
         
@@ -4816,15 +4974,24 @@ Elder: [
         const hpDisplay = r.health === "Deceased" ? "Deceased" : `${r.hp}/${r.maxHp}`;
         
         // NEW: RENDER APPEARANCE AND MUTATIONS
-        const ap = r.appearance || { hair: "Unknown", eyes: "Unknown", skin: "Unknown", mutations: [] };
+        const ap = r.appearance || { hair: "Unknown", eyes: "Unknown", skin: "Unknown", mutations: [], defect: null };
         
-        let mutationsHtml = '<span class="italic text-xs opacity-50">None</span>';
+        let mutationsHtml = '';
+        
+        // Render Defect if present
+        if (ap.defect) {
+             mutationsHtml += `<div class="mb-1"><span onclick="showTraitInfo('${ap.defect.name}')" class="gene-tag bg-red-800 text-white border-red-950 cursor-pointer hover:scale-110" title="${ap.defect.desc}">⚠ ${ap.defect.name}</span></div>`;
+        }
+
+        // Render Mutations
         if (ap.mutations && ap.mutations.length > 0) {
-            mutationsHtml = ap.mutations.map(m => {
+            mutationsHtml += ap.mutations.map(m => {
                 // UPDATED: Added onclick handler for NPC mutations
                 return `<span onclick="showTraitInfo('${m.name}')" class="gene-tag mut-${m.rarity.toLowerCase()} cursor-pointer hover:scale-110 transition-transform" title="Click for info">${m.name}</span>`;
             }).join('');
         }
+        
+        if (mutationsHtml === '') mutationsHtml = '<span class="italic text-xs opacity-50">None</span>';
 
         let html = `
             <h2 class="text-3xl font-medieval mb-1">${displayName}</h2>
@@ -4849,7 +5016,7 @@ Elder: [
             <div class="mb-4">
                 <div class="text-xs font-bold uppercase mb-1">Appearance</div>
                 <div class="text-sm italic mb-2">${ap.height}, ${ap.hair} Hair, ${ap.eyes} Eyes, ${ap.skin} Skin</div>
-                <div class="text-xs font-bold uppercase mb-1">Mutations</div>
+                <div class="text-xs font-bold uppercase mb-1">Mutations & Defects</div>
                 <div>${mutationsHtml}</div>
             </div>
 
@@ -6238,13 +6405,26 @@ Elder: [
             document.getElementById('appearance-display').innerText = `${state.gender}, ${ap.height}, ${ap.hair} Hair, ${ap.eyes} Eyes, ${ap.skin} Skin`;
 
             const geneList = document.getElementById('gene-list');
+            let htmlContent = '';
+
+            // 1. Defect Slot (Red Badge)
+            if (ap.defect) {
+                htmlContent += `<div class="mb-1"><span onclick="showTraitInfo('${ap.defect.name}')" class="gene-tag bg-red-800 text-white border-red-950 cursor-pointer hover:scale-110" title="${ap.defect.desc}">⚠ ${ap.defect.name}</span></div>`;
+            }
+
+            // 2. Mutations
             if (ap.mutations && ap.mutations.length > 0) {
-                geneList.innerHTML = ap.mutations.map(m => {
+                htmlContent += ap.mutations.map(m => {
                     return `<span onclick="showTraitInfo('${m.name}')" class="gene-tag mut-${m.rarity.toLowerCase()} cursor-pointer hover:scale-110 transition-transform" title="Click for info">${m.name}</span>`;
                 }).join('');
-            } else {
-                geneList.innerHTML = '<span class="italic opacity-50">No distinctive mutations.</span>';
+            } 
+            
+            // Fallback
+            if (!ap.defect && (!ap.mutations || ap.mutations.length === 0)) {
+                htmlContent = '<span class="italic opacity-50">No distinctive mutations.</span>';
             }
+
+            geneList.innerHTML = htmlContent;
 
             // RENDER HONORIFICS (NEW)
             const honList = document.getElementById('honorific-list');
