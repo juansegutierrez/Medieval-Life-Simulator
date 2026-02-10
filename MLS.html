@@ -612,6 +612,63 @@
         .buy-btn:hover { background: var(--gold); color: var(--ink); }
         .buy-btn:disabled { background: #555; cursor: not-allowed; color: #ccc; }
 
+        /* EQUIPPED SECTION STYLING */
+        .paper-doll-grid {
+            display: grid;
+            grid-template-areas:
+                ". head ."
+                "main armor off"
+                ". acc .";
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid var(--leather);
+            background: rgba(0,0,0,0.03);
+            padding: 1rem;
+            border-radius: 8px;
+            width: fit-content;
+            margin: 0 auto 1.5rem auto;
+        }
+
+        .equip-slot {
+            width: 70px;
+            height: 70px;
+            border: 2px dashed var(--leather);
+            background: rgba(255,255,255,0.2);
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .equip-slot:hover { background: rgba(255,255,255,0.4); border-color: var(--gold); }
+        .equip-slot.filled { border-style: solid; background: rgba(255,255,255,0.5); border-color: var(--leather); }
+        .equip-label { 
+            position: absolute; bottom: -18px; 
+            font-size: 0.6rem; text-transform: uppercase; font-weight: bold; 
+            width: 120%; text-align: center; opacity: 0.7;
+        }
+        .equip-icon { font-size: 1.8rem; line-height: 1; }
+        .equip-remove {
+            position: absolute; top: -5px; right: -5px;
+            background: var(--failure); color: white;
+            border-radius: 50%; width: 16px; height: 16px;
+            font-size: 10px; display: flex; align-items: center; justify-content: center;
+            border: 1px solid white; display: none;
+        }
+        .equip-slot:hover .equip-remove { display: flex; }
+
+        /* Grid Area Assignments */
+        .slot-head { grid-area: head; }
+        .slot-armor { grid-area: armor; }
+        .slot-mainHand { grid-area: main; }
+        .slot-offHand { grid-area: off; }
+        .slot-accessory { grid-area: acc; }
+
         /* Utility */
         .modal-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -1301,6 +1358,7 @@
         rejectedJobs: [], // Stores rejected job IDs for the current year
         traits: [], // ACQUIRED TRAITS
         inventory: [],
+        equipped: { head: null, armor: null, mainHand: null, offHand: null, accessory: null }, // NEW: Equipment Slots
         market: [], // NEW: Stores current year's shops
         eventQueue: [], // NEW: Stores events for the current year
         recentEvents: [], // NEW: Duplicate Ward memory
@@ -3081,6 +3139,136 @@ Elder: [
         state.house.members.push({
             name, gender, rank, locationIndex: locIndex, id: id || Math.random().toString(36).substr(2, 9)
         });
+    }
+
+    // --- EQUIPMENT LOGIC ---
+
+    function getEquipSlot(name) {
+        const n = name.toLowerCase();
+        if (n.includes('helm') || n.includes('hat') || n.includes('crown') || n.includes('hood') || n.includes('cap')) return 'head';
+        if (n.includes('armor') || n.includes('shirt') || n.includes('robe') || n.includes('vest') || n.includes('mail') || n.includes('tunic') || n.includes('cloak')) return 'armor';
+        if (n.includes('sword') || n.includes('dagger') || n.includes('blade') || n.includes('axe') || n.includes('mace') || n.includes('hammer') || n.includes('spear') || n.includes('staff') || n.includes('wand') || n.includes('excalibur')) return 'mainHand';
+        if (n.includes('shield') || n.includes('buckler') || n.includes('orb') || n.includes('tome')) return 'offHand';
+        if (n.includes('ring') || n.includes('amulet') || n.includes('charm') || n.includes('necklace') || n.includes('trinket')) return 'accessory';
+        return null;
+    }
+
+    function equipItem(index) {
+        if(state.health <= 0) return;
+        const item = state.inventory[index];
+        const slot = getEquipSlot(item.name);
+        
+        if (!slot) return; // Should be handled by UI, but safety check
+
+        // If slot is filled, swap
+        if (state.equipped[slot]) {
+            const temp = state.equipped[slot];
+            state.equipped[slot] = item;
+            state.inventory[index] = temp; // Direct Swap
+            log(`Swapped ${temp.name} for ${item.name}.`);
+        } else {
+            // Slot empty, just move
+            state.equipped[slot] = item;
+            state.inventory.splice(index, 1);
+            log(`Equipped ${item.name}.`);
+        }
+        
+        AudioEngine.pulse();
+        updateUI();
+    }
+
+    function unequipItem(slot) {
+        if(state.health <= 0) return;
+        const item = state.equipped[slot];
+        if (!item) return;
+
+        // Cap Check
+        const maxSlots = 10 + getModifier(state.stats.str);
+        if (state.inventory.length >= maxSlots) {
+            showMsg("Inventory Full", "No room to unequip this item.");
+            return;
+        }
+
+        state.inventory.push(item);
+        state.equipped[slot] = null;
+        log(`Unequipped ${item.name}.`);
+        updateUI();
+    }
+
+    function renderInventory() {
+        const list = document.getElementById('inventory-list');
+        const maxSlots = 10 + getModifier(state.stats.str);
+        
+        // 1. Render Equipped Section (Paper Doll)
+        const slots = [
+            { id: 'head', icon: '🪖', label: 'Head' },
+            { id: 'mainHand', icon: '⚔️', label: 'Main Hand' },
+            { id: 'armor', icon: '👕', label: 'Body' },
+            { id: 'offHand', icon: '🛡️', label: 'Off Hand' },
+            { id: 'accessory', icon: '💍', label: 'Accessory' }
+        ];
+
+        let equipHtml = `<div class="paper-doll-grid">`;
+        equipHtml += slots.map(s => {
+            const item = state.equipped[s.id];
+            const slotClass = `slot-${s.id}`;
+            
+            if (item) {
+                return `
+                <div class="equip-slot filled item-rarity-${item.rarity} ${slotClass}" onclick="unequipItem('${s.id}')" title="${item.name}: ${item.desc}">
+                    <div class="equip-remove">x</div>
+                    <div class="equip-icon">${s.icon}</div>
+                    <div class="text-[9px] font-bold truncate w-full text-center mt-1 leading-tight">${item.name}</div>
+                    <div class="equip-label">${s.label}</div>
+                </div>`;
+            } else {
+                return `
+                <div class="equip-slot opacity-50 ${slotClass}">
+                    <div class="equip-icon">${s.icon}</div>
+                    <div class="equip-label">${s.label}</div>
+                </div>`;
+            }
+        }).join('');
+        equipHtml += `</div>`;
+
+        // 2. Render Capacity & Grid
+        const capacityHtml = `<div class="col-span-full text-right text-xs opacity-70 mb-2 font-bold">Backpack: ${state.inventory.length} / ${maxSlots}</div>`;
+
+        let invHtml = '';
+        if (state.inventory.length === 0) { 
+            invHtml = `<p class="italic opacity-50 col-span-full text-center mt-4">Your satchel is empty.</p>`; 
+        } else {
+            invHtml = state.inventory.map((item, idx) => {
+                // Determine if item is usable
+                const canUse = item.effect && (item.effect.hp || item.effect.sp || item.effect.trait);
+                const equipSlot = getEquipSlot(item.name);
+                
+                let primaryBtn = '';
+                
+                if (equipSlot) {
+                    primaryBtn = `<button onclick="equipItem(${idx})" class="inv-btn bg-blue-900 text-blue-100 border-blue-950">Equip</button>`;
+                } else if (canUse) {
+                    primaryBtn = `<button onclick="useItem(${idx})" class="inv-btn btn-use">Use</button>`;
+                } else {
+                    primaryBtn = `<span class="flex-1"></span>`; // Spacer
+                }
+
+                return `
+                <div class="inventory-card">
+                    <div>
+                        <div class="inv-rarity-badge item-rarity-${item.rarity}">${item.rarity}</div>
+                        <div class="inv-item-header item-rarity-${item.rarity}">${item.name}</div>
+                        <div class="inv-item-desc">${item.desc}</div>
+                    </div>
+                    <div class="inv-actions">
+                        ${primaryBtn}
+                        <button onclick="sellItem(${idx})" class="inv-btn btn-sell">Sell (${item.value}g)</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        list.innerHTML = equipHtml + capacityHtml + invHtml;
     }
 
     function addRelationship(name, relation, friendship, gender, rank, locIndex = null, isBlood = false, isFamily = false, specificAge = null, isKnown = true) {
@@ -5770,7 +5958,7 @@ Elder: [
              if (state.class.includes("Lord") || state.class.includes("Lady")) extraIcon = `<div class="tree-crown">👑</div>`;
              
              let html = `
-                <div class="tree-member player">
+                <div class="tree-member player" onclick="switchTab('char')" title="View Character Sheet">
                     <span class="tree-blood">Blood</span>
                     ${extraIcon}
                     <div class="tree-name">${state.name}</div>
@@ -5965,37 +6153,6 @@ Elder: [
         updateUI();
     }
 
-    function renderInventory() {
-        const list = document.getElementById('inventory-list');
-        if (state.inventory.length === 0) { 
-            list.innerHTML = `<p class="italic opacity-50 col-span-full text-center mt-10">Your satchel is empty.</p>`; 
-            return; 
-        }
-
-        list.innerHTML = state.inventory.map((item, idx) => {
-            // Determine if item is usable
-            const canUse = item.effect && (item.effect.hp || item.effect.sp || item.effect.trait);
-            
-            let useBtn = '';
-            if (canUse) {
-                useBtn = `<button onclick="useItem(${idx})" class="inv-btn btn-use">Use</button>`;
-            }
-
-            return `
-            <div class="inventory-card">
-                <div>
-                    <div class="inv-rarity-badge item-rarity-${item.rarity}">${item.rarity}</div>
-                    <div class="inv-item-header item-rarity-${item.rarity}">${item.name}</div>
-                    <div class="inv-item-desc">${item.desc}</div>
-                </div>
-                <div class="inv-actions">
-                    ${useBtn}
-                    <button onclick="sellItem(${idx})" class="inv-btn btn-sell">Sell (${item.value}g)</button>
-                </div>
-            </div>`;
-        }).join('');
-    }
-
     function useItem(index) {
         if(state.health <= 0) return; // Guard
         const item = state.inventory[index];
@@ -6137,12 +6294,42 @@ Elder: [
 
     // UPDATED: Now accepts effect parameter
     function addItem(name, rarity, desc, value, effect = null) {
+        // --- INVENTORY LIMIT CHECK ---
+        const maxSlots = 10 + getModifier(state.stats.str);
+        if (state.inventory.length >= maxSlots) {
+            log(`<span style="color:var(--failure)">OVERBURDENED:</span> You found <strong>${name}</strong> but had no room (Max ${maxSlots}). It was left behind.`);
+            return false;
+        }
+
         state.inventory.push({ 
             name, rarity, desc, value, effect, 
             id: Math.random().toString(36).substr(2, 9) 
         });
         log(`<strong style="color:var(--gold)">ITEM GET:</strong> Found <span class="item-rarity-${rarity}">${name}</span>!`);
         updateUI();
+        return true;
+    }
+
+    function buyMarketItem(shopId, itemIndex) {
+        if(state.health <= 0) return; // Guard for death
+        const shop = state.market.find(s => s.id === shopId);
+        if (!shop) return; // Safety check for invalid shop
+
+        const item = shop.items[itemIndex];
+        
+        if (state.gold >= item.value && !item.sold) {
+            const added = addItem(item.name, item.rarity, item.desc, Math.floor(item.value/2), item.effect);
+            
+            if (added) {
+                state.gold -= item.value;
+                item.sold = true;
+                AudioEngine.pulse();
+                updateUI();
+                openShop(shopId); // Re-render to show Sold Out
+            } else {
+                showMsg("Inventory Full", "You are carrying too much.");
+            }
+        }
     }
 
     function sellItem(index) {
@@ -6181,6 +6368,7 @@ Elder: [
 
         // LOCK: Ensure player stays in Chronicle during ANY event interaction (Activities, Quest, etc.)
         state.flags.lockedInChronicle = true;
+        updateUI(); // Force UI update to lock tabs visually immediately
 
         // --- DYNAMIC PROMPT UPDATE ---
         const promptEl = document.getElementById('decision-prompt');
