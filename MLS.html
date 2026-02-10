@@ -3095,6 +3095,47 @@ Elder: [
                          { text: 'Chase', type: 'check', stat: 'dex', dc: 12, success: 'Caught them! (+1 DEX, +Rel)', fail: 'They are too fast.', onSuccess: () => { modRel(person.id, 5); state.stats.dex++; }, onFail: () => {} },
                          { text: 'Hide', type: 'check', stat: 'int', dc: 10, success: 'They run past you. (+Rel)', fail: 'Found you!', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
                          { text: 'Quit', type: 'flavor', effect: () => log("You are tired.") }
+                    ]),
+                                        createEvent(`kid_race_${person.id}`, `Footrace`, `${person.name} challenges you to a sprint.`, [
+                         { text: 'Sprint', type: 'check', stat: 'dex', dc: 12, success: 'You win the race! (+1 DEX, +Rel)', fail: 'Tripped! (-Rel)', onSuccess: () => { modRel(person.id, 5); state.stats.dex++; }, onFail: () => modRel(person.id, -2) },
+                         { text: 'Let Them Win', type: 'flavor', effect: () => { modRel(person.id, 5); log("They cheer for you. (+Rel)"); } },
+                         { text: 'Refuse', type: 'flavor', effect: () => { modRel(person.id, -1); log("You skip the race."); } }
+                    ]),
+
+                    createEvent(`kid_hide_${person.id}`, `Hide and Seek`, `${person.name} counts while you hide.`, [
+                         { text: 'Hide Well', type: 'check', stat: 'dex', dc: 12, success: 'They cannot find you! (+Rel)', fail: 'They spot you quickly. (-Rel)', onSuccess: () => modRel(person.id, 10), onFail: () => modRel(person.id, -5) },
+                         { text: 'Peek', type: 'check', stat: 'int', dc: 10, success: 'You spot them first! (+Rel)', fail: 'They catch you. (-Rel)', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -5) },
+                         { text: 'Quit', type: 'flavor', effect: () => log("Hiding is too tiring.") }
+                    ]),
+
+                    createEvent(`kid_story_${person.id}`, `Storytime`, `${person.name} asks you to tell a story.`, [
+                         { text: 'Make One Up', type: 'check', stat: 'cha', dc: 10, success: 'They are captivated! (+Rel)', fail: 'They get bored. (-Rel)', onSuccess: () => modRel(person.id, 10), onFail: () => modRel(person.id, -5) },
+                         { text: 'Tell a Real Tale', type: 'check', stat: 'wis', dc: 10, success: 'They listen intently. (+Rel)', fail: 'You forget the details.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                         { text: 'Refuse', type: 'flavor', effect: () => log("No stories today.") }
+                    ]),
+
+                    createEvent(`kid_snack_${person.id}`, `Snack Time`, `${person.name} offers you a treat.`, [
+                         { text: 'Accept', type: 'flavor', effect: () => { modRel(person.id, 5); log("Yum! Friendship grows. (+Rel)"); } },
+                         { text: 'Share Yours', type: 'flavor', effect: () => { modRel(person.id, 10); log("Sharing makes you friends. (+Rel)"); } },
+                         { text: 'Decline', type: 'flavor', effect: () => { modRel(person.id, -1); log("You politely refuse."); } }
+                    ]),
+
+                    createEvent(`kid_hideout_${person.id}`, `Secret Hideout`, `${person.name} invites you to a treehouse.`, [
+                         { text: 'Climb Up', type: 'check', stat: 'dex', dc: 12, success: 'You reach it safely! (+Rel)', fail: 'Slip and scrape knee.', onSuccess: () => modRel(person.id, 10), onFail: () => takeDamage(1) },
+                         { text: 'Explore Inside', type: 'check', stat: 'int', dc: 10, success: 'You discover hidden treasures! (+Rel)', fail: 'Nothing interesting.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                         { text: 'Stay Below', type: 'flavor', effect: () => log("You prefer to stay grounded.") }
+                    ]),
+
+                    createEvent(`kid_art_${person.id}`, `Drawing Together`, `${person.name} wants to color a picture with you.`, [
+                         { text: 'Draw Boldly', type: 'check', stat: 'cha', dc: 10, success: 'Your masterpiece impresses! (+Rel)', fail: 'Colors smudge.', onSuccess: () => modRel(person.id, 10), onFail: () => modRel(person.id, -2) },
+                         { text: 'Follow Along', type: 'check', stat: 'int', dc: 10, success: 'You learn new techniques. (+Rel)', fail: 'It’s messy.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                         { text: 'Refuse', type: 'flavor', effect: () => log("Art is not your thing.") }
+                    ]),
+
+                    createEvent(`kid_song_${person.id}`, `Singing Game`, `${person.name} starts a silly song.`, [
+                         { text: 'Join In', type: 'check', stat: 'cha', dc: 10, success: 'You harmonize perfectly! (+Rel)', fail: 'You sing off-key. (-Rel)', onSuccess: () => modRel(person.id, 10), onFail: () => modRel(person.id, -2) },
+                         { text: 'Make Up Words', type: 'check', stat: 'int', dc: 10, success: 'They love your creativity! (+Rel)', fail: 'It confuses them.', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -2) },
+                         { text: 'Stay Silent', type: 'flavor', effect: () => log("You prefer to listen.") }
                     ])
                 ],
                 enemy: [
@@ -3107,6 +3148,47 @@ Elder: [
                          { text: 'Cry', type: 'flavor', effect: () => { log("Tears fall."); modSanity(-1); } },
                          { text: 'Throw Mud', type: 'check', stat: 'dex', dc: 10, success: 'Direct hit! (-Rel)', fail: 'You miss.', onSuccess: () => modRel(person.id, -5), onFail: () => {} },
                          { text: 'Ignore', type: 'check', stat: 'wis', dc: 12, success: 'Sticks and stones...', fail: 'It hurts your feelings.', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }
+                    ]),
+                                        createEvent(`kid_push_${person.id}`, `Pushed Around`, `${person.name} shoves you in the dirt.`, [
+                         { text: 'Push Back', type: 'check', stat: 'str', dc: 10, success: 'You stand your ground. (-Rel)', fail: 'They push harder.', onSuccess: () => modRel(person.id, -5), onFail: () => takeDamage(1) },
+                         { text: 'Run Away', type: 'check', stat: 'dex', dc: 12, success: 'Escape unscathed.', fail: 'They grab you.', onSuccess: () => {}, onFail: () => takeDamage(1) },
+                         { text: 'Cry Out', type: 'flavor', effect: () => { log("You call for help."); modSanity(-1); } }
+                    ]),
+
+                    createEvent(`kid_tease_${person.id}`, `Teasing`, `${person.name} keeps mimicking you.`, [
+                         { text: 'Retaliate', type: 'check', stat: 'cha', dc: 10, success: 'They are embarrassed. (-Rel)', fail: 'They laugh harder.', onSuccess: () => modRel(person.id, -5), onFail: () => modSanity(-1) },
+                         { text: 'Ignore', type: 'check', stat: 'wis', dc: 12, success: 'They lose interest.', fail: 'They persist.', onSuccess: () => {}, onFail: () => modSanity(-1) },
+                         { text: 'Mimic Back', type: 'check', stat: 'dex', dc: 10, success: 'They are caught off guard.', fail: 'You trip yourself.', onSuccess: () => modRel(person.id, -3), onFail: () => takeDamage(1) }
+                    ]),
+
+                    createEvent(`kid_hide_${person.id}`, `Hide Your Belongings`, `${person.name} hides your favorite toy.`, [
+                         { text: 'Search', type: 'check', stat: 'wis', dc: 12, success: 'Found it! (-Rel)', fail: 'It remains hidden.', onSuccess: () => modRel(person.id, -5), onFail: () => {} },
+                         { text: 'Accuse', type: 'check', stat: 'cha', dc: 10, success: 'They return it. (-Rel)', fail: 'They deny everything.', onSuccess: () => modRel(person.id, -5), onFail: () => modSanity(-1) },
+                         { text: 'Let Go', type: 'flavor', effect: () => log("You decide not to worry about it.") }
+                    ]),
+
+                    createEvent(`kid_prank_${person.id}`, `Prank`, `${person.name} ties your shoes together.`, [
+                         { text: 'Untie Quickly', type: 'check', stat: 'dex', dc: 12, success: 'No one notices. (-Rel)', fail: 'Trip and fall.', onSuccess: () => modRel(person.id, -3), onFail: () => takeDamage(1) },
+                         { text: 'Play Along', type: 'check', stat: 'cha', dc: 10, success: 'They laugh together. (-Rel)', fail: 'They laugh at you.', onSuccess: () => modRel(person.id, -2), onFail: () => modSanity(-1) },
+                         { text: 'Ignore', type: 'flavor', effect: () => log("You just walk on.") }
+                    ]),
+
+                    createEvent(`kid_namecall_${person.id}`, `Mockery`, `${person.name} calls you a silly name loudly.`, [
+                         { text: 'Shout Back', type: 'check', stat: 'cha', dc: 12, success: 'They quiet down. (-Rel)', fail: 'They tease harder.', onSuccess: () => modRel(person.id, -5), onFail: () => modSanity(-1) },
+                         { text: 'Laugh It Off', type: 'check', stat: 'wis', dc: 10, success: 'They are confused. (-Rel)', fail: 'They persist.', onSuccess: () => modRel(person.id, -2), onFail: () => modSanity(-1) },
+                         { text: 'Walk Away', type: 'flavor', effect: () => log("You refuse to engage.") }
+                    ]),
+
+                    createEvent(`kid_sabotage_${person.id}`, `Sabotage`, `${person.name} ruins your drawing.`, [
+                         { text: 'Confront', type: 'check', stat: 'cha', dc: 12, success: 'They apologize. (-Rel)', fail: 'They deny it.', onSuccess: () => modRel(person.id, -5), onFail: () => modSanity(-1) },
+                         { text: 'Fix It', type: 'check', stat: 'int', dc: 10, success: 'You salvage it. (-Rel)', fail: 'It remains ruined.', onSuccess: () => modRel(person.id, -2), onFail: () => modSanity(-1) },
+                         { text: 'Ignore', type: 'flavor', effect: () => log("You move on from the incident.") }
+                    ]),
+
+                    createEvent(`kid_challenge_${person.id}`, `Challenge`, `${person.name} dares you to climb the tree.`, [
+                         { text: 'Climb', type: 'check', stat: 'dex', dc: 12, success: 'You reach the top! (-Rel)', fail: 'You fall slightly. (-Rel)', onSuccess: () => modRel(person.id, -3), onFail: () => takeDamage(1) },
+                         { text: 'Decline', type: 'flavor', effect: () => log("You play it safe.") },
+                         { text: 'Mock Them', type: 'check', stat: 'cha', dc: 10, success: 'They get embarrassed. (-Rel)', fail: 'They laugh at you.', onSuccess: () => modRel(person.id, -2), onFail: () => modSanity(-1) }
                     ])
                 ],
                 neutral: [
@@ -3119,7 +3201,54 @@ Elder: [
                          { text: 'Look', type: 'flavor', effect: () => { log("It is shiny. (+Rel)"); modRel(person.id, 5); } },
                          { text: 'Squish', type: 'check', stat: 'dex', dc: 10, success: 'Gross! (-Rel)', fail: 'Missed.', onSuccess: () => modRel(person.id, -5), onFail: () => {} },
                          { text: 'Eat it', type: 'flavor', effect: () => { log("Crunchy. (+1 HP, -Rel)"); state.health++; modRel(person.id, -2); } }
-                     ])
+                     ]),
+                                         createEvent(`kid_snack_${person.id}`, `Sharing Snacks`, `${person.name} offers you a treat.`, [
+                         { text: 'Accept', type: 'flavor', effect: () => { log("Yum! (+Rel)"); modRel(person.id, 5); } },
+                         { text: 'Decline', type: 'flavor', effect: () => { log("You politely refuse."); } },
+                         { text: 'Trade', type: 'check', stat: 'cha', dc: 10, success: 'You get a better snack! (+Rel, +Sanity)', fail: 'They refuse.', onSuccess: () => { modRel(person.id, 5); modSanity(1); }, onFail: () => {} }
+                    ]),
+
+                    createEvent(`kid_draw_${person.id}`, `Drawing Together`, `${person.name} invites you to draw.`, [
+                         { text: 'Draw', type: 'check', stat: 'int', dc: 10, success: 'A masterpiece! (+Rel)', fail: 'Smudged paper.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                         { text: 'Copy', type: 'check', stat: 'int', dc: 12, success: 'Looks great! (+Rel)', fail: 'Caught copying!', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -3) },
+                         { text: 'Watch', type: 'flavor', effect: () => log("You admire their art.") }
+                    ]),
+
+                    createEvent(`kid_hideandseek_${person.id}`, `Hide and Seek`, `${person.name} wants to play hide and seek.`, [
+                         { text: 'Hide', type: 'check', stat: 'dex', dc: 10, success: 'No one finds you! (+Rel)', fail: 'They spot you.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                         { text: 'Seek', type: 'check', stat: 'wis', dc: 10, success: 'Found them! (+Rel)', fail: 'They escape.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                         { text: 'Refuse', type: 'flavor', effect: () => log("Not today.") }
+                    ]),
+
+                    createEvent(`kid_fightplay_${person.id}`, `Mock Fight`, `${person.name} challenges you to a pretend duel.`, [
+                         { text: 'Engage', type: 'check', stat: 'dex', dc: 12, success: 'Great parry! (+Rel)', fail: 'You stumble.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                         { text: 'Refuse', type: 'flavor', effect: () => log("You step back.") },
+                         { text: 'Cheer Them On', type: 'flavor', effect: () => { log("They grin. (+Rel)"); modRel(person.id, 3); } }
+                    ]),
+
+                    createEvent(`kid_hideobject_${person.id}`, `Hide and Find`, `${person.name} hides an object for you to find.`, [
+                         { text: 'Search', type: 'check', stat: 'wis', dc: 12, success: 'Found it! (+Rel)', fail: 'No luck.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                         { text: 'Guess', type: 'check', stat: 'int', dc: 10, success: 'You guess right! (+Rel)', fail: 'Wrong guess.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                         { text: 'Give Up', type: 'flavor', effect: () => log("You let them keep it hidden.") }
+                    ]),
+
+                    createEvent(`kid_story_${person.id}`, `Storytelling`, `${person.name} tells you a story during recess.`, [
+                         { text: 'Listen', type: 'flavor', effect: () => { log("You enjoy the story. (+Rel)"); modRel(person.id, 5); } },
+                         { text: 'Add Your Part', type: 'check', stat: 'cha', dc: 10, success: 'They love it! (+Rel)', fail: 'They ignore you.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                         { text: 'Leave', type: 'flavor', effect: () => log("You wander off quietly.") }
+                    ]),
+
+                    createEvent(`kid_puzzle_${person.id}`, `Puzzle Time`, `${person.name} brings a puzzle to solve together.`, [
+                         { text: 'Solve Together', type: 'check', stat: 'int', dc: 12, success: 'Perfect teamwork! (+Rel)', fail: 'Pieces don’t fit.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                         { text: 'Take Lead', type: 'check', stat: 'cha', dc: 10, success: 'They follow your lead. (+Rel)', fail: 'They ignore your ideas.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                         { text: 'Watch', type: 'flavor', effect: () => log("You quietly observe.") }
+                    ]),
+
+                    createEvent(`kid_treasure_${person.id}`, `Treasure Hunt`, `${person.name} digs up a shiny rock and shows you.`, [
+                         { text: 'Excited', type: 'flavor', effect: () => { log("You admire the find. (+Rel)"); modRel(person.id, 5); } },
+                         { text: 'Trade', type: 'check', stat: 'cha', dc: 12, success: 'They accept! (+Rel)', fail: 'They refuse.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                         { text: 'Ignore', type: 'flavor', effect: () => log("You move on.") }
+                    ])
                 ],
                 lover: [] // Children map lovers to friends
             };
@@ -3180,6 +3309,65 @@ Elder: [
                     { text: 'Kiss Back', type: 'check', stat: 'cha', dc: 10, success: 'Crowd cheers! (+Renown, +Romance)', fail: 'You bump heads.', onSuccess: () => { modRep('renown', 2); modRel(person.id, 0, 5); }, onFail: () => modRep('infamy', 1) },
                     { text: 'Shy Away', type: 'flavor', effect: () => { modRel(person.id, 0, -5); log("They blush in embarrassment."); } },
                     { text: 'Show Off', type: 'check', stat: 'cha', dc: 14, success: 'A passionate display! (+Romance)', fail: 'Too much.', onSuccess: () => modRel(person.id, 0, 10), onFail: () => modRep('infamy', 1) }
+                ]),
+                                createEvent(`lov_11_${person.id}`, `Rainy Day`, `${person.name} forgot their cloak in the rain.`, [
+                    { text: 'Share Yours', type: 'check', stat: 'cha', dc: 10, success: 'They feel cherished. (+Romance, +Sanity)', fail: 'You get soaked too.', onSuccess: () => { modRel(person.id, 5, 5); modSanity(1); }, onFail: () => modSanity(-1) },
+                    { text: 'Run Together', type: 'check', stat: 'dex', dc: 12, success: 'Laughing all the way! (+Rel)', fail: 'Slipped in the mud.', onSuccess: () => modRel(person.id, 5), onFail: () => takeDamage(1) },
+                    { text: 'Let Them Shiver', type: 'flavor', effect: () => { modRel(person.id, -5); log("They glare at you."); } }
+                ]),
+
+                createEvent(`lov_12_${person.id}`, `Dancing`, `${person.name} invites you to dance at the festival.`, [
+                    { text: 'Dance Close', type: 'check', stat: 'dex', dc: 12, success: 'They smile warmly. (+Romance)', fail: 'Step on toes.', onSuccess: () => modRel(person.id, 5, 5), onFail: () => modRel(person.id, -2) },
+                    { text: 'Lead', type: 'check', stat: 'cha', dc: 14, success: 'Impressive moves! (+Rel)', fail: 'Tripped.', onSuccess: () => modRel(person.id, 5), onFail: () => takeDamage(1) },
+                    { text: 'Refuse', type: 'flavor', effect: () => log("You sit out awkwardly.") }
+                ]),
+
+                createEvent(`lov_13_${person.id}`, `Shared Secret`, `${person.name} whispers a secret only for you.`, [
+                    { text: 'Promise to Keep', type: 'check', stat: 'wis', dc: 12, success: 'Trust deepens. (+Romance)', fail: 'You almost blurt it out.', onSuccess: () => modRel(person.id, 10, 5), onFail: () => modRel(person.id, -5) },
+                    { text: 'Share Your Secret', type: 'check', stat: 'cha', dc: 10, success: 'They appreciate honesty. (+Rel)', fail: 'Overshare.', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -2) },
+                    { text: 'Ignore', type: 'flavor', effect: () => log("You nod politely.") }
+                ]),
+
+                createEvent(`lov_14_${person.id}`, `Star-Crossed`, `You both spot a falling star.`, [
+                    { text: 'Make a Wish', type: 'check', stat: 'wis', dc: 12, success: 'The wish feels shared. (+Romance)', fail: 'You wish poorly.', onSuccess: () => modRel(person.id, 5, 5), onFail: () => {} },
+                    { text: 'Point It Out', type: 'flavor', effect: () => { modRel(person.id, 2); log("They giggle at your enthusiasm."); } },
+                    { text: 'Ignore', type: 'flavor', effect: () => { log("Missed opportunity."); } }
+                ]),
+
+                createEvent(`lov_15_${person.id}`, `Shared Adventure`, `${person.name} suggests a walk in the forest.`, [
+                    { text: 'Take Lead', type: 'check', stat: 'str', dc: 12, success: 'You navigate safely. (+Romance, +Rel)', fail: 'Get lost briefly.', onSuccess: () => modRel(person.id, 5, 5), onFail: () => modRel(person.id, 0, -2) },
+                    { text: 'Follow', type: 'check', stat: 'wis', dc: 10, success: 'They enjoy your company.', fail: 'Trip over roots.', onSuccess: () => modRel(person.id, 5), onFail: () => takeDamage(1) },
+                    { text: 'Refuse', type: 'flavor', effect: () => { modRel(person.id, -5); log("They look disappointed."); } }
+                ]),
+
+                createEvent(`lov_16_${person.id}`, `Secret Note`, `${person.name} slips you a folded paper in class.`, [
+                    { text: 'Read Silently', type: 'check', stat: 'wis', dc: 12, success: 'Your heart warms. (+Romance)', fail: 'You fumble the note.', onSuccess: () => modRel(person.id, 5, 5), onFail: () => modRel(person.id, -2) },
+                    { text: 'Reply', type: 'check', stat: 'cha', dc: 12, success: 'They blush! (+Rel)', fail: 'Ink smudges.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                    { text: 'Ignore', type: 'flavor', effect: () => log("You fold it back into your pocket.") }
+                ]),
+
+                createEvent(`lov_17_${person.id}`, `Morning Walk`, `${person.name} joins you for an early stroll.`, [
+                    { text: 'Chat', type: 'check', stat: 'cha', dc: 10, success: 'A peaceful conversation. (+Rel)', fail: 'Awkward pauses.', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -2) },
+                    { text: 'Silent Walk', type: 'flavor', effect: () => { modRel(person.id, 3); log("Comfortable silence shared."); } },
+                    { text: 'Jog Ahead', type: 'check', stat: 'dex', dc: 12, success: 'You race them playfully. (+Rel, +Sanity)', fail: 'Trip and fall.', onSuccess: () => { modRel(person.id, 5); modSanity(1); }, onFail: () => takeDamage(1) }
+                ]),
+
+                createEvent(`lov_18_${person.id}`, `Board Game`, `${person.name} challenges you to a friendly game.`, [
+                    { text: 'Play Fair', type: 'check', stat: 'int', dc: 12, success: 'Fun is had by all. (+Romance)', fail: 'You mess up the rules.', onSuccess: () => modRel(person.id, 5, 5), onFail: () => {} },
+                    { text: 'Cheat', type: 'check', stat: 'dex', dc: 14, success: 'They forgive you. (+Rel)', fail: 'Caught cheating! (-Rel)', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -5) },
+                    { text: 'Watch', type: 'flavor', effect: () => log("You enjoy their strategy.") }
+                ]),
+
+                createEvent(`lov_19_${person.id}`, `Rainy Confession`, `Caught in a sudden downpour, ${person.name} admits their feelings.`, [
+                    { text: 'Confess Back', type: 'check', stat: 'cha', dc: 12, success: 'Mutual feelings bloom. (+Romance, +Rel)', fail: 'You stammer awkwardly.', onSuccess: () => modRel(person.id, 10, 10), onFail: () => modRel(person.id, -2, -2) },
+                    { text: 'Stay Silent', type: 'flavor', effect: () => { log("You let them speak."); } },
+                    { text: 'Run Inside', type: 'check', stat: 'dex', dc: 10, success: 'They follow happily. (+Rel)', fail: 'You slip.', onSuccess: () => modRel(person.id, 5), onFail: () => takeDamage(1) }
+                ]),
+
+                createEvent(`lov_20_${person.id}`, `Festival Fireworks`, `${person.name} holds your hand as fireworks explode overhead.`, [
+                    { text: 'Gaze Together', type: 'flavor', effect: () => { modRel(person.id, 5, 5); log("Magic fills the air."); } },
+                    { text: 'Whisper Promise', type: 'check', stat: 'cha', dc: 12, success: 'Your words linger in memory. (+Romance)', fail: 'They frown slightly.', onSuccess: () => modRel(person.id, 5, 10), onFail: () => modRel(person.id, -2, -2) },
+                    { text: 'Cheer Loudly', type: 'flavor', effect: () => { modRel(person.id, 2); log("Fun but less intimate."); } }
                 ])
             ],
             enemy: [
@@ -3232,6 +3420,65 @@ Elder: [
                     { text: 'Make Peace', type: 'check', stat: 'cha', dc: 10, success: 'The feud ends. (Reset Rel)', fail: 'It was a trap!', onSuccess: () => { const r = state.relationships.find(x=>x.id===person.id); if(r) r.friendship = 0; }, onFail: () => takeDamage(2) },
                     { text: 'Never', type: 'flavor', effect: () => log("The war continues.") },
                     { text: 'Demand Payment', type: 'check', stat: 'cha', dc: 14, success: 'They pay 20g to end it.', fail: 'They spit at you.', onSuccess: () => { state.gold += 20; const r = state.relationships.find(x=>x.id===person.id); if(r) r.friendship = 0; }, onFail: () => {} }
+                ]),
+                                createEvent(`eny_11_${person.id}`, `Sabotaged Feast`, `${person.name} ruins your carefully prepared meal.`, [
+                    { text: 'Confront', type: 'check', stat: 'cha', dc: 12, success: 'They apologize begrudgingly. (+Rel)', fail: 'They mock you further. (-Rel)', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -5) },
+                    { text: 'Retaliate', type: 'flavor', effect: () => { modRel(person.id, -10); log("You spill their drink in revenge."); } },
+                    { text: 'Ignore', type: 'flavor', effect: () => log("You salvage what you can.") }
+                ]),
+
+                createEvent(`eny_12_${person.id}`, `Street Race`, `${person.name} challenges you to a footrace through the market.`, [
+                    { text: 'Accept', type: 'check', stat: 'dex', dc: 14, success: 'Victory! (+Renown)', fail: 'Tripped over a cart. (-HP)', onSuccess: () => modRep('renown', 5), onFail: () => takeDamage(2) },
+                    { text: 'Decline', type: 'flavor', effect: () => log("They scoff at your cowardice.") },
+                    { text: 'Sabotage', type: 'check', stat: 'int', dc: 12, success: 'They slip on spilled oil. (+Renown)', fail: 'You slip too.', onSuccess: () => modRep('renown', 3), onFail: () => takeDamage(1) }
+                ]),
+
+                createEvent(`eny_13_${person.id}`, `The Prank`, `${person.name} puts a frog in your bed.`, [
+                    { text: 'Jump', type: 'check', stat: 'dex', dc: 12, success: 'You avoid the frog. (+Rel)', fail: 'It lands on you! (-Sanity)', onSuccess: () => modRel(person.id, 5), onFail: () => modSanity(-1) },
+                    { text: 'Throw Back', type: 'flavor', effect: () => { modRel(person.id, -5); log("Frog revenge executed."); } },
+                    { text: 'Laugh', type: 'flavor', effect: () => { modRel(person.id, 2); log("You take it in stride."); } }
+                ]),
+
+                createEvent(`eny_14_${person.id}`, `Insulting Letter`, `${person.name} sends a nasty note to your family.`, [
+                    { text: 'Confront', type: 'check', stat: 'cha', dc: 14, success: 'They admit wrongdoing. (+Honor)', fail: 'They deny everything. (-Renown)', onSuccess: () => modRep('honor', 5), onFail: () => modRep('renown', -3) },
+                    { text: 'Ignore', type: 'flavor', effect: () => log("Your family comforts you.") },
+                    { text: 'Return Insult', type: 'check', stat: 'int', dc: 12, success: 'You humiliate them cleverly. (+Renown)', fail: 'Backfires. (-Honor)', onSuccess: () => modRep('renown', 5), onFail: () => modRep('honor', -5) }
+                ]),
+
+                createEvent(`eny_15_${person.id}`, `Ambushed Caravan`, `${person.name} sabotages your trade caravan.`, [
+                    { text: 'Fight', type: 'check', stat: 'str', dc: 14, success: 'You recover goods. (+Renown)', fail: 'Lose some cargo. (-Gold)', onSuccess: () => modRep('renown', 5), onFail: () => state.gold = Math.max(0, state.gold - 20) },
+                    { text: 'Track', type: 'check', stat: 'wis', dc: 12, success: 'You find them hiding. (+Honor)', fail: 'They vanish. (-Renown)', onSuccess: () => modRep('honor', 5), onFail: () => modRep('renown', -5) },
+                    { text: 'Pay Back', type: 'flavor', effect: () => { state.gold -= 10; modRel(person.id, -5); log("You strike back with coin."); } }
+                ]),
+
+                createEvent(`eny_16_${person.id}`, `Poisoned Ale`, `${person.name} slipped something in your drink at the tavern.`, [
+                    { text: 'Spit Out', type: 'check', stat: 'wis', dc: 12, success: 'You avoid harm.', fail: 'You get sick. (-HP)', onSuccess: () => {}, onFail: () => takeDamage(3) },
+                    { text: 'Confront', type: 'check', stat: 'cha', dc: 14, success: 'They confess. (+Rel)', fail: 'They deny. (-Rel)', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -5) },
+                    { text: 'Drink Anyway', type: 'flavor', effect: () => { takeDamage(2); log("Brave or foolish."); } }
+                ]),
+
+                createEvent(`eny_17_${person.id}`, `Broken Bridge`, `${person.name} sabotages a bridge you need to cross.`, [
+                    { text: 'Repair', type: 'check', stat: 'dex', dc: 14, success: 'Safe passage. (+Renown)', fail: 'You slip. (-HP)', onSuccess: () => modRep('renown', 5), onFail: () => takeDamage(3) },
+                    { text: 'Find Alternate', type: 'check', stat: 'wis', dc: 12, success: 'Shortcut found. (+Rel)', fail: 'You get lost. (-Sanity)', onSuccess: () => modRel(person.id, 5), onFail: () => modSanity(-1) },
+                    { text: 'Confront', type: 'check', stat: 'str', dc: 12, success: 'They rebuild in your favor.', fail: 'They taunt you. (-Renown)', onSuccess: () => {}, onFail: () => modRep('renown', -2) }
+                ]),
+
+                createEvent(`eny_18_${person.id}`, `Poisoned Well`, `${person.name} poisons the village well.`, [
+                    { text: 'Warn Villagers', type: 'check', stat: 'cha', dc: 12, success: 'They evacuate safely. (+Honor)', fail: 'Not enough time. (-HP)', onSuccess: () => modRep('honor', 5), onFail: () => takeDamage(3) },
+                    { text: 'Stop Them', type: 'check', stat: 'str', dc: 14, success: 'You catch them. (+Renown, -Rel)', fail: 'They escape. (-Honor)', onSuccess: () => { modRep('renown', 5); modRel(person.id, -10); }, onFail: () => modRep('honor', -5) },
+                    { text: 'Ignore', type: 'flavor', effect: () => log("You hope someone else notices.") }
+                ]),
+
+                createEvent(`eny_19_${person.id}`, `Ambushed at Night`, `${person.name} and accomplices attack your home.`, [
+                    { text: 'Defend', type: 'check', stat: 'str', dc: 14, success: 'You fend them off. (+Renown, +Honor)', fail: 'They break in. (-HP)', onSuccess: () => { modRep('renown', 5); modRep('honor', 5); }, onFail: () => takeDamage(5) },
+                    { text: 'Hide', type: 'check', stat: 'dex', dc: 12, success: 'Escape unharmed.', fail: 'Found anyway. (-HP)', onSuccess: () => {}, onFail: () => takeDamage(3) },
+                    { text: 'Negotiate', type: 'check', stat: 'cha', dc: 14, success: 'They leave. (+Rel)', fail: 'They mock you. (-Rel)', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -5) }
+                ]),
+
+                createEvent(`eny_20_${person.id}`, `The Final Insult`, `${person.name} publicly humiliates you during the festival.`, [
+                    { text: 'Challenge Duel', type: 'check', stat: 'str', dc: 16, success: 'You regain honor. (+Renown, +Honor)', fail: 'Defeated. (-HP, -Honor)', onSuccess: () => { modRep('renown', 10); modRep('honor', 10); }, onFail: () => { takeDamage(5); modRep('honor', -5); } },
+                    { text: 'Retaliate Verbally', type: 'check', stat: 'cha', dc: 14, success: 'The crowd sides with you. (+Renown)', fail: 'They laugh. (-Renown)', onSuccess: () => modRep('renown', 5), onFail: () => modRep('renown', -5) },
+                    { text: 'Walk Away', type: 'flavor', effect: () => log("Pride hurts, but you survive.") }
                 ])
             ],
             friend: [
@@ -3284,6 +3531,65 @@ Elder: [
                     { text: 'Play (5g)', type: 'check', stat: 'int', dc: 12, req: s => s.gold >= 5, success: 'You win! (+5g, +Rel)', fail: 'You lose. (-5g, +Rel)', onSuccess: () => { state.gold += 5; modRel(person.id, 2); }, onFail: () => { state.gold -= 5; modRel(person.id, 2); } },
                     { text: 'Refuse', type: 'flavor', effect: () => log("Gambling is a sin.") },
                     { text: 'Cheat', type: 'check', stat: 'dex', dc: 14, success: 'You win big! (+10g)', fail: 'Caught! (-Rel)', onSuccess: () => state.gold += 10, onFail: () => modRel(person.id, -10) }
+                ]), 
+                                createEvent(`frn_11_${person.id}`, `Hunting Trip`, `${person.name} invites you to hunt in the forest.`, [
+                    { text: 'Join', type: 'check', stat: 'dex', dc: 14, success: 'You bag a stag! (+Gold, +Rel)', fail: 'You get lost. (-Sanity)', onSuccess: () => { state.gold += 15; modRel(person.id, 5); }, onFail: () => modSanity(-1) },
+                    { text: 'Decline', type: 'flavor', effect: () => log("You stay in town.") },
+                    { text: 'Scout Ahead', type: 'check', stat: 'wis', dc: 12, success: 'Spot prey early. (+Rel)', fail: 'You trip. (-HP)', onSuccess: () => modRel(person.id, 5), onFail: () => takeDamage(2) }
+                ]),
+
+                createEvent(`frn_12_${person.id}`, `Festival Dance`, `${person.name} drags you into a dance circle.`, [
+                    { text: 'Dance', type: 'check', stat: 'dex', dc: 12, success: 'You impress everyone. (+Renown, +Rel)', fail: 'Step on their toes! (-Rel)', onSuccess: () => { modRep('renown', 5); modRel(person.id, 5); }, onFail: () => modRel(person.id, -5) },
+                    { text: 'Cheer', type: 'flavor', effect: () => { modRel(person.id, 2); log("You clap along."); } },
+                    { text: 'Sit Out', type: 'flavor', effect: () => log("You watch from the sidelines.") }
+                ]),
+
+                createEvent(`frn_13_${person.id}`, `Secret Recipe`, `${person.name} shares their favorite stew recipe with you.`, [
+                    { text: 'Cook Together', type: 'check', stat: 'int', dc: 12, success: 'Delicious! (+Rel)', fail: 'Burnt! (-Sanity)', onSuccess: () => modRel(person.id, 5), onFail: () => modSanity(-1) },
+                    { text: 'Write Down', type: 'flavor', effect: () => { addItem('Stew Recipe', 'Common', 'Recipe from a friend.', 5); modRel(person.id, 5); } },
+                    { text: 'Forget', type: 'flavor', effect: () => log("You enjoy the memory of cooking.") }
+                ]),
+
+                createEvent(`frn_14_${person.id}`, `Fishing Trip`, `${person.name} takes you to a quiet river.`, [
+                    { text: 'Fish', type: 'check', stat: 'dex', dc: 12, success: 'Catch a big one! (+Gold, +Rel)', fail: 'Nothing bites.', onSuccess: () => { state.gold += 5; modRel(person.id, 5); }, onFail: () => {} },
+                    { text: 'Relax', type: 'flavor', effect: () => { modSanity(1); modRel(person.id, 2); log("Peaceful day."); } },
+                    { text: 'Prank', type: 'check', stat: 'dex', dc: 14, success: 'Splash them! (+Rel)', fail: 'They splash back. (-Rel)', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -2) }
+                ]),
+
+                createEvent(`frn_15_${person.id}`, `Crafting Lesson`, `${person.name} wants to teach you carpentry.`, [
+                    { text: 'Learn', type: 'check', stat: 'int', dc: 12, success: 'You craft something fine. (+Rel)', fail: 'It collapses. (-Sanity)', onSuccess: () => modRel(person.id, 5), onFail: () => modSanity(-1) },
+                    { text: 'Teach Them', type: 'check', stat: 'int', dc: 12, success: 'They admire your skill. (+Rel)', fail: 'They get frustrated. (-Rel)', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -5) },
+                    { text: 'Skip', type: 'flavor', effect: () => log("Too busy for woodworking.") }
+                ]),
+
+                createEvent(`frn_16_${person.id}`, `Storytelling Night`, `${person.name} invites you to share tales by the fire.`, [
+                    { text: 'Tell Story', type: 'check', stat: 'cha', dc: 12, success: 'Everyone is captivated. (+Renown, +Rel)', fail: 'They get bored. (-Rel)', onSuccess: () => { modRep('renown', 5); modRel(person.id, 5); }, onFail: () => modRel(person.id, -5) },
+                    { text: 'Listen', type: 'flavor', effect: () => { modRel(person.id, 2); log("You enjoy the tales."); } },
+                    { text: 'Sleep', type: 'flavor', effect: () => log("Dreaming by the fire.") }
+                ]),
+
+                createEvent(`frn_17_${person.id}`, `Secret Hideout`, `${person.name} shows you a hidden spot in town.`, [
+                    { text: 'Explore', type: 'check', stat: 'wis', dc: 12, success: 'Found treasures! (+Gold, +Rel)', fail: 'Trap! (-HP)', onSuccess: () => { state.gold += 10; modRel(person.id, 5); }, onFail: () => takeDamage(2) },
+                    { text: 'Keep Secret', type: 'flavor', effect: () => { modRel(person.id, 5); log("A bond is formed.") } },
+                    { text: 'Forget', type: 'flavor', effect: () => log("You wander elsewhere.") }
+                ]),
+
+                createEvent(`frn_18_${person.id}`, `Pet Rescue`, `${person.name} asks for help saving a stray animal.`, [
+                    { text: 'Help', type: 'check', stat: 'con', dc: 12, success: 'The animal is safe! (+Rel)', fail: 'You get scratched. (-HP)', onSuccess: () => modRel(person.id, 5), onFail: () => takeDamage(1) },
+                    { text: 'Decline', type: 'flavor', effect: () => { modRel(person.id, -5); log("They are disappointed.") } },
+                    { text: 'Adopt', type: 'flavor', effect: () => { addItem('Stray Kitten', 'Common', 'A new companion.', 5); modRel(person.id, 5); } }
+                ]),
+
+                createEvent(`frn_19_${person.id}`, `Cooking Challenge`, `${person.name} challenges you to a bake-off.`, [
+                    { text: 'Accept', type: 'check', stat: 'int', dc: 12, success: 'Delicious! (+Rel, +Renown)', fail: 'Burnt dessert. (-Rel)', onSuccess: () => { modRel(person.id, 5); modRep('renown', 3); }, onFail: () => modRel(person.id, -5) },
+                    { text: 'Decline', type: 'flavor', effect: () => log("Not your day for baking.") },
+                    { text: 'Help Them', type: 'check', stat: 'int', dc: 10, success: 'Great teamwork! (+Rel)', fail: 'They get annoyed. (-Rel)', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -3) }
+                ]),
+
+                createEvent(`frn_20_${person.id}`, `Treasure Hunt`, `${person.name} found clues to a hidden chest!`, [
+                    { text: 'Search Together', type: 'check', stat: 'wis', dc: 14, success: 'Treasure found! (+Gold, +Rel)', fail: 'Misread clues. (-Gold)', onSuccess: () => { state.gold += 25; modRel(person.id, 5); }, onFail: () => { state.gold = Math.max(0, state.gold - 5); } },
+                    { text: 'Let Them Go Alone', type: 'flavor', effect: () => log("They return excited.") },
+                    { text: 'Sell Clues', type: 'check', stat: 'cha', dc: 12, success: 'Profit shared. (+Gold)', fail: 'No buyers.', onSuccess: () => state.gold += 10, onFail: () => {} }
                 ])
             ],
             neutral: [
@@ -3336,6 +3642,65 @@ Elder: [
                     { text: 'Smile', type: 'check', stat: 'cha', dc: 10, success: 'They smile back. (+Rel)', fail: 'You have spinach in your teeth.', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -2) },
                     { text: 'Stare', type: 'check', stat: 'str', dc: 12, success: 'They look away.', fail: 'Staring contest.', onSuccess: () => {}, onFail: () => {} },
                     { text: 'Ignore', type: 'flavor', effect: () => log("Just a stranger.") }
+                ]),
+                                createEvent(`neu_11_${person.id}`, `Street Performer`, `${person.name} is juggling in the square.`, [
+                    { text: 'Watch', type: 'flavor', effect: () => { modRel(person.id, 2); log("Entertaining performance.") } },
+                    { text: 'Join In', type: 'check', stat: 'dex', dc: 12, success: 'You impress! (+Rel, +Renown)', fail: 'You drop everything. (-Rel)', onSuccess: () => { modRel(person.id, 5); modRep('renown', 2); }, onFail: () => modRel(person.id, -5) },
+                    { text: 'Ignore', type: 'flavor', effect: () => log("Keep walking.") }
+                ]),
+
+                createEvent(`neu_12_${person.id}`, `Lost Pet`, `${person.name} is looking for a lost dog.`, [
+                    { text: 'Help Search', type: 'check', stat: 'wis', dc: 12, success: 'Found it! (+Rel)', fail: 'Dog runs off. (-Sanity)', onSuccess: () => modRel(person.id, 5), onFail: () => modSanity(-1) },
+                    { text: 'Give Advice', type: 'check', stat: 'int', dc: 12, success: 'They follow your tip. (+Rel)', fail: 'Ignored.', onSuccess: () => modRel(person.id, 3), onFail: () => {} },
+                    { text: 'Leave', type: 'flavor', effect: () => log("Not your problem.") }
+                ]),
+
+                createEvent(`neu_13_${person.id}`, `Street Debate`, `${person.name} argues about politics loudly.`, [
+                    { text: 'Join In', type: 'check', stat: 'cha', dc: 14, success: 'You persuade some onlookers. (+Renown)', fail: 'You offend them. (-Rel)', onSuccess: () => modRep('renown', 3), onFail: () => modRel(person.id, -5) },
+                    { text: 'Stay Silent', type: 'flavor', effect: () => log("You observe quietly.") },
+                    { text: 'Change Topic', type: 'flavor', effect: () => { modRel(person.id, 2); log("Talk about local events.") } }
+                ]),
+
+                createEvent(`neu_14_${person.id}`, `Shared Snack`, `${person.name} offers you some bread.` , [
+                    { text: 'Accept', type: 'flavor', effect: () => { modRel(person.id, 5); log("You enjoy the snack.") } },
+                    { text: 'Decline', type: 'flavor', effect: () => log("Politely refuse.") },
+                    { text: 'Trade Something', type: 'check', stat: 'cha', dc: 12, success: 'Trade successful! (+Rel)', fail: 'They refuse.', onSuccess: () => modRel(person.id, 5), onFail: () => {} }
+                ]),
+
+                createEvent(`neu_15_${person.id}`, `Mysterious Note`, `You find a note from ${person.name} on the ground.`, [
+                    { text: 'Read', type: 'flavor', effect: () => log("A cryptic message.") },
+                    { text: 'Return', type: 'check', stat: 'dex', dc: 12, success: 'They thank you. (+Rel)', fail: 'They are annoyed.', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -2) },
+                    { text: 'Ignore', type: 'flavor', effect: () => log("Leave it be.") }
+                ]),
+
+                createEvent(`neu_16_${person.id}`, `Broken Wagon`, `${person.name} struggles with a broken cart.`, [
+                    { text: 'Help Push', type: 'check', stat: 'str', dc: 12, success: 'Cart moves! (+Rel)', fail: 'Strain yourself. (-HP)', onSuccess: () => modRel(person.id, 5), onFail: () => takeDamage(2) },
+                    { text: 'Offer Advice', type: 'check', stat: 'int', dc: 12, success: 'It works! (+Rel)', fail: 'No effect.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                    { text: 'Walk Away', type: 'flavor', effect: () => log("Too heavy.") }
+                ]),
+
+                createEvent(`neu_17_${person.id}`, `Street Musician`, `${person.name} is playing a lute.`, [
+                    { text: 'Listen', type: 'flavor', effect: () => { modRel(person.id, 2); modSanity(1); log("Music soothes you.") } },
+                    { text: 'Request Song', type: 'check', stat: 'cha', dc: 12, success: 'They play beautifully. (+Rel)', fail: 'They ignore you.', onSuccess: () => modRel(person.id, 5), onFail: () => {} },
+                    { text: 'Tip 1g', type: 'flavor', req: s => s.gold >= 1, effect: () => { state.gold -= 1; modRel(person.id, 3); log("Appreciated! (+Rel)") } }
+                ]),
+
+                createEvent(`neu_18_${person.id}`, `Muddy Puddle`, `${person.name} splashes water on you by accident.`, [
+                    { text: 'Laugh', type: 'flavor', effect: () => { modRel(person.id, 5); log("Funny incident.") } },
+                    { text: 'Scold', type: 'check', stat: 'cha', dc: 12, success: 'They apologize. (+Rel)', fail: 'They get defensive. (-Rel)', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -5) },
+                    { text: 'Splash Back', type: 'check', stat: 'dex', dc: 14, success: 'You win the splash war! (+Rel)', fail: 'They retaliate. (-Rel)', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -5) }
+                ]),
+
+                createEvent(`neu_19_${person.id}`, `Odd Compliment`, `${person.name} compliments your unusual hat.`, [
+                    { text: 'Thank', type: 'flavor', effect: () => { modRel(person.id, 5); log("Graciously accepted.") } },
+                    { text: 'Brag', type: 'check', stat: 'cha', dc: 12, success: 'They are impressed. (+Rel)', fail: 'They roll eyes. (-Rel)', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -3) },
+                    { text: 'Dismiss', type: 'flavor', effect: () => log("Ignore it.") }
+                ]),
+
+                createEvent(`neu_20_${person.id}`, `Shared Shortcut`, `${person.name} shows you a faster route through town.`, [
+                    { text: 'Follow', type: 'flavor', effect: () => { modRel(person.id, 5); log("Saved time!") } },
+                    { text: 'Decline', type: 'flavor', effect: () => log("Stick to your path.") },
+                    { text: 'Race Them', type: 'check', stat: 'dex', dc: 12, success: 'You beat them! (+Rel)', fail: 'They win. (-Rel)', onSuccess: () => modRel(person.id, 5), onFail: () => modRel(person.id, -3) }
                 ])
             ]
         };
