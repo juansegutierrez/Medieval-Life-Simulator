@@ -2878,7 +2878,8 @@ Elder: [
         const numSiblings = Math.floor(Math.random() * 4);
         for(let i=0; i < numSiblings; i++) {
             const sibGender = Math.random() > 0.5 ? 'Male' : 'Female';
-            const sibAge = Math.floor(Math.random() * 10) + 1;
+            // Siblings are generally older than the newborn player (age 0)
+            const sibAge = Math.floor(Math.random() * 12) + 1;
             const sib = addRelationship(getRandomName(sibGender), "Sibling", 80, sibGender, "House Member", state.location, true, true, sibAge);
             sib.appearance = GeneticEngine.mix(father, mother); // Inherit from parents
             addHouseMember(sib.name, sib.gender, sib.rank, sib.locationIndex, sib.id);
@@ -3400,7 +3401,7 @@ Elder: [
                 }
             }
             // Flavor update to parents
-            mother.relation += " (Kin)";
+            // Note: renderNode uses isBlood flag for badges, so visually they are already marked
         }
         
         // STATS NO LONGER MODIFIED BY GENES (Except Defects now)
@@ -3436,6 +3437,16 @@ Elder: [
             log(`You are born a ${state.class}. Your House's Bloodline Trait is <strong style="color:var(--royal)">${state.house.trait}</strong>.`);
         } else {
             log(`You are born a free commoner.`);
+        }
+
+        // --- INCEST REVEAL ---
+        if (state.appearance.defect) {
+             const father = getParent('Father');
+             const mother = getParent('Mother');
+             // Check if born of incest
+             if (father && mother && father.isBlood && mother.isBlood) {
+                 log(`<strong style="color:var(--stress)">DARK SECRET:</strong> You were born of a union between kin (${father.name} and ${mother.name}). This impurity of blood has marked you with: <strong style="color:var(--failure)">${state.appearance.defect.name}</strong>.`);
+             }
         }
         
         generateMarket(state.location); // Initial Market Gen
@@ -6007,18 +6018,32 @@ Elder: [
         // Player Children (Son/Daughter) are direct roots of the player branch
         const playerChildren = state.relationships.filter(r => ['Son', 'Daughter'].includes(r.relation));
         
-        // --- BRANCH 1: PLAYER & SIBLINGS ---
-        const playerBranch = `
-            <ul>
-                <li>
-                    ${renderPlayerNode()}
-                    ${playerChildren.length > 0 ? 
-                        `<ul>${playerChildren.map(c => renderDescendants(c)).join('')}</ul>` 
-                        : ''}
-                </li>
-                ${siblings.map(sib => renderDescendants(sib)).join('')}
-            </ul>
-        `;
+        // --- BRANCH 1: PLAYER & SIBLINGS (SORTED BY AGE) ---
+        // Merge Player and Siblings into one generation list
+        const currentGeneration = [...siblings];
+        // Add proxy object for Player
+        currentGeneration.push({ id: 'PLAYER', age: state.age, isPlayer: true });
+        
+        // Sort: Oldest to Left (Descending Age)
+        currentGeneration.sort((a, b) => b.age - a.age);
+
+        const generationHtml = currentGeneration.map(member => {
+            if (member.isPlayer) {
+                // Render Player
+                return `
+                    <li>
+                        ${renderPlayerNode()}
+                        ${playerChildren.length > 0 ? 
+                            `<ul>${playerChildren.map(c => renderDescendants(c)).join('')}</ul>` 
+                            : ''}
+                    </li>`;
+            } else {
+                // Render Sibling
+                return renderDescendants(member);
+            }
+        }).join('');
+
+        const playerBranch = `<ul>${generationHtml}</ul>`;
 
         // --- BRANCH 2: UNCLES/AUNTS & COUSINS ---
         // Use renderCouple to show Uncle+Aunt
