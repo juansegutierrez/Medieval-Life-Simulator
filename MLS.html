@@ -3878,7 +3878,15 @@ Elder: [
             cha: 8 + Math.floor(Math.random()*8)
         };
 
-        const hpVal = 10 + Math.floor((rndStats.con - 10) / 2);
+        // NEW: Retroactive Health Calculation based on Age
+        const npcConMod = Math.floor((rndStats.con - 10) / 2);
+        let hpVal = 10 + npcConMod;
+        
+        // Apply growth for every 5 years lived, up to age 30
+        const growthSteps = Math.floor(Math.min(age, 30) / 5);
+        for (let i = 0; i < growthSteps; i++) {
+            hpVal += Math.max(1, Math.floor(Math.random() * 4) + 1 + npcConMod);
+        }
 
         // NEW: Generate Standard Appearance
         const appearance = GeneticEngine.generate();
