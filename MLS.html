@@ -2704,6 +2704,8 @@ Elder: [
         
         if (roll < 0.1) {
             parent.health = "Deceased";
+            parent.deathYear = state.year - Math.floor(Math.random() * 5); // Died recently
+            parent.deathCause = "passed away before your memory";
             // log(`Your ${relation} passed before your memory begins.`);
         }
         return parent;
@@ -4208,9 +4210,9 @@ Elder: [
                 simulateNPCs();
             } catch(e) { console.error("NPC Sim Error:", e); }
 
+            // MODIFIED: Only check inheritance here. AI Simulation moved to end of function.
             if (state.house && state.house.members.length > 0) {
                 try { checkInheritance(); } catch(e) { console.error("Inheritance Error:", e); }
-                try { simulateHouseAI(); } catch(e) { console.error("House AI Error:", e); }
             }
 
             document.getElementById('year-display').innerText = `Year ${state.year}`;
@@ -4311,6 +4313,11 @@ Elder: [
                 }
             }
 
+            // --- 3. HOUSE EVENTS (Moved Last) ---
+            if (state.house && state.house.members.length > 0) {
+                try { simulateHouseAI(); } catch(e) { console.error("House AI Error:", e); }
+            }
+
             processNextEvent();
         } catch(e) {
             console.error("Critical ProcessYear Failure:", e);
@@ -4355,6 +4362,10 @@ Elder: [
                 if (r.age < 50) cause = "died of a sudden illness";
                 else if (r.age > 80) cause = "succumbed to old age";
                 
+                // NEW: Record Death Details
+                r.deathCause = cause;
+                r.deathYear = state.year;
+
                 // EDITED: Only log death if NPC is KNOWN to player
                 if (r.isKnown) {
                     log(`<span style="color:var(--failure)">† ${r.name} (${r.relation}) has ${cause} at age ${r.age}.</span>`);
@@ -4487,7 +4498,8 @@ Elder: [
 
         // --- NEW: AGE 16 CAREER DEMAND ---
         if (state.age === 16 && !state.occupation) {
-            state.eventQueue.unshift({
+            // MODIFIED: Changed from unshift to push to ensure it happens after age/social events
+            state.eventQueue.push({
                 id: 'house_career_demand',
                 title: 'Family Expectations',
                 text: `Lord ${rulerNPC.name} summons you to the solar. The hearth fire crackles, but their gaze is cold.<br><br>"You are sixteen now, ${state.name}. It is time you contributed to the House's legacy. I expect you to take up a vocation befitting your station. Do not idle away your bloodline."`,
@@ -5175,6 +5187,9 @@ Elder: [
         const loc = CITIES[r.locationIndex].name;
         const isKnight = r.rank === 'Sir' || r.rank === 'Dame';
         
+        // NEW: Calculate Birth Year
+        const birthYear = state.year - r.age;
+
         // Determine Display Name using new helper
         const displayName = getNPCName(r);
 
@@ -5265,6 +5280,12 @@ Elder: [
         
         if (mutationsHtml === '') mutationsHtml = '<span class="italic text-xs opacity-50">None</span>';
 
+        // NEW: Death Info Block
+        let deathInfo = '';
+        if (r.health === "Deceased") {
+            deathInfo = `<p class="text-red-900 font-bold text-xs mt-1">† Died ${r.deathYear || 'Unknown'} (${r.deathCause || 'Unknown causes'})</p>`;
+        }
+
         let html = `
             <h2 class="text-3xl font-medieval mb-1">${displayName}</h2>
             <div class="flex justify-between items-center mb-4 border-b border-black/10 pb-2">
@@ -5274,6 +5295,7 @@ Elder: [
             
             <div class="grid grid-cols-2 gap-4 text-sm mb-4">
                 <div>
+                    <p><strong>Born:</strong> ${birthYear}</p>
                     <p><strong>Age:</strong> ${r.age}</p>
                     <p><strong>Sex:</strong> ${r.gender}</p>
                     <p><strong>City:</strong> ${loc}</p>
@@ -5281,6 +5303,7 @@ Elder: [
                 </div>
                 <div>
                     <p><strong>Health:</strong> ${hpDisplay}</p>
+                    ${deathInfo}
                     <p><strong>Relation:</strong> ${r.relation}</p>
                     <p><strong>Class:</strong> ${socialClassDisplay}</p>
                     <p><strong>Claim:</strong> ${successionDisplay}</p>
@@ -5607,8 +5630,14 @@ Elder: [
             ]
         );
         
-        renderEvent(interviewEvent);
-        switchTab('log');
+        // MODIFIED: If triggered during event loop (e.g. House Event), inject into queue to prevent overwrite.
+        if (state.flags.lockedInChronicle) {
+            state.eventQueue.unshift(interviewEvent);
+            // nextTurn() from the triggering choice will pick this up
+        } else {
+            renderEvent(interviewEvent);
+            switchTab('log');
+        }
     }
 
     function joinJob(id) {
