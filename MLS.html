@@ -854,7 +854,7 @@
                 <!-- Stats injected here -->
             </div>
 
-            <button onclick="rerollStats()" class="choice-btn w-full justify-center mb-6">Roll Stats 🎲</button>
+            <button onclick="rerollStats()" class="choice-btn w-full justify-center mb-6">Reroll Stats 🎲</button>
 
             <div class="border-t border-black/20 pt-4 mb-6">
                 <h4 class="font-bold mb-2">Social Origin</h4>
@@ -2689,10 +2689,29 @@ Elder: [
 
     function setGender(g) {
         state.gender = g;
-        document.getElementById('gender-m').style.opacity = g === 'Male' ? 1 : 0.6;
-        document.getElementById('gender-f').style.opacity = g === 'Female' ? 1 : 0.6;
-        document.getElementById('gender-m').style.border = g === 'Male' ? '2px solid gold' : '2px solid #2c1e16';
-        document.getElementById('gender-f').style.border = g === 'Female' ? '2px solid gold' : '2px solid #2c1e16';
+        
+        const btnM = document.getElementById('gender-m');
+        const btnF = document.getElementById('gender-f');
+
+        // Reset classes
+        btnM.classList.remove('active-opt');
+        btnF.classList.remove('active-opt');
+        btnM.classList.add('opacity-60');
+        btnF.classList.add('opacity-60');
+        
+        // Clear legacy inline styles
+        btnM.style.border = '';
+        btnF.style.border = '';
+        btnM.style.opacity = '';
+        btnF.style.opacity = '';
+
+        if (g === 'Male') {
+            btnM.classList.add('active-opt');
+            btnM.classList.remove('opacity-60');
+        } else {
+            btnF.classList.add('active-opt');
+            btnF.classList.remove('opacity-60');
+        }
         checkReady();
     }
 
