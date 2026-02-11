@@ -922,6 +922,7 @@
                     <div>
                         <h3 class="font-bold mb-2">Vitals</h3>
                         <p><strong>Health:</strong> <span id="hp-display" class="text-green-800 font-bold">10 / 10</span></p>
+                        <p><strong>Armor:</strong> <span id="armor-display" class="text-blue-900 font-bold">0</span></p>
                         <p><strong>Sanity:</strong> <span id="sp-display" class="text-purple-800 font-bold">8 / 8</span></p>
                         <p><strong>Gold:</strong> <span id="gold-display">0</span> GP</p>
                         <p><strong>Social Reality:</strong> <span id="social-display">Commoner</span></p>
@@ -1685,11 +1686,11 @@
             items: [
                 { name: "Whetstone", rarity: "Common", desc: "Sharpen your blade.", value: 5 },
                 { name: "Iron Dagger", rarity: "Common", desc: "Simple sidearm.", value: 15 },
-                { name: "Chain Shirt", rarity: "Uncommon", desc: "Protect your vitals.", value: 50 },
+                { name: "Chain Shirt", rarity: "Uncommon", desc: "Protect your vitals.", value: 50, dr: 2 },
                 { name: "Steel Sword", rarity: "Uncommon", desc: "A soldier's weapon.", value: 45 },
-                { name: "Heavy Shield", rarity: "Uncommon", desc: "Block incoming blows.", value: 30 },
-                { name: "Masterwork Helm", rarity: "Rare", desc: "Fit for a knight.", value: 150 },
-                { name: "Plate Armor", rarity: "VeryRare", desc: "Heavy protection.", value: 500 }
+                { name: "Heavy Shield", rarity: "Uncommon", desc: "Block incoming blows.", value: 30, dr: 1 },
+                { name: "Masterwork Helm", rarity: "Rare", desc: "Fit for a knight.", value: 150, dr: 3 },
+                { name: "Plate Armor", rarity: "VeryRare", desc: "Heavy protection.", value: 500, dr: 5 }
             ]
         },
         herbalist: {
@@ -3245,12 +3246,14 @@ Elder: [
             const slotClass = `slot-${s.id}`;
             
             if (item) {
+                // Determine DR Text for equipped items
+                const drText = item.dr ? `(+${item.dr} DR)` : '';
                 return `
                 <div class="equip-slot filled item-rarity-${item.rarity} ${slotClass}" onclick="unequipItem('${s.id}')" title="${item.name}: ${item.desc}">
                     <div class="equip-remove">x</div>
                     <div class="equip-icon">${s.icon}</div>
                     <div class="text-[9px] font-bold truncate w-full text-center mt-1 leading-tight">${item.name}</div>
-                    <div class="equip-label">${s.label}</div>
+                    <div class="equip-label">${s.label} ${drText}</div>
                 </div>`;
             } else {
                 return `
@@ -3263,8 +3266,10 @@ Elder: [
         equipHtml += `</div>`;
 
         // 2. Render Capacity & Grid
+        const currentArmor = getPlayerArmor();
         const capacityHtml = `<div class="col-span-full flex justify-between items-center text-xs opacity-70 mb-2 font-bold">
             <span class="text-amber-900 text-sm">💰 ${state.gold} GP</span>
+            <span class="text-blue-900 text-sm" title="Total Damage Reduction">🛡️ ${currentArmor} DR</span>
             <span>Backpack: ${state.inventory.length} / ${maxSlots}</span>
         </div>`;
 
@@ -3287,11 +3292,14 @@ Elder: [
                     primaryBtn = `<span class="flex-1"></span>`; // Spacer
                 }
 
+                // DR Badge Logic
+                const drBadge = item.dr ? `<span class="ml-1 text-[9px] bg-blue-100 text-blue-900 border border-blue-200 px-1 rounded font-bold">🛡️ ${item.dr}</span>` : '';
+
                 return `
                 <div class="inventory-card">
                     <div>
                         <div class="inv-rarity-badge item-rarity-${item.rarity}">${item.rarity}</div>
-                        <div class="inv-item-header item-rarity-${item.rarity}">${item.name}</div>
+                        <div class="inv-item-header item-rarity-${item.rarity}">${item.name} ${drBadge}</div>
                         <div class="inv-item-desc">${item.desc}</div>
                     </div>
                     <div class="inv-actions">
@@ -4859,7 +4867,7 @@ Elder: [
             { text: 'Duel (STR)', type: 'check', stat: 'str', dc: 18, 
               success: 'VICTORY! You disarm the champion to thunderous applause!', 
               fail: 'You are crushed. (-15 HP, Injury)', 
-              onSuccess: () => { modRep('renown', 50); state.gold += 200; addItem('Champion Helm', 'Rare', 'Proof of victory.', 150); log("You won 200g!"); },
+              onSuccess: () => { modRep('renown', 50); state.gold += 200; addItem('Champion Helm', 'Rare', 'Proof of victory.', 150, null, 3); log("You won 200g!"); },
               onFail: () => { takeDamage(15); addTrait('Limp'); }
             },
             { text: 'Outmaneuver (DEX)', type: 'check', stat: 'dex', dc: 18,
@@ -6421,8 +6429,8 @@ Elder: [
         });
     }
 
-    // UPDATED: Now accepts effect parameter
-    function addItem(name, rarity, desc, value, effect = null) {
+    // UPDATED: Now accepts effect parameter and dr parameter
+    function addItem(name, rarity, desc, value, effect = null, dr = 0) {
         // --- INVENTORY LIMIT CHECK ---
         const maxSlots = 10 + getModifier(state.stats.str);
         if (state.inventory.length >= maxSlots) {
@@ -6431,7 +6439,7 @@ Elder: [
         }
 
         state.inventory.push({ 
-            name, rarity, desc, value, effect, 
+            name, rarity, desc, value, effect, dr,
             id: Math.random().toString(36).substr(2, 9) 
         });
         log(`<strong style="color:var(--gold)">ITEM GET:</strong> Found <span class="item-rarity-${rarity}">${name}</span>!`);
@@ -6447,7 +6455,7 @@ Elder: [
         const item = shop.items[itemIndex];
         
         if (state.gold >= item.value && !item.sold) {
-            const added = addItem(item.name, item.rarity, item.desc, Math.floor(item.value/2), item.effect);
+            const added = addItem(item.name, item.rarity, item.desc, Math.floor(item.value/2), item.effect, item.dr);
             
             if (added) {
                 state.gold -= item.value;
@@ -6633,9 +6641,27 @@ Elder: [
             container.appendChild(btn);
         }
     }
+
+    function getPlayerArmor() {
+        let armor = 0;
+        for (let slot in state.equipped) {
+            const item = state.equipped[slot];
+            if (item && item.dr) armor += item.dr;
+        }
+        return armor;
+    }
+
     function takeDamage(amt) {
-        state.health -= amt;
-        log(`<strong class="text-red-800">DAMAGE:</strong> You took ${amt} damage!`);
+        const armor = getPlayerArmor();
+        const reducedAmt = Math.max(0, amt - armor);
+        
+        state.health -= reducedAmt;
+        if (reducedAmt < amt) {
+             log(`<strong class="text-red-800">DAMAGE:</strong> You took ${reducedAmt} damage! (Armor blocked ${amt - reducedAmt})`);
+        } else {
+             log(`<strong class="text-red-800">DAMAGE:</strong> You took ${reducedAmt} damage!`);
+        }
+        
         updateUI();
         if (state.health <= 0) {
              state.eventQueue = []; // Clear pending events on death
@@ -6707,6 +6733,7 @@ Elder: [
             document.getElementById('location-display').innerText = CITIES[state.location].name;
             document.getElementById('header-hp').innerText = `${state.health} / ${state.maxHealth} HP`;
             document.getElementById('hp-display').innerText = `${state.health} / ${state.maxHealth}`;
+            document.getElementById('armor-display').innerText = getPlayerArmor(); // Armor Update
             document.getElementById('header-sp').innerText = `${state.sanity} / ${state.maxSanity} SP`;
             document.getElementById('sp-display').innerText = `${state.sanity} / ${state.maxSanity}`;
             document.getElementById('align-display').innerText = "True Neutral"; 
