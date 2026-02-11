@@ -1467,6 +1467,7 @@
         age: 0,
         year: 1200,
         stats: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+        growth: { hp: 0, sp: 0 }, // NEW: Track accumulated growth
         appearance: { hair: "Brown", eyes: "Brown", skin: "Fair", height: "Average", mutations: [], defect: null }, // Added defect slot
         genes: [], // Legacy/Unused or purely strictly internal ID tracking if needed, but appearance.mutations is main
         reputation: { renown: 0, honor: 0, piety: 0, infamy: 0 },
@@ -4760,7 +4761,28 @@ Elder: [
                 }
             }
 
-            state.maxHealth = 10 + getModifier(state.stats.con);
+            // --- GROWTH LOGIC (Every 5 years until 30) ---
+            if (state.age > 0 && state.age <= 30 && state.age % 5 === 0) {
+                if (!state.growth) state.growth = { hp: 0, sp: 0 }; // Safety init
+                
+                const conMod = getModifier(state.stats.con);
+                const wisMod = getModifier(state.stats.wis);
+                
+                // Gain 1d4 + Mod (Minimum 1)
+                const hpGain = Math.max(1, Math.floor(Math.random() * 4) + 1 + conMod);
+                const spGain = Math.max(1, Math.floor(Math.random() * 4) + 1 + wisMod);
+                
+                state.growth.hp += hpGain;
+                state.growth.sp += spGain;
+                
+                log(`<strong style="color:var(--success)">Growth:</strong> You feel tougher and wiser. (+${hpGain} Max HP, +${spGain} Max SP)`);
+            }
+
+            // Recalculate Max Stats (Base + Growth)
+            state.maxHealth = 10 + getModifier(state.stats.con) + (state.growth ? state.growth.hp : 0);
+            // Recalculate Max Sanity as well to respect WIS changes and Growth
+            state.maxSanity = Math.max(1, 8 + getModifier(state.stats.wis) + getModifier(state.stats.cha) + (state.growth ? state.growth.sp : 0));
+
             state.health = Math.min(state.maxHealth, state.health + 5); 
 
             const spFlux = Math.floor(Math.random() * 3) - 1; 
@@ -4910,6 +4932,27 @@ Elder: [
             
             r.age++;
             
+            // --- NPC GROWTH (Every 5 years until 30) ---
+            if (r.age <= 30 && r.age % 5 === 0) {
+                const conMod = Math.floor((r.stats.con - 10) / 2);
+                const wisMod = Math.floor((r.stats.wis - 10) / 2);
+                
+                const hpGain = Math.max(1, Math.floor(Math.random() * 4) + 1 + conMod);
+                const spGain = Math.max(1, Math.floor(Math.random() * 4) + 1 + wisMod);
+                
+                // Initialize Max Sanity for NPCs if missing
+                if (typeof r.maxSanity === 'undefined') {
+                    const chaMod = Math.floor((r.stats.cha - 10) / 2);
+                    r.maxSanity = Math.max(1, 8 + wisMod + chaMod);
+                    r.sanity = r.maxSanity;
+                }
+
+                r.maxHp += hpGain;
+                r.hp += hpGain; // Heal the new amount
+                r.maxSanity += spGain;
+                r.sanity += spGain;
+            }
+
             // Dynamic Death Chance for NPCs (Old Age)
             let deathChance = 0.005; // 0.5% base chance (accidents/sickness)
             
