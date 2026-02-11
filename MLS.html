@@ -1155,6 +1155,44 @@
         "Paranoid": { desc: "They are out to get you.", rarity: "Uncommon" }
     };
 
+    // --- NEW: NPC INVENTORY GENERATOR ---
+    function generateNPCInventory(occupation, rank) {
+        const items = [];
+        const add = (name, rarity, desc, val) => items.push({name, rarity, desc, value: val, id: Math.random().toString(36).substr(2, 9)});
+
+        // Basic Wealth/Rank Items
+        const isNoble = rank.includes('Noble') || rank.includes('Lord') || rank.includes('Lady') || rank === 'House Member' || rank.includes('King') || rank.includes('Queen') || rank.includes('Duke') || rank.includes('Heir');
+        
+        if (isNoble) {
+            add('Fine Clothes', 'Uncommon', 'Silk and velvet.', 25);
+            if(Math.random() > 0.7) add('Signet Ring', 'Rare', 'Gold ring with crest.', 50);
+            if(Math.random() > 0.8) add('Jeweled Brooch', 'Rare', 'Sparkling gemstone.', 80);
+        } else {
+            add('Rough Clothes', 'Common', 'Wool and linen.', 1);
+            if(Math.random() > 0.5) add('Dagger', 'Common', 'Simple iron blade.', 5);
+            add('Waterskin', 'Common', 'Leather pouch.', 1);
+        }
+
+        // Occupation Specifics
+        const jobLower = (occupation || "").toLowerCase();
+        
+        if (jobLower.includes('smith')) { add('Hammer', 'Common', 'Heavy tool.', 5); add('Apron', 'Common', 'Leather.', 2); }
+        else if (jobLower.includes('farm')) { add('Hoe', 'Common', 'Farming tool.', 3); add('Seeds', 'Common', 'Bag of grain.', 1); }
+        else if (jobLower.includes('merchant') || jobLower.includes('peddler') || jobLower.includes('shop')) { add('Ledger', 'Common', 'Account book.', 5); add('Trade Goods', 'Uncommon', 'Assorted wares.', 20); }
+        else if (jobLower.includes('knight') || jobLower.includes('guard') || jobLower.includes('soldier') || jobLower.includes('captain') || jobLower.includes('squire')) { 
+            add('Longsword', 'Uncommon', 'Steel blade.', 40); 
+            add('Chainmail', 'Uncommon', 'Protection.', 50); 
+        }
+        else if (jobLower.includes('clerg') || jobLower.includes('priest')) { add('Holy Symbol', 'Common', 'Wooden icon.', 5); add('Prayer Beads', 'Common', 'For focus.', 2); }
+        else if (jobLower.includes('scholar') || jobLower.includes('scribe') || jobLower.includes('mage') || jobLower.includes('alc')) { add('Scroll', 'Uncommon', 'Parchment.', 10); add('Quill & Ink', 'Common', 'Writing set.', 5); }
+        else if (jobLower.includes('thief') || jobLower.includes('crim')) { add('Lockpicks', 'Uncommon', 'Thieves tools.', 15); }
+        else if (jobLower.includes('artist') || jobLower.includes('paint')) { add('Paints', 'Common', 'Colorful dyes.', 5); }
+        else if (jobLower.includes('bake') || jobLower.includes('cook')) { add('Rolling Pin', 'Common', 'Wood.', 2); add('Flour', 'Common', 'Sack.', 1); }
+        else if (jobLower.includes('hunt')) { add('Shortbow', 'Common', 'Yew wood.', 15); add('Arrows', 'Common', 'Quiver.', 2); }
+        
+        return items;
+    }
+
     const GeneticEngine = {
         getRandomMutation: function() {
             const roll = Math.random();
@@ -1525,17 +1563,7 @@
             ranks: [
                 { title: "Peddler", wage: 10, stressMod: 3 },
                 { title: "Shopkeeper", wage: 30, stressMod: 4 },
-                { title: "Trade Magnate", wage: 100, stressMod: 6 }
-            ]
-        },
-        squire: {
-            name: "Squireship",
-            req: { age: 12, stat: 'str', val: 12 }, // Special entry via NPC interaction
-            dc: 100, stat: 'str', // Impossible via menu
-            ranks: [
-                { title: "Page", wage: 2, stressMod: 2 },
-                { title: "Squire", wage: 5, stressMod: 4 },
-                { title: "Knight-Errant", wage: 20, stressMod: 6 } 
+                { title: "Trade Magnate", wage: 80, stressMod: 6 }
             ]
         },
         military: { 
@@ -1545,8 +1573,9 @@
             ranks: [
                 { title: "Camp Follower", wage: 2, stressMod: 1 },
                 { title: "Foot Soldier", wage: 10, stressMod: 5 },
-                { title: "Veteran Sergeant", wage: 25, stressMod: 6 },
-                { title: "Captain", wage: 60, stressMod: 8 }
+                { title: "Corporal", wage: 25, stressMod: 6 },
+                { title: "Sergeant", wage: 40, stressMod: 7 },
+                { title: "Sergeant Major", wage: 80, stressMod: 8 }
             ]
         },
         knight: {
@@ -1554,9 +1583,11 @@
             req: { age: 16, stat: 'str', val: 12, class: 'House' },
             dc: 14, stat: 'str',
             ranks: [
-                { title: "Household Guard", wage: 15, stressMod: 3 },
-                { title: "Knight-Errant", wage: 30, stressMod: 5 },
-                { title: "Lord Commander", wage: 80, stressMod: 7 }
+                { title: "Page", wage: 3, stressMod: 2 },
+                { title: "Squire", wage: 5, stressMod: 4 },
+                { title: "Knight", wage: 30, stressMod: 5 },
+                { title: "Knight Lieutenant", wage: 40, stressMod: 7 },
+                { title: "Knight Captain", wage: 100, stressMod: 8 }
             ]
         },
         diplomat: {
@@ -3057,13 +3088,41 @@ Elder: [
     }
 
     // --- NEW: SUCCESSION LOGIC ---
+    // Helper for Titles
+    function getTitleSet(tier, gender) {
+        const isMale = gender === 'Male';
+        if (tier === 'Royal House') {
+            return {
+                head: isMale ? 'King' : 'Queen',
+                spouse: isMale ? 'Prince Consort' : 'Queen Consort',
+                heir: isMale ? 'Crown Prince' : 'Crown Princess',
+                emeritus: isMale ? 'King Emeritus' : 'Queen Mother'
+            };
+        } else if (tier === 'Greater House') {
+            return {
+                head: isMale ? 'Duke' : 'Duchess',
+                spouse: isMale ? 'Duke' : 'Duchess',
+                heir: isMale ? 'Marquess' : 'Marchioness',
+                emeritus: isMale ? 'Duke Emeritus' : 'Dowager Duchess'
+            };
+        } else {
+            return {
+                head: isMale ? 'Lord' : 'Lady',
+                spouse: isMale ? 'Lord' : 'Lady',
+                heir: 'Heir',
+                emeritus: isMale ? 'Lord Emeritus' : 'Dowager Lady'
+            };
+        }
+    }
+
     function checkInheritance() {
         if (!state.house || !state.house.members) return;
 
         // 1. Identify Current Ruler
+        // UPDATED: Check for King, Queen, Duke, Duchess as well
         let ruler = state.house.members.find(m => 
-            (m.rank.includes('Lord') && !m.rank.includes('Emeritus')) || 
-            (m.rank.includes('Lady') && !m.rank.includes('Dowager') && !m.rank.includes('Waiting'))
+            !m.rank.includes('Emeritus') && !m.rank.includes('Dowager') && !m.rank.includes('Mother') && !m.rank.includes('Consort') &&
+            (m.rank.includes('Lord') || m.rank.includes('Lady') || m.rank.includes('King') || m.rank.includes('Queen') || m.rank.includes('Duke') || m.rank.includes('Duchess'))
         );
 
         // If no ruler found (e.g. game start), defaults to Oldest Male Bloodline
@@ -3071,9 +3130,9 @@ Elder: [
             const candidates = calculateSuccession(null);
             if (candidates.length > 0) {
                 ruler = candidates[0];
-                const title = ruler.gender === 'Male' ? 'Lord' : 'Lady';
-                updateRank(ruler.id, title);
-                log(`<strong style="color:var(--royal)">HOUSE:</strong> ${ruler.name} is recognized as the ${title} of House ${state.house.name}.`);
+                const titles = getTitleSet(state.house.tier, ruler.gender);
+                updateRank(ruler.id, titles.head);
+                log(`<strong style="color:var(--royal)">HOUSE:</strong> ${ruler.name} is recognized as the ${titles.head} of House ${state.house.name}.`);
             }
         }
 
@@ -3093,35 +3152,38 @@ Elder: [
         const heirApparent = heirs.length > 0 ? heirs[0] : null;
 
         // Ensure only one person has 'Heir' rank at a time (if ruler is alive)
+        // UPDATED: Check for specific heir titles (Crown Prince, Marquess)
         if (!rulerIsDead && heirApparent) {
+            const heirTitles = getTitleSet(state.house.tier, heirApparent.gender);
+            
             state.house.members.forEach(m => {
-                if (m.rank === 'Heir' && m.id !== heirApparent.id) {
+                if ((m.rank === 'Heir' || m.rank === 'Crown Prince' || m.rank === 'Crown Princess' || m.rank === 'Marquess' || m.rank === 'Marchioness') && m.id !== heirApparent.id) {
                     m.rank = 'House Member'; // Demote previous heir
                     // If player was demoted, update their state class string
                     if (m.id === 'PLAYER') updateRank('PLAYER', 'House Member');
                 }
             });
-            if (heirApparent.rank !== 'Heir') updateRank(heirApparent.id, 'Heir');
+            if (heirApparent.rank !== heirTitles.heir) updateRank(heirApparent.id, heirTitles.heir);
         }
 
         // 4. Process Succession if Ruler Died
         if (rulerIsDead) {
-            const oldTitle = ruler.gender === 'Male' ? 'Lord Emeritus' : 'Dowager Lady';
-            updateRank(ruler.id, oldTitle);
+            const oldTitles = getTitleSet(state.house.tier, ruler.gender);
+            updateRank(ruler.id, oldTitles.emeritus);
             
             if (ruler.id !== 'PLAYER') {
                 log(`<strong style="color:var(--failure)">DEATH:</strong> The ${ruler.rank} has passed. The House looks to the bloodline.`);
             }
 
             if (heirApparent) {
-                const newTitle = heirApparent.gender === 'Male' ? 'Lord' : 'Lady';
-                updateRank(heirApparent.id, newTitle);
+                const newTitles = getTitleSet(state.house.tier, heirApparent.gender);
+                updateRank(heirApparent.id, newTitles.head);
                 
                 if (heirApparent.id === 'PLAYER') {
-                    log(`<strong style="color:var(--gold)">ASCENSION:</strong> You are now the ${newTitle} of House ${state.house.name}!`);
+                    log(`<strong style="color:var(--gold)">ASCENSION:</strong> You are now the ${newTitles.head} of House ${state.house.name}!`);
                     modRep('renown', 50);
                 } else {
-                    log(`<strong style="color:var(--royal)">ASCENSION:</strong> ${heirApparent.name} ascends as the new ${newTitle}.`);
+                    log(`<strong style="color:var(--royal)">ASCENSION:</strong> ${heirApparent.name} ascends as the new ${newTitles.head}.`);
                 }
                 
                 // Trigger recursive check in case the new Lord has an heir ready
@@ -3468,7 +3530,7 @@ Elder: [
             careerKeys = ['knight', 'diplomat', 'merchant', 'scholar', 'clergy', 'military', 'alchemist', 'artist'];
         } else {
             // Peasants generally don't get noble exclusive jobs (though Merchant/Military/Clergy overlap)
-            careerKeys = careerKeys.filter(k => k !== 'knight' && k !== 'diplomat' && k !== 'squire');
+            careerKeys = careerKeys.filter(k => k !== 'knight' && k !== 'diplomat');
         }
 
         const rndJobKey = careerKeys[Math.floor(Math.random() * careerKeys.length)];
@@ -3513,6 +3575,18 @@ Elder: [
         // NEW: Generate Standard Appearance
         const appearance = GeneticEngine.generate();
 
+        // NEW: Generate Gold & Inventory
+        let npcGold = 0;
+        const isNobleRank = rank.includes('Lord') || rank.includes('Lady') || rank.includes('King') || rank.includes('Queen') || rank.includes('Duke') || rank === 'House Member' || rank.includes('Heir');
+        
+        if (isNobleRank) npcGold = 100 + Math.floor(Math.random() * 400);
+        else if (rndJob.includes('Merchant') || rndJob.includes('Magnate')) npcGold = 50 + Math.floor(Math.random() * 150);
+        else if (rndJob.includes('Master') || rndJob.includes('Captain')) npcGold = 30 + Math.floor(Math.random() * 50);
+        else if (rndJob === 'Child') npcGold = Math.floor(Math.random() * 2);
+        else npcGold = Math.floor(Math.random() * 20) + 1;
+
+        const npcInv = generateNPCInventory(rndJob, rank);
+
         const person = {
             id: Math.random().toString(36).substr(2, 9),
             name, relation, 
@@ -3531,7 +3605,9 @@ Elder: [
             stats: rndStats,
             appearance: appearance, // Store appearance
             genes: [], // Legacy
-            traits: [] // Existing acquired traits
+            traits: [], // Existing acquired traits
+            gold: npcGold, // NEW
+            inventory: npcInv // NEW
         };
         state.relationships.push(person);
         return person;
@@ -4629,6 +4705,45 @@ Elder: [
 
                     if (r.isKnown) {
                         log(`<strong style="color:var(--gold)">Marriage:</strong> Your ${r.relation} ${r.name} married ${spouseName}.`);
+                        
+                        // NEW: Wedding Invitation Event
+                        // If player is close enough or family, they get invited
+                        if (r.friendship > 30 || r.isFamily) {
+                            state.eventQueue.push({
+                                id: `wedding_invite_${r.id}`,
+                                title: 'Wedding Invitation',
+                                text: `You have received an invitation to the wedding of your ${r.relation} <strong>${r.name}</strong> and ${spouseName}.`,
+                                choices: [
+                                    { 
+                                        text: 'Attend with Gift (15g)', 
+                                        type: 'flavor', 
+                                        req: s => s.gold >= 15, 
+                                        effect: () => { 
+                                            state.gold -= 15; 
+                                            modRel(r.id, 25); 
+                                            modSanity(1);
+                                            log(`You attended the wedding and presented a fine gift. ${r.name} was touched.`); 
+                                        } 
+                                    },
+                                    { 
+                                        text: 'Attend Ceremony', 
+                                        type: 'flavor', 
+                                        effect: () => { 
+                                            modRel(r.id, 10); 
+                                            log(`You attended the ceremony to show your support.`); 
+                                        } 
+                                    },
+                                    { 
+                                        text: 'Send Regrets', 
+                                        type: 'flavor', 
+                                        effect: () => { 
+                                            modRel(r.id, -5); 
+                                            log(`You declined the invitation. ${r.name} was disappointed.`); 
+                                        } 
+                                    }
+                                ]
+                            });
+                        }
                     }
                 }
 
@@ -4949,7 +5064,27 @@ Elder: [
                                 marryNPC(spouse.id); 
                                 modRel(rulerNPC.id, 20); 
                                 modRep('honor', 10); 
-                                log(`<span style="color:var(--royal)">DUTY:</span> You accepted the match. The Lord is pleased.`); 
+                                
+                                // NEW: Treasury Funding Logic
+                                let weddingType = 'Simple Ceremony';
+                                let cost = 50;
+                                
+                                if (state.house.treasury >= 1500) {
+                                    weddingType = 'Royal Extravaganza';
+                                    cost = 1000;
+                                    modRep('renown', 50);
+                                } else if (state.house.treasury >= 500) {
+                                    weddingType = 'Grand Feast';
+                                    cost = 200;
+                                    modRep('renown', 15);
+                                }
+                                
+                                if (state.house.treasury >= cost) {
+                                    state.house.treasury -= cost;
+                                    log(`<span style="color:var(--royal)">DUTY:</span> You accepted the match. Lord ${rulerNPC.name} funded a <strong>${weddingType}</strong> (${cost}g) from the treasury.`); 
+                                } else {
+                                    log(`<span style="color:var(--royal)">DUTY:</span> You accepted the match. The House treasury could only afford a modest blessing.`);
+                                }
                             } 
                         },
                         { 
@@ -5010,7 +5145,43 @@ Elder: [
                 spouseNPC.isMarried = true;
                 spouseNPC.spouseId = targetNPC.id;
                 
-                log(`<strong style="color:var(--royal)">HOUSE:</strong> Lord ${rulerNPC.name} arranged a marriage between ${targetNPC.name} and ${spouseName}.`);
+                // NEW: Treasury Logic for NPC
+                let weddingType = 'Simple Ceremony';
+                let cost = 50;
+                let funded = false;
+                
+                if (state.house.treasury >= 1500) {
+                    weddingType = 'Royal Extravaganza';
+                    cost = 1000;
+                } else if (state.house.treasury >= 500) {
+                    weddingType = 'Grand Feast';
+                    cost = 200;
+                }
+                
+                if (state.house.treasury >= cost) {
+                    state.house.treasury -= cost;
+                    funded = true;
+                }
+
+                if (funded) {
+                    log(`<strong style="color:var(--royal)">HOUSE:</strong> Lord ${rulerNPC.name} arranged a <strong>${weddingType}</strong> (${cost}g) between ${targetNPC.name} and ${spouseName}.`);
+                } else {
+                    log(`<strong style="color:var(--royal)">HOUSE:</strong> Lord ${rulerNPC.name} arranged a humble marriage between ${targetNPC.name} and ${spouseName}.`);
+                }
+                
+                // Trigger invite for player if they know the NPC
+                if (targetNPC.isKnown && (targetNPC.friendship > 20 || targetNPC.isFamily)) {
+                     state.eventQueue.push({
+                        id: `wedding_invite_npc_${targetNPC.id}`,
+                        title: 'Wedding Invitation',
+                        text: `You are invited to the arranged wedding of ${targetNPC.name}.`,
+                        choices: [
+                            { text: 'Attend', type: 'flavor', effect: () => { modRel(targetNPC.id, 10); log("You paid your respects at the wedding."); } },
+                            { text: 'Ignore', type: 'flavor', effect: () => log("You did not attend.") }
+                        ]
+                    });
+                }
+
             } else {
                 log(`<strong style="color:var(--stress)">SCANDAL:</strong> ${targetNPC.name} publicly refused a marriage arranged by Lord ${rulerNPC.name}!`);
             }
@@ -5023,22 +5194,44 @@ Elder: [
             state.house.treasury -= amt;
             log(`<strong style="color:var(--royal)">HOUSE:</strong> ${ruler.name} withdrew ${amt}g from the treasury for courtly expenses.`);
         }
+
+        // 4. Member Contributions
+        // NPCs with sufficient personal wealth may donate to the treasury
+        state.house.members.forEach(m => {
+            if (m.id === 'PLAYER') return; // Player donates manually
+            const npc = state.relationships.find(r => r.id === m.id);
+            if (!npc || npc.health === 'Deceased') return;
+
+            // Check if NPC is wealthy enough to contribute (> 100g)
+            if (npc.gold > 100 && Math.random() < 0.15) {
+                // They donate 10-30% of their wealth
+                const percent = 0.10 + (Math.random() * 0.20);
+                const donation = Math.floor(npc.gold * percent);
+                
+                if (donation > 0) {
+                    npc.gold -= donation;
+                    state.house.treasury += donation;
+                    // Log relevant contributions
+                    if (donation >= 10) {
+                        log(`<strong style="color:var(--gold)">CONTRIBUTION:</strong> ${npc.name} donated ${donation}g to the House treasury.`);
+                    }
+                }
+            }
+        });
     }
 
-    function processNextEvent() {
-        if (state.eventQueue.length > 0) {
-            const evt = state.eventQueue.shift();
-            renderEvent(evt);
-        } else {
-            const container = document.getElementById('choices-container');
-            container.innerHTML = '';
-            const btn = document.createElement('button');
-            btn.className = 'choice-btn justify-center font-bold';
-            btn.innerText = "Advance Year";
-            btn.onclick = processYear;
-            container.appendChild(btn);
-            if (state.health <= 0) death();
-        }
+    // NEW: Helper to get local ruler title for UI
+    function getLocalRulerTitle(locationIndex) {
+        const city = CITIES[locationIndex];
+        // Hardcoded check for Chep (Capital) -> King
+        if (city.name.includes("Chep")) return "King";
+        
+        // Check for Greater Houses -> Duke
+        const greater = ["Valdoria", "Thalor", "Grimward", "Sunstrider", "Ironheart", "Moonshadow", "Stormbreaker"];
+        if (greater.some(n => city.ruler.includes(n))) return "Duke";
+        
+        // Default
+        return "Lord";
     }
 
     // --- ACTIVITIES ---
@@ -5049,6 +5242,8 @@ Elder: [
             return;
         }
 
+        const lordTitle = getLocalRulerTitle(state.location);
+
         // Updated Activity Grid - Reordered & Labeled
         container.innerHTML = `
             <button onclick="actTrain()" class="act-btn choice-btn"><span class="act-icon">⚔️</span>Train <span class="text-[10px] opacity-70 block">(Age 8+)</span></button>
@@ -5057,7 +5252,7 @@ Elder: [
             <button onclick="actSocialize()" class="act-btn choice-btn"><span class="act-icon">🍻</span>Socialize</button>
             <button onclick="actBrothel()" class="act-btn choice-btn"><span class="act-icon">♥️</span>Brothel <span class="text-[10px] opacity-70 block">(Age 18+)</span></button>
             
-            <button onclick="actVisitLord()" class="act-btn choice-btn"><span class="act-icon">👑</span>Visit Lord <span class="text-[10px] opacity-70 block">(Age 16+, 50 Renown)</span></button>
+            <button onclick="actVisitLord()" class="act-btn choice-btn"><span class="act-icon">👑</span>Visit ${lordTitle} <span class="text-[10px] opacity-70 block">(Age 16+, 50 Renown)</span></button>
             <button onclick="actTournament()" class="act-btn choice-btn"><span class="act-icon">🎪</span>Tournament <span class="text-[10px] opacity-70 block">(Age 16+)</span></button>
             
             <button onclick="actDungeon()" class="act-btn choice-btn"><span class="act-icon">💀</span>Dungeon <span class="text-[10px] opacity-70 block">(Age 16+)</span></button>
@@ -5119,14 +5314,18 @@ Elder: [
         if(!checkAge(16)) return;
         if(!checkActLimit('lord', 1, "The Lord is not accepting further audiences this year.")) return;
 
+        const city = CITIES[state.location];
+        const title = getLocalRulerTitle(state.location);
+        // Determine gendered title for text (simplification: default to male title or generic)
+        const displayTitle = title === "King" ? "King/Queen" : (title === "Duke" ? "Duke/Duchess" : "Lord/Lady");
+
         if (state.reputation.renown < 50 && state.socialClass !== 'House') {
-            log(`<strong class="text-red-800">Denied.</strong> The guards block your path. "The Lord only grants audiences to those of name (50 Renown)."`);
+            log(`<strong class="text-red-800">Denied.</strong> The guards block your path. "The ${title} only grants audiences to those of name (50 Renown)."`);
             switchTab('log');
             return;
         }
 
-        const city = CITIES[state.location];
-        log(`You attempt to gain audience with the ruling family of ${city.ruler}.`);
+        log(`You attempt to gain audience with the ${displayTitle} of ${city.ruler}.`);
         
         let dc = 18;
         if (state.socialClass === 'House') dc = 12;
@@ -5134,7 +5333,7 @@ Elder: [
         
         const roll = rollD20(getModifier(state.stats.cha));
         if (roll.total >= dc) {
-            log(`<strong class="text-green-800">Granted!</strong> You meet the Lord/Lady. They are impressed by your bearing.`);
+            log(`<strong class="text-green-800">Granted!</strong> You meet the ${title}. They are impressed by your bearing.`);
             modRep('renown', 5);
             modSanity(1);
             // Create the Lord NPC if not exists, or update interactions
@@ -5504,9 +5703,10 @@ Elder: [
                 socialClassDisplay = `<span class="text-royal font-bold">Noble House</span>`;
 
                 // Find current ruler to calculate line relative to them
+                // UPDATED: Robust ruler check for titles
                 let ruler = state.house.members.find(m => 
-                    (m.rank.includes('Lord') && !m.rank.includes('Emeritus')) || 
-                    (m.rank.includes('Lady') && !m.rank.includes('Dowager') && !m.rank.includes('Waiting'))
+                    !m.rank.includes('Emeritus') && !m.rank.includes('Dowager') && !m.rank.includes('Mother') && !m.rank.includes('Consort') &&
+                    (m.rank.includes('Lord') || m.rank.includes('Lady') || m.rank.includes('King') || m.rank.includes('Queen') || m.rank.includes('Duke') || m.rank.includes('Duchess'))
                 );
 
                 // If this NPC IS the ruler
@@ -5549,9 +5749,6 @@ Elder: [
                 </button>
                 <button onclick="interact('${id}', 'gift')" class="choice-btn text-sm justify-center">🎁 Gift (5g)</button>
             `;
-            if (isKnight && state.age >= 12 && state.occupation?.id !== 'squire') {
-                actions += `<button onclick="attemptJob('squire')" class="choice-btn text-sm bg-blue-900 text-white">🛡️ Ask to Squire</button>`;
-            }
         } else {
             actions = `<button onclick="interact('${id}', 'letter')" class="col-span-2 choice-btn text-sm justify-center">🕊️ Send Letter (1g)</button>`;
         }
@@ -5584,6 +5781,11 @@ Elder: [
             deathInfo = `<p class="text-red-900 font-bold text-xs mt-1">† Died ${r.deathYear || 'Unknown'} (${r.deathCause || 'Unknown causes'})</p>`;
         }
 
+        // NEW: Inventory HTML
+        const invHtml = (r.inventory && r.inventory.length > 0) 
+            ? r.inventory.map(i => `<span class="text-[10px] border border-black/20 rounded px-1 bg-white/50 item-rarity-${i.rarity}" title="${i.desc} - Val: ${i.value}g">${i.name}</span>`).join(' ') 
+            : '<span class="text-xs italic opacity-50">Empty pockets.</span>';
+
         let html = `
             <h2 class="text-3xl font-medieval mb-1">${displayName}</h2>
             <div class="flex justify-between items-center mb-4 border-b border-black/10 pb-2">
@@ -5613,6 +5815,16 @@ Elder: [
                 <div class="text-sm italic mb-2">${ap.height}, ${ap.hair} Hair, ${ap.eyes} Eyes, ${ap.skin} Skin</div>
                 <div class="text-xs font-bold uppercase mb-1">Mutations & Defects</div>
                 <div>${mutationsHtml}</div>
+            </div>
+
+            <div class="mb-4 pt-2 border-t border-black/10">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="text-xs font-bold uppercase">Possessions</div>
+                    <div class="text-xs font-bold text-amber-900">💰 ${r.gold || 0} GP</div>
+                </div>
+                <div class="flex flex-wrap gap-1">
+                    ${invHtml}
+                </div>
             </div>
 
             <div class="mb-4 space-y-2">
@@ -5878,7 +6090,6 @@ Elder: [
                 html += `<h4 class="font-bold border-b border-black/10 mb-2 mt-4">New Career</h4>`;
             }
             for (let id in CAREERS) {
-                if (id === 'squire') continue; 
                 const c = CAREERS[id];
                 let canJoin = true;
                 if (c.req.age && state.age < c.req.age) canJoin = false;
@@ -5973,7 +6184,6 @@ Elder: [
 
     function attemptJob(id) {
         if(state.health <= 0) return; // Guard
-        if(id === 'squire') closeNPC(); 
         
         const career = CAREERS[id];
         log(`You attempt to find work as a ${career.name}.`);
@@ -6326,8 +6536,8 @@ Elder: [
                 const demogHtml = `
                 <div class="mt-2 pt-2 border-t border-black/10 text-[10px] grid grid-cols-4 gap-1 text-center opacity-80">
                     <div>🌾 Common Folk: ${commoners.toLocaleString()}</div>
-                    <div>⚔️ Guards: ${soldiers.toLocaleString()}</div>
                     <div>🧹 Servants: ${servants.toLocaleString()}</div>
+                    <div>⚔️ Guards: ${soldiers.toLocaleString()}</div>
                     <div>🛡️ Sworn Knights: ${knights}</div>
                 </div>`;
 
@@ -6397,8 +6607,12 @@ Elder: [
             }
 
             // SUCCESSION INFO BOX
-            const currentLord = state.house.members.find(m => (m.rank.includes('Lord') && !m.rank.includes('Emeritus')) || (m.rank.includes('Lady') && !m.rank.includes('Dowager')));
-            const heir = state.house.members.find(m => m.rank === 'Heir');
+            const currentLord = state.house.members.find(m => 
+                !m.rank.includes('Emeritus') && !m.rank.includes('Dowager') && !m.rank.includes('Mother') && !m.rank.includes('Consort') &&
+                (m.rank.includes('Lord') || m.rank.includes('Lady') || m.rank.includes('King') || m.rank.includes('Queen') || m.rank.includes('Duke') || m.rank.includes('Duchess'))
+            );
+            // UPDATED: Check for all heir types
+            const heir = state.house.members.find(m => m.rank === 'Heir' || m.rank === 'Crown Prince' || m.rank === 'Crown Princess' || m.rank === 'Marquess' || m.rank === 'Marchioness');
             
             successionHtml = `
                 <div class="mt-4 pt-4 border-t border-black/10">
@@ -6448,8 +6662,9 @@ Elder: [
             const bloodBadge = p.isBlood ? `<span class="tree-blood">Blood</span>` : (p.isFamily ? `<span class="tree-married">In-Law</span>` : '');
             
             let extraIcon = '';
-            if (p.rank.includes("Lord") || p.rank.includes("Lady") || p.rank.includes("King") || p.rank.includes("Queen")) {
-                if(!p.rank.includes("Emeritus") && !p.rank.includes("Dowager")) extraIcon = `<div class="tree-crown">👑</div>`;
+            // UPDATED: Included Duke/Duchess in crown logic
+            if (p.rank.includes("Lord") || p.rank.includes("Lady") || p.rank.includes("King") || p.rank.includes("Queen") || p.rank.includes("Duke") || p.rank.includes("Duchess")) {
+                if(!p.rank.includes("Emeritus") && !p.rank.includes("Dowager") && !p.rank.includes("Mother") && !p.rank.includes("Consort")) extraIcon = `<div class="tree-crown">👑</div>`;
             }
             if (p.health === "Deceased") extraIcon += `<div class="tree-grave">💀</div>`;
 
@@ -6480,7 +6695,8 @@ Elder: [
 
         const renderPlayerNode = () => {
              let extraIcon = '';
-             if (state.class.includes("Lord") || state.class.includes("Lady")) extraIcon = `<div class="tree-crown">👑</div>`;
+             // UPDATED: Included Duke/Duchess/King/Queen
+             if (state.class.includes("Lord") || state.class.includes("Lady") || state.class.includes("King") || state.class.includes("Queen") || state.class.includes("Duke") || state.class.includes("Duchess")) extraIcon = `<div class="tree-crown">👑</div>`;
              
              let html = `
                 <div class="tree-member player" onclick="switchTab('char')" title="View Character Sheet">
@@ -6649,7 +6865,11 @@ Elder: [
         }
 
         // NEW: Allow Lord to set Bloodline Trait from own traits
-        if (state.socialClass === 'House' && (state.class.includes("Lord") || state.class.includes("Lady"))) {
+        // UPDATED: Check for all ruler ranks
+        const rulerTitles = ['Lord', 'Lady', 'King', 'Queen', 'Duke', 'Duchess'];
+        const isRuler = rulerTitles.some(t => state.class.includes(t));
+
+        if (state.socialClass === 'House' && isRuler) {
              const available = [];
              if (state.appearance.mutations) available.push(...state.appearance.mutations.map(m => m.name));
              if (state.traits) available.push(...state.traits);
