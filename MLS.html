@@ -834,7 +834,7 @@
             <!-- Arena / Status -->
             <div class="grid grid-cols-2 gap-8 mb-6">
                 <!-- Player Side -->
-                <div class="text-center bg-white/20 p-2 rounded border border-black/10">
+                <div id="combat-player" class="text-center bg-white/20 p-2 rounded border border-black/10">
                     <h3 class="font-bold text-xl mb-1 font-medieval" id="combat-player-name">Hero</h3>
                     <div class="w-full bg-black/20 h-6 rounded border border-black/30 relative overflow-hidden">
                         <div id="combat-player-hp-bar" class="h-full bg-green-700 transition-all duration-500" style="width: 100%;"></div>
@@ -844,7 +844,7 @@
                 </div>
 
                 <!-- Enemy Side -->
-                <div class="text-center bg-white/20 p-2 rounded border border-black/10">
+                <div id="combat-enemy" class="text-center bg-white/20 p-2 rounded border border-black/10">
                     <h3 class="font-bold text-xl mb-1 font-medieval" id="combat-enemy-name">Enemy</h3>
                     <div class="w-full bg-black/20 h-6 rounded border border-black/30 relative overflow-hidden">
                         <div id="combat-enemy-hp-bar" class="h-full bg-red-800 transition-all duration-500" style="width: 100%;"></div>
@@ -861,10 +861,10 @@
 
             <!-- Controls -->
             <div id="combat-controls" class="grid grid-cols-2 gap-3 pt-2 border-t-2 border-red-900/30">
-                <button onclick="CombatEngine.playerAction('attack')" class="choice-btn justify-center bg-red-900 text-white border-red-950 hover:bg-red-800 text-lg">⚔️ Attack</button>
-                <button onclick="CombatEngine.playerAction('defend')" class="choice-btn justify-center bg-blue-900 text-white border-blue-950 hover:bg-blue-800">🛡️ Defend</button>
-                <button onclick="CombatEngine.playerAction('item')" class="choice-btn justify-center">🎒 Item (Potion)</button>
-                <button onclick="CombatEngine.playerAction('flee')" class="choice-btn justify-center opacity-80 hover:opacity-100">🏃 Flee</button>
+                <button onclick="CombatEngine.playerAction('attack')" class="combat-btn choice-btn justify-center bg-red-900 text-white border-red-950 hover:bg-red-800 text-lg">⚔️ Attack</button>
+                <button onclick="CombatEngine.playerAction('defend')" class="combat-btn choice-btn justify-center bg-blue-900 text-white border-blue-950 hover:bg-blue-800">🛡️ Defend</button>
+                <button onclick="CombatEngine.playerAction('item')" class="combat-btn choice-btn justify-center">🎒 Item (Potion)</button>
+                <button onclick="CombatEngine.playerAction('flee')" class="combat-btn choice-btn justify-center opacity-80 hover:opacity-100">🏃 Flee</button>
             </div>
         </div>
     </div>
@@ -2076,13 +2076,13 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             };
 
             document.getElementById('combat-modal').classList.remove('hidden');
-            document.getElementById('combat-log').innerHTML = ""; // Clear log
+            document.getElementById('combat-log-area').innerHTML = ""; // Clear log
             this.log(`<strong>Battle Commences!</strong> You face a ${this.enemy.name}.`);
             this.render();
         },
 
         log: function(msg, type='normal') {
-            const logEl = document.getElementById('combat-log');
+            const logEl = document.getElementById('combat-log-area');
             const div = document.createElement('div');
             div.className = `cl-entry ${type === 'hit' ? 'cl-hit' : type === 'crit' ? 'cl-crit' : type === 'miss' ? 'cl-miss' : ''}`;
             div.innerHTML = msg;
@@ -2090,20 +2090,20 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
         },
 
         render: function() {
-            document.getElementById('cp-name').innerText = this.player.name;
+            document.getElementById('combat-player-name').innerText = this.player.name;
             const ppct = (this.player.hp / this.player.maxHp) * 100;
-            document.getElementById('cp-hp-bar').style.width = `${Math.max(0, ppct)}%`;
-            document.getElementById('cp-hp-text').innerText = `${Math.ceil(this.player.hp)} / ${this.player.maxHp}`;
-            document.getElementById('cp-stats').innerText = `AC: ${this.player.ac} | AB: +${this.player.atk}`;
+            document.getElementById('combat-player-hp-bar').style.width = `${Math.max(0, ppct)}%`;
+            document.getElementById('combat-player-hp-text').innerText = `${Math.ceil(this.player.hp)} / ${this.player.maxHp}`;
+            document.getElementById('combat-player-stats').innerText = `AC: ${this.player.ac} | AB: +${this.player.atk}`;
 
-            document.getElementById('ce-name').innerText = this.enemy.name;
-            document.getElementById('ce-icon').innerText = this.enemy.icon;
+            document.getElementById('combat-enemy-name').innerText = `${this.enemy.icon} ${this.enemy.name}`;
             const epct = (this.enemy.hp / this.enemy.maxHp) * 100;
-            document.getElementById('ce-hp-bar').style.width = `${Math.max(0, epct)}%`;
-            document.getElementById('ce-hp-text').innerText = `${Math.ceil(this.enemy.hp)} / ${this.enemy.maxHp}`;
-            document.getElementById('ce-stats').innerText = `AC: ${this.enemy.ac}`;
+            document.getElementById('combat-enemy-hp-bar').style.width = `${Math.max(0, epct)}%`;
+            document.getElementById('combat-enemy-hp-text').innerText = `${Math.ceil(this.enemy.hp)} / ${this.enemy.maxHp}`;
+            document.getElementById('combat-enemy-status').innerText = `AC: ${this.enemy.ac} | ATK: +${this.enemy.atk}`;
 
-            document.getElementById('combat-round').innerText = `Round ${this.round}`;
+            const roundEl = document.getElementById('combat-round');
+            if (roundEl) roundEl.innerText = `Round ${this.round}`;
 
             const btns = document.querySelectorAll('.combat-btn');
             btns.forEach(b => b.disabled = (this.turn !== 'player'));
@@ -2243,6 +2243,7 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             if (victory || fled) nextTurn(); 
         }
     };
+    window.CombatEngine = CombatEngine;
 
     const POOLS = {
 Infancy: [
