@@ -43,9 +43,24 @@
         .parchment-container {
             background-color: var(--parchment);
             background-image: url("https://www.transparenttextures.com/patterns/p6-dark.png");
-            border: 12px solid var(--leather);
-            border-image: linear-gradient(to bottom, #8b4513, #5d4037) 1;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8), inset 0 0 120px rgba(0,0,0,0.2);
+            
+            /* Heavy Wooden Frame Construction - Thinned */
+            border: 12px solid #2a1a10; /* Reduced from 20px */
+            border-radius: 6px; 
+            
+            /* Layered Wood Accents via Shadow */
+            box-shadow: 
+                /* Inner edge of the frame (Parchment shadow) */
+                inset 0 0 60px rgba(0,0,0,0.3),
+                /* Inner Bevel (Lighter Wood) */
+                inset 0 0 0 2px #5d4037,
+                /* Outer Bevel (Lighter Wood Accent) */
+                0 0 0 2px #5d4037,
+                /* Outer Frame Body (Mid Oak) */
+                0 0 0 6px #3e2723,
+                /* Deep Drop Shadow */
+                0 20px 60px rgba(0,0,0,0.9);
+
             max-width: 1000px;
             width: 95%;
             height: 95vh;
@@ -782,7 +797,7 @@
     </div>
 
     <!-- NEW: Trait Info Modal -->
-    <div id="trait-modal" class="modal-overlay hidden">
+    <div id="trait-modal" class="modal-overlay hidden" style="z-index: 150;">
         <div class="modal-box border-amber-900 relative">
             <button onclick="document.getElementById('trait-modal').classList.add('hidden')" class="absolute top-2 right-4 text-xl font-bold hover:text-red-800">X</button>
             <h2 id="trait-modal-title" class="text-3xl font-medieval mb-2 text-amber-900">Trait Name</h2>
@@ -954,6 +969,7 @@
             <div id="tab-log" class="tab-btn active" onclick="switchTab('log')">📜 Chronicle</div>
             <div id="tab-char" class="tab-btn" onclick="switchTab('char')">👤 Character</div>
             <div id="tab-inv" class="tab-btn" onclick="switchTab('inv')">🎒 Inventory</div>
+            <div id="tab-quest" class="tab-btn" onclick="switchTab('quest')">🛡️ Quests</div>
             <div id="tab-house" class="tab-btn" onclick="switchTab('house')">🏰 House</div>
             <div id="tab-rel" class="tab-btn" onclick="switchTab('rel')">❤️ Relationships</div>
             <div id="tab-occ" class="tab-btn" onclick="switchTab('occ')">⚒️ Occupation</div>
@@ -1068,6 +1084,16 @@
                 <h2 class="text-3xl font-medieval mb-4 border-b border-black/20 pb-2">Inventory</h2>
                 <div id="inventory-list" class="inventory-grid">
                     <p class="italic opacity-50 col-span-full text-center">Your satchel is empty.</p>
+                </div>
+            </div>
+
+            <!-- Tab: Quests -->
+            <div id="quest-tab" class="tab-content hidden p-6 overflow-y-auto">
+                <h2 class="text-3xl font-medieval mb-4 border-b border-black/20 pb-2">Quest Log</h2>
+                <div id="quest-list" class="flex flex-col gap-4">
+                    <div class="bg-amber-900/5 p-4 rounded border border-amber-900/10 text-center italic opacity-70">
+                        The world is wide, but your path is currently clear of obligation.
+                    </div>
                 </div>
             </div>
 
@@ -6481,7 +6507,7 @@ Elder: [
 
             <div class="mb-4">
                 <div class="text-xs font-bold uppercase mb-1">Appearance</div>
-                <div class="text-sm italic mb-2">${ap.height}, ${ap.hair} Hair, ${ap.eyes} Eyes, ${ap.skin} Skin</div>
+                <div class="text-sm italic mb-2">${ap.height} Height, ${ap.hair} Hair, ${ap.eyes} Eyes, ${ap.skin} Skin</div>
                 <div class="text-xs font-bold uppercase mb-1">Mutations & Defects</div>
                 <div>${mutationsHtml}</div>
             </div>
