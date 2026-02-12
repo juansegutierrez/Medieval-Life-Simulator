@@ -43,9 +43,24 @@
         .parchment-container {
             background-color: var(--parchment);
             background-image: url("https://www.transparenttextures.com/patterns/p6-dark.png");
-            border: 12px solid var(--leather);
-            border-image: linear-gradient(to bottom, #8b4513, #5d4037) 1;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8), inset 0 0 120px rgba(0,0,0,0.2);
+            
+            /* Heavy Wooden Frame Construction - Thinned */
+            border: 12px solid #2a1a10; /* Reduced from 20px */
+            border-radius: 6px; 
+            
+            /* Layered Wood Accents via Shadow */
+            box-shadow: 
+                /* Inner edge of the frame (Parchment shadow) */
+                inset 0 0 60px rgba(0,0,0,0.3),
+                /* Inner Bevel (Lighter Wood) */
+                inset 0 0 0 2px #5d4037,
+                /* Outer Bevel (Lighter Wood Accent) */
+                0 0 0 2px #5d4037,
+                /* Outer Frame Body (Mid Oak) */
+                0 0 0 6px #3e2723,
+                /* Deep Drop Shadow */
+                0 20px 60px rgba(0,0,0,0.9);
+
             max-width: 1000px;
             width: 95%;
             height: 95vh;
@@ -782,7 +797,7 @@
     </div>
 
     <!-- NEW: Trait Info Modal -->
-    <div id="trait-modal" class="modal-overlay hidden">
+    <div id="trait-modal" class="modal-overlay hidden" style="z-index: 150;">
         <div class="modal-box border-amber-900 relative">
             <button onclick="document.getElementById('trait-modal').classList.add('hidden')" class="absolute top-2 right-4 text-xl font-bold hover:text-red-800">X</button>
             <h2 id="trait-modal-title" class="text-3xl font-medieval mb-2 text-amber-900">Trait Name</h2>
@@ -827,14 +842,15 @@
     <div id="combat-modal" class="modal-overlay hidden" style="z-index: 200;">
         <div class="modal-box border-red-900 w-full max-w-2xl relative bg-[#f4e4bc]">
             <!-- Header -->
-            <div class="text-center border-b-2 border-red-900/30 pb-2 mb-4">
+            <div class="text-center border-b-2 border-red-900/30 pb-2 mb-4 relative">
                 <h2 id="combat-title" class="text-4xl font-medieval text-red-900 drop-shadow-sm">⚔️ Combat ⚔️</h2>
+                <div id="combat-round" class="absolute right-0 bottom-0 text-xs font-bold opacity-50">Round 1</div>
             </div>
             
             <!-- Arena / Status -->
             <div class="grid grid-cols-2 gap-8 mb-6">
                 <!-- Player Side -->
-                <div class="text-center bg-white/20 p-2 rounded border border-black/10">
+                <div id="combat-player" class="text-center bg-white/20 p-2 rounded border border-black/10 transition-transform">
                     <h3 class="font-bold text-xl mb-1 font-medieval" id="combat-player-name">Hero</h3>
                     <div class="w-full bg-black/20 h-6 rounded border border-black/30 relative overflow-hidden">
                         <div id="combat-player-hp-bar" class="h-full bg-green-700 transition-all duration-500" style="width: 100%;"></div>
@@ -844,7 +860,7 @@
                 </div>
 
                 <!-- Enemy Side -->
-                <div class="text-center bg-white/20 p-2 rounded border border-black/10">
+                <div id="combat-enemy" class="text-center bg-white/20 p-2 rounded border border-black/10 transition-transform">
                     <h3 class="font-bold text-xl mb-1 font-medieval" id="combat-enemy-name">Enemy</h3>
                     <div class="w-full bg-black/20 h-6 rounded border border-black/30 relative overflow-hidden">
                         <div id="combat-enemy-hp-bar" class="h-full bg-red-800 transition-all duration-500" style="width: 100%;"></div>
@@ -954,6 +970,7 @@
             <div id="tab-log" class="tab-btn active" onclick="switchTab('log')">📜 Chronicle</div>
             <div id="tab-char" class="tab-btn" onclick="switchTab('char')">👤 Character</div>
             <div id="tab-inv" class="tab-btn" onclick="switchTab('inv')">🎒 Inventory</div>
+            <div id="tab-quest" class="tab-btn" onclick="switchTab('quest')">🛡️ Quests</div>
             <div id="tab-house" class="tab-btn" onclick="switchTab('house')">🏰 House</div>
             <div id="tab-rel" class="tab-btn" onclick="switchTab('rel')">❤️ Relationships</div>
             <div id="tab-occ" class="tab-btn" onclick="switchTab('occ')">⚒️ Occupation</div>
@@ -1071,6 +1088,16 @@
                 </div>
             </div>
 
+            <!-- Tab: Quests -->
+            <div id="quest-tab" class="tab-content hidden p-6 overflow-y-auto">
+                <h2 class="text-3xl font-medieval mb-4 border-b border-black/20 pb-2">Quest Log</h2>
+                <div id="quest-list" class="flex flex-col gap-4">
+                    <div class="bg-amber-900/5 p-4 rounded border border-amber-900/10 text-center italic opacity-70">
+                        The world is wide, but your path is currently clear of obligation.
+                    </div>
+                </div>
+            </div>
+
             <!-- Tab: Market (NEW) -->
             <div id="market-tab" class="tab-content hidden p-6 overflow-y-auto">
                 <h2 class="text-3xl font-medieval mb-4 border-b border-black/20 pb-2">City Market</h2>
@@ -1153,31 +1180,31 @@
     { name: "Asymmetrical Face", rarity: "Common", desc: "Subtle imbalance in facial features." },
 
     // ===== UNCOMMON (noticeable, whispered about) =====
-    { name: "Heterochromia", rarity: "Uncommon", desc: "Eyes of two different colors." },
+    { name: "Heterochromia", rarity: "Uncommon", desc: "Eyes of two different colors. (+1 CHA)", stats: { cha: 1 } },
     { name: "Albinism", rarity: "Uncommon", desc: "Complete lack of pigment." },
     { name: "Vitiligo", rarity: "Uncommon", desc: "Patches of unpigmented skin." },
-    { name: "Sharp Teeth", rarity: "Uncommon", desc: "Slightly pointed canines." },
-    { name: "Double Pupil", rarity: "Uncommon", desc: "Two pupils in one eye." },
+    { name: "Sharp Teeth", rarity: "Uncommon", desc: "Slightly pointed canines. (+1 STR)", stats: { str: 1 } },
+    { name: "Double Pupil", rarity: "Uncommon", desc: "Two pupils in one eye. (+1 WIS)", stats: { wis: 1 } },
     { name: "Extended Canines", rarity: "Uncommon", desc: "Fangs just long enough to be unsettling." },
     { name: "Unusual Ear Shape", rarity: "Uncommon", desc: "Ears taper, curl, or angle unnaturally." },
-    { name: "Heat-Resistant Skin", rarity: "Uncommon", desc: "Skin rarely blisters or burns." },
+    { name: "Heat-Resistant Skin", rarity: "Uncommon", desc: "Skin rarely blisters or burns. (+1 CON)", stats: { con: 1 } },
 
     // ===== RARE (distinctive, earns a nickname) =====
     { name: "Webbed Fingers", rarity: "Rare", desc: "Skin between fingers, good for swimming." },
-    { name: "Cat Eyes", rarity: "Rare", desc: "Vertical slit pupils." },
+    { name: "Cat Eyes", rarity: "Rare", desc: "Vertical slit pupils. (+1 WIS)", stats: { wis: 1 } },
     { name: "Forked Tongue", rarity: "Rare", desc: "A split tongue capable of precise movement." },
-    { name: "Stone Nails", rarity: "Rare", desc: "Hard, grayish nails resistant to breakage." },
-    { name: "Thickened Bones", rarity: "Rare", desc: "Bones are unusually dense and heavy." },
+    { name: "Stone Nails", rarity: "Rare", desc: "Hard, grayish nails resistant to breakage. (+1 STR)", stats: { str: 1 } },
+    { name: "Thickened Bones", rarity: "Rare", desc: "Bones are unusually dense and heavy. (+2 CON)", stats: { con: 2 } },
     { name: "Shadow Veins", rarity: "Rare", desc: "Dark veins visible beneath the skin." },
 
     // ===== EPIC (unnatural, feared or revered) =====
-    { name: "Scales", rarity: "Epic", desc: "Patches of hardened, scaled skin." },
+    { name: "Scales", rarity: "Epic", desc: "Patches of hardened, scaled skin. (+2 AC Natural Armor)", stats: { ac: 2 } }, // Handled in armor calc
     { name: "Bioluminescence", rarity: "Epic", desc: "Skin glows faintly in absolute darkness." },
-    { name: "Third Eye", rarity: "Epic", desc: "A dormant eye in the center of the forehead." },
+    { name: "Third Eye", rarity: "Epic", desc: "A dormant eye in the center of the forehead. (+2 INT)", stats: { int: 2 } },
     { name: "Horns", rarity: "Epic", desc: "Small bony protrusions on the forehead." },
 
     // ===== LEGENDARY (myth-tier, almost unique) =====
-    { name: "Seer", rarity: "Legendary", desc: "Innate ability to perceive beyond linear time and physical reality." },
+    { name: "Seer", rarity: "Legendary", desc: "Innate ability to perceive beyond linear time. (+2 WIS, Psychic Blast)", stats: { wis: 2 }, combatAbility: 'psychic' },
 
     // ===== DEFECTS (Inbreeding/Bad Luck) - NOW WITH STAT IMPACTS =====
     { name: "Habsburg Jaw", rarity: "Defect", desc: "A painfully prominent underbite. (-2 CHA)", stats: { cha: -2 } },
@@ -1194,28 +1221,61 @@
     const TRAIT_LIBRARY = {
         "Flushed Cheeks": { desc: "You blush easily in social situations.", rarity: "Common" },
         "Sooty Skin": { desc: "Permanently stained by the forge and hard labor.", rarity: "Common" },
-        "Shifty Look": { desc: "People instinctively distrust you.", rarity: "Uncommon" },
-        "Fine Clothes": { desc: "You dress better than your station suggests.", rarity: "Uncommon" },
+        "Shifty Look": { desc: "People instinctively distrust you. (-1 CHA)", rarity: "Uncommon", stats: { cha: -1 } },
+        "Fine Clothes": { desc: "You dress better than your station suggests. (+1 CHA)", rarity: "Uncommon", stats: { cha: 1 } },
         "Worn Boots": { desc: "You have walked many miles on hard roads.", rarity: "Common" },
         "Crooked Nose": { desc: "Broken in a fight and never set right.", rarity: "Common" },
-        "Scar: Knuckles": { desc: "Calloused and scarred from many tavern brawls.", rarity: "Common" },
-        "Broken Hand": { desc: "It never healed quite right, aching in the rain.", rarity: "Common" },
-        "Gaunt Face": { desc: "Hunger has hollowed your cheeks.", rarity: "Common" },
-        "Well-Fed": { desc: "You haven't missed a meal in a long time.", rarity: "Common" },
-        "Far-Off Gaze": { desc: "You see things others do not.", rarity: "Rare" },
+        "Scar: Knuckles": { desc: "Calloused and scarred from many tavern brawls. (+1 STR)", rarity: "Common", stats: { str: 1 } },
+        "Broken Hand": { desc: "It never healed quite right, aching in the rain. (-1 DEX)", rarity: "Common", stats: { dex: -1 } },
+        "Gaunt Face": { desc: "Hunger has hollowed your cheeks. (-1 CON)", rarity: "Common", stats: { con: -1 } },
+        "Well-Fed": { desc: "You haven't missed a meal in a long time. (+1 CON)", rarity: "Common", stats: { con: 1 } },
+        "Far-Off Gaze": { desc: "You see things others do not. (+1 WIS)", rarity: "Rare", stats: { wis: 1 } },
         "Muttering": { desc: "You talk to yourself constantly.", rarity: "Common" },
-        "Ink-Stained Hands": { desc: "The mark of a scholar or scribe.", rarity: "Common" },
-        "Stooped Posture": { desc: "Age or burden has bent your back.", rarity: "Common" },
+        "Ink-Stained Hands": { desc: "The mark of a scholar or scribe. (+1 INT)", rarity: "Common", stats: { int: 1 } },
+        "Stooped Posture": { desc: "Age or burden has bent your back. (-1 DEX)", rarity: "Common", stats: { dex: -1 } },
         "Pale Skin": { desc: "Sickness has leeched your color.", rarity: "Common" },
-        "Scarred Lungs": { desc: "Breathing is difficult after the plague.", rarity: "Uncommon" },
+        "Scarred Lungs": { desc: "Breathing is difficult after the plague. (-1 CON)", rarity: "Uncommon", stats: { con: -1 } },
         "Blue Skin": { desc: "A fey prank gone wrong (or right?).", rarity: "Rare" },
         "Cursed": { desc: "Bad luck follows you like a shadow.", rarity: "Epic" },
-        "Pet Griffin": { desc: "A loyal, feathered companion bonded to you.", rarity: "Legendary" },
+        "Pet Griffin": { desc: "A loyal, feathered companion bonded to you. (+2 STR)", rarity: "Legendary", stats: { str: 2 } },
         "Burn Scars": { desc: "Painful marks from the fire.", rarity: "Uncommon" },
         "Haunted": { desc: "Something watches you from the shadows.", rarity: "Rare" },
-        "Limp": { desc: "Movement is slow and painful.", rarity: "Common" },
-        "Scarred Face": { desc: "A badge of survival from the arena.", rarity: "Uncommon" },
-        "Paranoid": { desc: "They are out to get you.", rarity: "Uncommon" }
+        "Limp": { desc: "Movement is slow and painful. (-1 DEX)", rarity: "Common", stats: { dex: -1 } },
+        "Scarred Face": { desc: "A badge of survival from the arena. (+1 CHA)", rarity: "Uncommon", stats: { cha: 1 } },
+        "Paranoid": { desc: "They are out to get you. (+1 WIS)", rarity: "Uncommon", stats: { wis: 1 } },
+        "Strange Rash": { desc: "An itchy reminder of a questionable cure.", rarity: "Common" },
+        "Heavy Sleeper": { desc: "You could sleep through a siege.", rarity: "Common" },
+        "Animal Bite Scar": { desc: "Teeth marks that never faded.", rarity: "Common" },
+        "Family Keepsake": { desc: "A token of those who came before.", rarity: "Common" }
+    };
+
+    // --- DEATH CAUSE POOLS ---
+    const DEATH_CAUSES = {
+        common: [
+            "succumbed to the sweating sickness", "died of a sudden fever", "withered away from consumption",
+            "passed in their sleep", "took a bad fall down the stairs", "choked on a fishbone at a feast",
+            "was kicked in the head by a mule", "fell from a roof while repairing thatch", 
+            "drowned in the river", "was crushed by a runaway cart", "ate bad pork",
+            "caught an infection from a rusty nail", "froze during the long winter"
+        ],
+        violent: [
+            "was stabbed in a tavern brawl", "was waylaid by bandits", "died in a duel of honor",
+            "was trampled by a warhorse", "took an arrow to the eye", "was executed for crimes unknown",
+            "disappeared in the dark alleys", "was pushed into a well"
+        ],
+        fantasy: [
+            "was incinerated by a stray dragon blast", "was turned to stone by a cockatrice",
+            "walked into a sphere of annihilation", "was eaten by a mimic disguised as a chest",
+            "insulted a wizard and was turned into a newt (permanently)", "tried to pet a dire wolf",
+            "was carried off by a giant eagle", "vanished into a faerie ring", "read a cursed rune and imploded",
+            "was drained dry by a vampire", "was crushed by a falling giant", "drank a Potion of Explosion by mistake",
+            "was sacrificed by cultists", "lost a riddle contest to a sphinx (and was eaten)",
+            "was stepped on by a troll", "touched a cursed artifact", "was absorbed by a gelatinous cube"
+        ],
+        old: [
+            "succumbed to old age", "passed away peacefully in their sleep", "felt their heart stop beating",
+            "simply faded away", "breathed their last surrounded by kin"
+        ]
     };
 
     // --- NEW: NPC INVENTORY GENERATOR ---
@@ -1504,6 +1564,7 @@
             travelTarget: null,
             adult: false,
             traveledThisYear: false,
+            requestedHouseFunds: false, // NEW: Track stipend requests
             lockedInChronicle: false // NEW: Lock flag
         }
     };
@@ -1972,15 +2033,38 @@
         const item = shop.items[itemIndex];
         
         if (state.gold >= item.value && !item.sold) {
-            state.gold -= item.value;
-            item.sold = true;
-            // UPDATED: Pass the effect object to addItem
-            addItem(item.name, item.rarity, item.desc, Math.floor(item.value/2), item.effect);
-            AudioEngine.pulse();
+            // UPDATED: Robust version with inventory check and DR
+            const added = addItem(item.name, item.rarity, item.desc, Math.floor(item.value/2), item.effect, item.dr);
             
-            updateUI();
-            openShop(shopId); // Re-render to show Sold Out
+            if (added) {
+                state.gold -= item.value;
+                item.sold = true;
+                AudioEngine.pulse();
+                updateUI();
+                openShop(shopId); // Re-render to show Sold Out
+            } else {
+                showMsg("Inventory Full", "You are carrying too much.");
+            }
         }
+    }
+
+    // --- CONSOLIDATED UTILITIES ---
+    function marryNPC(id) {
+        const r = state.relationships.find(x => x.id === id);
+        if(!r) return;
+        r.relation = 'Spouse';
+        state.flags.married = true;
+        log(`<strong style="color:var(--gold)">MARRIAGE:</strong> You and ${r.name} are joined in holy matrimony!`);
+        updateUI();
+    }
+
+    function getRelLabel(val) {
+        if (val <= -50) return "Enemy";
+        if (val < 0) return "Disliked";
+        if (val < 30) return "Acquaintance";
+        if (val < 60) return "Friend";
+        if (val < 90) return "Good Friend";
+        return "Best Friend";
     }
 
     // --- END MARKET DATA ---
@@ -2053,11 +2137,19 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             const atkBonus = Math.max(pStr, pDex);
             const dmgBonus = pStr;
 
+            // Check for Mutation Armor (Scales)
+            let natArmor = 0;
+            if (state.appearance.mutations) {
+                state.appearance.mutations.forEach(m => {
+                    if (m.stats && m.stats.ac) natArmor += m.stats.ac;
+                });
+            }
+
             this.player = {
                 name: state.name,
                 maxHp: state.maxHealth,
                 hp: state.health,
-                ac: 10 + pDex + pArmor,
+                ac: 10 + pDex + pArmor + natArmor,
                 atk: atkBonus,
                 dmgMod: dmgBonus
             };
@@ -2076,36 +2168,62 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             };
 
             document.getElementById('combat-modal').classList.remove('hidden');
-            document.getElementById('combat-log').innerHTML = ""; // Clear log
-            this.log(`<strong>Battle Commences!</strong> You face a ${this.enemy.name}.`);
+            document.getElementById('combat-log-area').innerHTML = ""; // Clear log
+            this.log(`<strong>Battle Commences!</strong> You face ${this.enemy.name}.`);
+            
+            // Render Controls dynamically to include abilities
+            const controls = document.getElementById('combat-controls');
+            let abilityBtn = '';
+            
+            // Check for Seer (Psychic)
+            const mutations = state.appearance.mutations || [];
+            if (mutations.some(m => m.combatAbility === 'psychic')) {
+                abilityBtn = `<button onclick="CombatEngine.playerAction('psychic')" class="choice-btn justify-center bg-purple-900 text-white border-purple-950 hover:bg-purple-800 col-span-2">🔮 Psychic Blast</button>`;
+            }
+
+            controls.innerHTML = `
+                <button onclick="CombatEngine.playerAction('attack')" class="choice-btn justify-center bg-red-900 text-white border-red-950 hover:bg-red-800 text-lg">⚔️ Attack</button>
+                <button onclick="CombatEngine.playerAction('defend')" class="choice-btn justify-center bg-blue-900 text-white border-blue-950 hover:bg-blue-800">🛡️ Defend</button>
+                <button onclick="CombatEngine.playerAction('item')" class="choice-btn justify-center">🎒 Item (Potion)</button>
+                <button onclick="CombatEngine.playerAction('flee')" class="choice-btn justify-center opacity-80 hover:opacity-100">🏃 Flee</button>
+                ${abilityBtn}
+            `;
+
             this.render();
         },
 
         log: function(msg, type='normal') {
-            const logEl = document.getElementById('combat-log');
+            const logEl = document.getElementById('combat-log-area');
             const div = document.createElement('div');
-            div.className = `cl-entry ${type === 'hit' ? 'cl-hit' : type === 'crit' ? 'cl-crit' : type === 'miss' ? 'cl-miss' : ''}`;
+            // Basic styling is handled by CSS in #combat-log-area div
+            if (type === 'crit') div.className = "text-amber-700 font-bold";
+            if (type === 'hit') div.className = "text-red-900";
+            if (type === 'heal') div.className = "text-green-800 font-bold";
+            if (type === 'miss') div.className = "opacity-60 italic";
+            
             div.innerHTML = msg;
             logEl.prepend(div); 
         },
 
         render: function() {
-            document.getElementById('cp-name').innerText = this.player.name;
+            // Player Updates
+            document.getElementById('combat-player-name').innerText = this.player.name;
             const ppct = (this.player.hp / this.player.maxHp) * 100;
-            document.getElementById('cp-hp-bar').style.width = `${Math.max(0, ppct)}%`;
-            document.getElementById('cp-hp-text').innerText = `${Math.ceil(this.player.hp)} / ${this.player.maxHp}`;
-            document.getElementById('cp-stats').innerText = `AC: ${this.player.ac} | AB: +${this.player.atk}`;
+            document.getElementById('combat-player-hp-bar').style.width = `${Math.max(0, ppct)}%`;
+            document.getElementById('combat-player-hp-text').innerText = `${Math.ceil(this.player.hp)} / ${this.player.maxHp}`;
+            document.getElementById('combat-player-stats').innerText = `AC: ${this.player.ac} | ATK: +${this.player.atk}`;
 
-            document.getElementById('ce-name').innerText = this.enemy.name;
-            document.getElementById('ce-icon').innerText = this.enemy.icon;
+            // Enemy Updates
+            document.getElementById('combat-enemy-name').innerText = this.enemy.name;
             const epct = (this.enemy.hp / this.enemy.maxHp) * 100;
-            document.getElementById('ce-hp-bar').style.width = `${Math.max(0, epct)}%`;
-            document.getElementById('ce-hp-text').innerText = `${Math.ceil(this.enemy.hp)} / ${this.enemy.maxHp}`;
-            document.getElementById('ce-stats').innerText = `AC: ${this.enemy.ac}`;
+            document.getElementById('combat-enemy-hp-bar').style.width = `${Math.max(0, epct)}%`;
+            document.getElementById('combat-enemy-hp-text').innerText = `${Math.ceil(this.enemy.hp)} / ${this.enemy.maxHp}`;
+            document.getElementById('combat-enemy-status').innerText = `AC: ${this.enemy.ac} | DMG: 1d${this.enemy.dmg}`;
 
             document.getElementById('combat-round').innerText = `Round ${this.round}`;
 
-            const btns = document.querySelectorAll('.combat-btn');
+            // Disable buttons if not player turn
+            const btns = document.querySelectorAll('#combat-controls button');
             btns.forEach(b => b.disabled = (this.turn !== 'player'));
         },
 
@@ -2117,6 +2235,26 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             } else if (action === 'defend') {
                 this.modifiers.playerDefending = true;
                 this.log(`<strong>${this.player.name}</strong> braces for impact! (+2 AC)`, 'normal');
+            } else if (action === 'psychic') {
+                // Psychic Blast Logic
+                const wisMod = getModifier(state.stats.wis);
+                const dmg = Math.floor(Math.random() * 8) + 4 + wisMod; // 1d8 + 4 + WIS
+                
+                this.log(`<strong>${this.player.name}</strong> unleashes a wave of mental energy!`, 'crit');
+                document.getElementById('combat-enemy').classList.add('anim-shake'); // Corrected ID
+                setTimeout(() => document.getElementById('combat-enemy').classList.remove('anim-shake'), 300);
+                
+                this.enemy.hp -= dmg;
+                this.log(`The psychic blast strikes the enemy's mind for <strong>${dmg} DMG</strong>!`, 'hit');
+                
+                this.render();
+                
+                if (this.enemy.hp <= 0) {
+                    this.log(`<strong>${this.enemy.name}</strong> collapses, mind shattered!`, 'crit');
+                    await new Promise(r => setTimeout(r, 1000));
+                    this.endCombat(true, false);
+                    return;
+                }
             } else if (action === 'flee') {
                 const roll = Math.floor(Math.random() * 20) + 1;
                 const bonus = getModifier(state.stats.dex);
@@ -2136,7 +2274,7 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 if (potIdx !== -1) {
                     const item = state.inventory[potIdx];
                     useItem(potIdx);
-                    this.player.hp = state.health;
+                    this.player.hp = state.health; // Sync health
                     this.log(`You quickly consume <strong>${item.name}</strong>.`, 'heal');
                 } else {
                     this.log("You fumble for a potion but find none!", 'miss');
@@ -2144,9 +2282,11 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 }
             }
 
-            this.turn = 'enemy';
-            this.render();
-            setTimeout(() => this.enemyTurn(), 800);
+            if (this.active) {
+                this.turn = 'enemy';
+                this.render();
+                setTimeout(() => this.enemyTurn(), 800);
+            }
         },
 
         enemyTurn: async function() {
@@ -2166,8 +2306,13 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
         performAttack: async function(attacker, defender, isPlayer) {
             const divId = isPlayer ? 'combat-player' : 'combat-enemy';
             const targetId = isPlayer ? 'combat-enemy' : 'combat-player';
-            document.getElementById(divId).classList.add('anim-lunge');
-            setTimeout(() => document.getElementById(divId).classList.remove('anim-lunge'), 200);
+            
+            // Visual Lunge
+            const div = document.getElementById(divId);
+            if(div) {
+                div.style.transform = isPlayer ? 'translateX(20px)' : 'translateX(-20px)';
+                setTimeout(() => div.style.transform = 'translateX(0)', 200);
+            }
 
             const d20 = Math.floor(Math.random() * 20) + 1;
             const hitMod = attacker.atk;
@@ -2196,8 +2341,12 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                     updateUI();
                 }
 
-                document.getElementById(targetId).classList.add('anim-shake');
-                setTimeout(() => document.getElementById(targetId).classList.remove('anim-shake'), 300);
+                // Shake Target
+                const targetDiv = document.getElementById(targetId);
+                if(targetDiv) {
+                    targetDiv.style.transform = `translate(${Math.random()*10-5}px, ${Math.random()*10-5}px)`;
+                    setTimeout(() => targetDiv.style.transform = 'translate(0,0)', 100);
+                }
 
                 const flavorArr = isPlayer ? this.flavorText.playerHit : this.flavorText.enemyHit;
                 const flavor = flavorArr[Math.floor(Math.random() * flavorArr.length)];
@@ -2356,7 +2505,7 @@ Childhood: [
     createEvent('kid_2', 'Mud Pies', 'Heavy rain has turned the road into a playground.', [
         { text: 'Play', type: 'check', stat: 'con', dc: 10, success: 'You build a mighty mud fortress. (+1 CON)', fail: 'You feel awful later. (-2 HP)', onSuccess: () => state.stats.con++, onFail: () => takeDamage(2) },
         { text: 'Avoid Dirt', type: 'flavor', effect: () => log("You keep yourself spotless.") },
-        { text: 'Throw Mud', type: 'check', stat: 'dex', dc: 12, success: 'Direct hit! (+Sanity)', fail: 'You slip and fall.', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }
+        { text: 'Throw Mud', type: 'check', stat: 'dex', dc: 12, success: 'Direct hit! (+1 SP)', fail: 'You slip and fall.', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }
     ]),
     createEvent('kid_3', 'The Market Thief', 'You see a man steal an apple.', [
         { text: 'Yell', type: 'check', stat: 'cha', dc: 10, success: 'The guards catch him! (+Renown)', fail: 'He glares and escapes.', onSuccess: () => modRep('renown', 5), onFail: () => modSanity(-1) },
@@ -2366,7 +2515,7 @@ Childhood: [
     createEvent('kid_4', 'Lesson Time', 'An elder offers to teach you letters.', [
         { text: 'Learn', type: 'check', stat: 'int', dc: 12, success: 'You learn to write your name. (+1 INT)', fail: 'Ink stains everything.', onSuccess: () => { state.stats.int++; state.flags.literate = true; }, onFail: () => {} },
         { text: 'Skip Class', type: 'flavor', effect: () => { state.stats.dex++; log("You explore instead. (+1 DEX)"); } },
-        { text: 'Daydream', type: 'flavor', effect: () => { modSanity(2); log("Your mind wanders to fantastic places. (+Sanity)"); } }
+        { text: 'Daydream', type: 'flavor', effect: () => { modSanity(2); log("Your mind wanders to fantastic places. (+2 SP)"); } }
     ]),
     createEvent('kid_5', 'Scary Story', 'Older kids tell ghost stories after dark.', [
         { text: 'Listen', type: 'check', stat: 'wis', dc: 12, success: 'You spot the holes in the tale. (+1 WIS)', fail: 'Nightmares follow. (-Sanity)', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-2) },
@@ -2466,7 +2615,7 @@ Childhood: [
         { text: 'Ask Questions', type: 'check', stat: 'int', dc: 12, success: 'You learn the basics of the trade. (+1 INT)', fail: 'Your curiosity annoys.', onSuccess: () => state.stats.int++, onFail: () => {} }
     ]),
     createEvent('teen_4', 'Curfew Bell', 'The town bell rings, signaling the end of festivities.', [
-        { text: 'Sneak Around', type: 'check', stat: 'dex', dc: 12, success: 'A thrilling night. (+Sanity)', fail: 'You are noticed.', onSuccess: () => modSanity(2), onFail: () => modRep('honor', -2) },
+        { text: 'Sneak Around', type: 'check', stat: 'dex', dc: 12, success: 'A thrilling night. (+2 SP)', fail: 'You are noticed.', onSuccess: () => modSanity(2), onFail: () => modRep('honor', -2) },
         { text: 'Head Back', type: 'flavor', effect: () => { modRep('honor', 2); log("You play it safe."); } },
         { text: 'Talk Your Way Out', type: 'check', stat: 'cha', dc: 14, success: 'You are let go. (+1 CHA)', fail: 'Extra chores assigned.', onSuccess: () => state.stats.cha++, onFail: () => modSanity(-1) }
     ]),
@@ -2518,7 +2667,7 @@ Childhood: [
     createEvent('teen_14', 'Festival Night', 'Music and lanterns fill the streets.', [
         { text: 'Dance', type: 'check', stat: 'dex', dc: 12, success: 'You move effortlessly. (+1 DEX)', fail: 'Clumsy steps.', onSuccess: () => state.stats.dex++, onFail: () => modSanity(-1) },
         { text: 'Flirt', type: 'check', stat: 'cha', dc: 12, success: 'Sparks fly. (+Romance)', fail: 'Rejection stings.', onSuccess: () => createRandomRel(20), onFail: () => modSanity(-2) },
-        { text: 'Watch Lights', type: 'check', stat: 'wis', dc: 10, success: 'You feel at peace. (+Sanity)', fail: 'You feel distant.', onSuccess: () => modSanity(2), onFail: () => {} }
+        { text: 'Watch Lights', type: 'check', stat: 'wis', dc: 10, success: 'You feel at peace. (+2 SP)', fail: 'You feel distant.', onSuccess: () => modSanity(2), onFail: () => {} }
     ]),
     createEvent('teen_15', 'Crossed Line', 'You break a rule you were warned about.', [
         { text: 'Lie About It', type: 'check', stat: 'cha', dc: 14, success: 'They believe you. (+Infamy)', fail: 'Caught red-handed.', onSuccess: () => modRep('infamy', 3), onFail: () => modRep('honor', -3) },
@@ -2541,7 +2690,7 @@ Childhood: [
         { text: 'Slack Off', type: 'flavor', effect: () => log("Nothing happens… hopefully.") }
     ]),
     createEvent('teen_19', 'Unexpected Loss', 'Something important to you is gone.', [
-        { text: 'Search Everywhere', type: 'check', stat: 'wis', dc: 12, success: 'You recover it. (+Sanity)', fail: 'It is truly lost.', onSuccess: () => modSanity(2), onFail: () => modSanity(-3) },
+        { text: 'Search Everywhere', type: 'check', stat: 'wis', dc: 12, success: 'You recover it. (+2 SP)', fail: 'It is truly lost.', onSuccess: () => modSanity(2), onFail: () => modSanity(-3) },
         { text: 'Let Go', type: 'check', stat: 'wis', dc: 10, success: 'You accept it. (+1 WIS)', fail: 'Regret lingers.', onSuccess: () => state.stats.wis++, onFail: () => {} },
         { text: 'Blame Someone', type: 'check', stat: 'cha', dc: 12, success: 'They apologize. (+Infamy)', fail: 'It backfires.', onSuccess: () => modRep('infamy', 2), onFail: () => modRep('renown', -2) }
     ]),
@@ -2560,7 +2709,7 @@ Adult: [
     createEvent('adult_2', 'Tavern Brawl', 'A drunkard swings a stool at you!', [
         { text: 'Dodge', type: 'check', stat: 'dex', dc: 14, success: 'You slip aside cleanly. (+1 DEX)', fail: 'Bonk. (-HP)', onSuccess: () => state.stats.dex++, onFail: () => { takeDamage(5); addTrait('Crooked Nose'); } },
         { text: 'Punch', type: 'check', stat: 'str', dc: 12, success: 'Knockout!', fail: 'You injure your hand.', onSuccess: () => { modRep('renown', 2); addTrait('Scar: Knuckles'); }, onFail: () => { takeDamage(3); addTrait('Broken Hand'); } },
-        { text: 'Talk Down', type: 'check', stat: 'cha', dc: 14, success: 'The fight dissolves. (+Sanity)', fail: 'He swings mid-sentence.', onSuccess: () => modSanity(2), onFail: () => takeDamage(4) }
+        { text: 'Talk Down', type: 'check', stat: 'cha', dc: 14, success: 'The fight dissolves. (+2 SP)', fail: 'He swings mid-sentence.', onSuccess: () => modSanity(2), onFail: () => takeDamage(4) }
     ]),
     createEvent('adult_3', 'The Beggar', 'A weathered veteran asks for alms.', [
         { text: 'Give 5g', type: 'flavor', req: s => s.gold >= 5, effect: () => { state.gold -= 5; modRep('piety', 5); modRep('honor', 2); log("A quiet blessing follows you."); } },
@@ -2595,7 +2744,7 @@ Adult: [
     createEvent('adult_9', 'Lingering Injury', 'An old wound flares painfully.', [
         { text: 'Push Through', type: 'check', stat: 'con', dc: 14, success: 'You endure it. (+1 CON)', fail: 'Pain slows you.', onSuccess: () => state.stats.con++, onFail: () => takeDamage(2) },
         { text: 'Rest', type: 'flavor', effect: () => { state.health = Math.min(state.maxHealth, state.health + 3); log("Time heals you."); } },
-        { text: 'Seek Remedy', type: 'check', stat: 'wis', dc: 12, success: 'You find relief. (+Sanity)', fail: 'No improvement.', onSuccess: () => modSanity(2), onFail: () => {} }
+        { text: 'Seek Remedy', type: 'check', stat: 'wis', dc: 12, success: 'You find relief. (+2 SP)', fail: 'No improvement.', onSuccess: () => modSanity(2), onFail: () => {} }
     ]),
     createEvent('adult_10', 'Crossroads', 'You pause to reassess your direction.', [
         { text: 'Pursue Wealth', type: 'check', stat: 'int', dc: 10, success: 'Plans sharpen. (+1 INT)', fail: 'Doubts linger.', onSuccess: () => state.stats.int++, onFail: () => {} },
@@ -2611,7 +2760,7 @@ Adult: [
     createEvent('adult_12', 'Old Rival', 'Someone from your past confronts you publicly.', [
         { text: 'Challenge Them', type: 'check', stat: 'str', dc: 14, success: 'You assert dominance. (+Renown)', fail: 'You are humiliated.', onSuccess: () => modRep('renown', 3), onFail: () => modRep('infamy', 2) },
         { text: 'Outwit Them', type: 'check', stat: 'int', dc: 13, success: 'You expose their lies.', fail: 'Your words falter.', onSuccess: () => modRep('honor', 2), onFail: () => {} },
-        { text: 'Let It Go', type: 'check', stat: 'wis', dc: 12, success: 'Peace feels earned. (+Sanity)', fail: 'Bitterness lingers.', onSuccess: () => modSanity(2), onFail: () => modSanity(-1) }
+        { text: 'Let It Go', type: 'check', stat: 'wis', dc: 12, success: 'Peace feels earned. (+2 SP)', fail: 'Bitterness lingers.', onSuccess: () => modSanity(2), onFail: () => modSanity(-1) }
     ]),
 
     createEvent('adult_13', 'Traveling Healer', 'A wandering healer offers unconventional aid.', [
@@ -2653,12 +2802,12 @@ Adult: [
     createEvent('adult_19', 'Unexpected Inheritance', 'A distant relation leaves you something small.', [
         { text: 'Accept Graciously', type: 'flavor', effect: () => { state.gold += 20; addTrait('Family Keepsake'); } },
         { text: 'Investigate', type: 'check', stat: 'int', dc: 13, success: 'You uncover hidden value. (+40g)', fail: 'Nothing more is found.', onSuccess: () => state.gold += 40, onFail: () => {} },
-        { text: 'Decline', type: 'check', stat: 'wis', dc: 10, success: 'Peace of mind. (+Sanity)', fail: 'Lingering regret.', onSuccess: () => modSanity(2), onFail: () => modSanity(-1) }
+        { text: 'Decline', type: 'check', stat: 'wis', dc: 10, success: 'Peace of mind. (+2 SP)', fail: 'Lingering regret.', onSuccess: () => modSanity(2), onFail: () => modSanity(-1) }
     ]),
 
     createEvent('adult_20', 'Moment of Reflection', 'A quiet night invites honesty with yourself.', [
         { text: 'Recall Triumphs', type: 'check', stat: 'cha', dc: 10, success: 'Confidence swells. (+1 CHA)', fail: 'Doubts creep in.', onSuccess: () => state.stats.cha++, onFail: () => {} },
-        { text: 'Confront Regrets', type: 'check', stat: 'wis', dc: 12, success: 'You make peace. (+Sanity)', fail: 'Old wounds reopen.', onSuccess: () => modSanity(3), onFail: () => modSanity(-2) },
+        { text: 'Confront Regrets', type: 'check', stat: 'wis', dc: 12, success: 'You make peace. (+3 SP)', fail: 'Old wounds reopen.', onSuccess: () => modSanity(3), onFail: () => modSanity(-2) },
         { text: 'Plan the Future', type: 'check', stat: 'int', dc: 12, success: 'A clear path forms. (+1 INT)', fail: 'Uncertainty remains.', onSuccess: () => state.stats.int++, onFail: () => {} }
     ])
 ],
@@ -2671,7 +2820,7 @@ Elder: [
     createEvent('elder_2', 'The Youth', 'Children are playing noisily nearby.', [
         { text: 'Yell', type: 'check', stat: 'cha', dc: 12, success: 'They scatter in a panic.', fail: 'They mock you.', onSuccess: () => {}, onFail: () => modSanity(-1) },
         { text: 'Tell Story', type: 'check', stat: 'cha', dc: 14, success: 'They listen in awe. (+Renown)', fail: 'You lose your train of thought.', onSuccess: () => modRep('renown', 5), onFail: () => {} },
-        { text: 'Watch Quietly', type: 'check', stat: 'wis', dc: 10, success: 'Memories warm you. (+Sanity)', fail: 'Nostalgia stings.', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }
+        { text: 'Watch Quietly', type: 'check', stat: 'wis', dc: 10, success: 'Memories warm you. (+1 SP)', fail: 'Nostalgia stings.', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }
     ]),
     createEvent('elder_3', 'Legacy', 'You reflect on what you will leave behind.', [
         { text: 'Write Memoirs', type: 'check', stat: 'int', dc: 14, success: 'Your life fills many pages. (+Renown, +Gold)', fail: 'The words won’t come.', onSuccess: () => { modRep('renown', 10); state.gold += 20; addTrait('Ink-Stained Hands'); }, onFail: () => {} },
@@ -2689,12 +2838,12 @@ Elder: [
         { text: 'Listen Carefully', type: 'check', stat: 'int', dc: 14, success: 'You untangle the issue. (+Renown)', fail: 'It is too tangled.', onSuccess: () => modRep('renown', 10), onFail: () => {} }
     ]),
     createEvent('elder_6', 'Fading Strength', 'Simple tasks feel heavier than before.', [
-        { text: 'Push Through', type: 'check', stat: 'con', dc: 12, success: 'You prove you still can. (+Sanity)', fail: 'You overdo it.', onSuccess: () => modSanity(1), onFail: () => takeDamage(2) },
+        { text: 'Push Through', type: 'check', stat: 'con', dc: 12, success: 'You prove you still can. (+1 SP)', fail: 'You overdo it.', onSuccess: () => modSanity(1), onFail: () => takeDamage(2) },
         { text: 'Ask for Help', type: 'flavor', effect: () => log("You accept your limits.") },
         { text: 'Change Routine', type: 'check', stat: 'int', dc: 10, success: 'You adapt wisely. (+1 INT)', fail: 'Old habits persist.', onSuccess: () => state.stats.int++, onFail: () => {} }
     ]),
     createEvent('elder_7', 'Old Rival', 'You encounter someone from long ago.', [
-        { text: 'Make Peace', type: 'check', stat: 'cha', dc: 12, success: 'Bitterness fades. (+Sanity)', fail: 'Old wounds reopen.', onSuccess: () => modSanity(2), onFail: () => modSanity(-2) },
+        { text: 'Make Peace', type: 'check', stat: 'cha', dc: 12, success: 'Bitterness fades. (+2 SP)', fail: 'Old wounds reopen.', onSuccess: () => modSanity(2), onFail: () => modSanity(-2) },
         { text: 'Ignore', type: 'flavor', effect: () => log("Some things are better left alone.") },
         { text: 'Reminisce', type: 'check', stat: 'wis', dc: 12, success: 'You gain perspective. (+1 WIS)', fail: 'Memories hurt.', onSuccess: () => state.stats.wis++, onFail: () => modSanity(-1) }
     ]),
@@ -2709,18 +2858,18 @@ Elder: [
         { text: 'Abandon It', type: 'flavor', effect: () => log("You decide it no longer matters.") }
     ]),
     createEvent('elder_10', 'Closing Reflections', 'You sit quietly with your thoughts.', [
-        { text: 'Seek Meaning', type: 'check', stat: 'wis', dc: 12, success: 'You feel content. (+Sanity)', fail: 'Questions linger.', onSuccess: () => modSanity(3), onFail: () => {} },
+        { text: 'Seek Meaning', type: 'check', stat: 'wis', dc: 12, success: 'You feel content. (+3 SP)', fail: 'Questions linger.', onSuccess: () => modSanity(3), onFail: () => {} },
         { text: 'Count Blessings', type: 'check', stat: 'int', dc: 10, success: 'Gratitude fills you. (+Piety)', fail: 'It feels forced.', onSuccess: () => modRep('piety', 3), onFail: () => {} },
         { text: 'Simply Rest', type: 'flavor', effect: () => log("You close your eyes and breathe.") }
     ]),
         createEvent('elder_11', 'Old Friends', 'You meet a friend from decades past.', [
-        { text: 'Share Memories', type: 'check', stat: 'cha', dc: 12, success: 'Laughter warms your heart. (+Sanity)', fail: 'Stories falter.', onSuccess: () => modSanity(3), onFail: () => modSanity(-1) },
+        { text: 'Share Memories', type: 'check', stat: 'cha', dc: 12, success: 'Laughter warms your heart. (+3 SP)', fail: 'Stories falter.', onSuccess: () => modSanity(3), onFail: () => modSanity(-1) },
         { text: 'Listen', type: 'check', stat: 'wis', dc: 12, success: 'You gain insight. (+1 WIS)', fail: 'The tales confuse you.', onSuccess: () => state.stats.wis++, onFail: () => {} },
         { text: 'Walk Away', type: 'flavor', effect: () => log("Time has changed you both.")}
     ]),
 
     createEvent('elder_12', 'Stormy Night', 'Thunder shakes the old roof.', [
-        { text: 'Reassure Yourself', type: 'check', stat: 'wis', dc: 12, success: 'You feel safe inside. (+Sanity)', fail: 'Fear lingers.', onSuccess: () => modSanity(2), onFail: () => modSanity(-1) },
+        { text: 'Reassure Yourself', type: 'check', stat: 'wis', dc: 12, success: 'You feel safe inside. (+2 SP)', fail: 'Fear lingers.', onSuccess: () => modSanity(2), onFail: () => modSanity(-1) },
         { text: 'Inspect Damage', type: 'check', stat: 'dex', dc: 14, success: 'Repairs are minor. (+1 DEX)', fail: 'A beam falls.', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(3) },
         { text: 'Stay in Bed', type: 'flavor', effect: () => log("You let the storm pass overhead.")}
     ]),
@@ -2739,24 +2888,24 @@ Elder: [
 
     createEvent('elder_15', 'Memory Lane', 'You wander familiar streets from your youth.', [
         { text: 'Recall Details', type: 'check', stat: 'int', dc: 12, success: 'Memories sharpen your mind. (+1 INT)', fail: 'Some memories confuse you.', onSuccess: () => state.stats.int++, onFail: () => modSanity(-1) },
-        { text: 'Relive Joys', type: 'check', stat: 'wis', dc: 10, success: 'Nostalgia soothes you. (+Sanity)', fail: 'Bittersweet feelings arise.', onSuccess: () => modSanity(2), onFail: () => modSanity(-1) },
+        { text: 'Relive Joys', type: 'check', stat: 'wis', dc: 10, success: 'Nostalgia soothes you. (+2 SP)', fail: 'Bittersweet feelings arise.', onSuccess: () => modSanity(2), onFail: () => modSanity(-1) },
         { text: 'Avoid Old Haunts', type: 'flavor', effect: () => log("Not all paths are worth treading.")}
     ]),
 
     createEvent('elder_16', 'A Gift', 'A young villager offers you something small.', [
         { text: 'Accept Graciously', type: 'flavor', effect: () => { modRep('honor', 2); log("The gesture warms your heart."); } },
         { text: 'Teach Them', type: 'check', stat: 'wis', dc: 12, success: 'You give more than a gift. (+Piety)', fail: 'They do not understand.', onSuccess: () => modRep('piety', 3), onFail: () => {} },
-        { text: 'Decline Politely', type: 'check', stat: 'cha', dc: 12, success: 'You avoid burden. (+Sanity)', fail: 'They feel slighted.', onSuccess: () => modSanity(1), onFail: () => modRep('infamy', 1) }
+        { text: 'Decline Politely', type: 'check', stat: 'cha', dc: 12, success: 'You avoid burden. (+1 SP)', fail: 'They feel slighted.', onSuccess: () => modSanity(1), onFail: () => modRep('infamy', 1) }
     ]),
 
     createEvent('elder_17', 'Minor Mishap', 'A small accident reminds you of your age.', [
         { text: 'Recover Gracefully', type: 'check', stat: 'dex', dc: 12, success: 'You rise unshaken. (+1 DEX)', fail: 'You stumble awkwardly.', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(2) },
         { text: 'Call for Aid', type: 'flavor', effect: () => log("Help arrives without fuss.") },
-        { text: 'Ignore It', type: 'check', stat: 'con', dc: 10, success: 'Pain is minor. (+Sanity)', fail: 'Aches linger.', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }
+        { text: 'Ignore It', type: 'check', stat: 'con', dc: 10, success: 'Pain is minor. (+1 SP)', fail: 'Aches linger.', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }
     ]),
 
     createEvent('elder_18', 'Evening Reflection', 'You watch the sunset in silence.', [
-        { text: 'Meditate', type: 'check', stat: 'wis', dc: 12, success: 'A deep calm fills you. (+Sanity)', fail: 'Thoughts wander restlessly.', onSuccess: () => modSanity(3), onFail: () => modSanity(-1) },
+        { text: 'Meditate', type: 'check', stat: 'wis', dc: 12, success: 'A deep calm fills you. (+3 SP)', fail: 'Thoughts wander restlessly.', onSuccess: () => modSanity(3), onFail: () => modSanity(-1) },
         { text: 'Recall Achievements', type: 'check', stat: 'int', dc: 12, success: 'You feel proud. (+Renown)', fail: 'Regrets creep in.', onSuccess: () => modRep('renown', 5), onFail: () => modSanity(-1) },
         { text: 'Simply Watch', type: 'flavor', effect: () => log("The colors fade into memory.")}
     ]),
@@ -2768,7 +2917,7 @@ Elder: [
     ]),
 
     createEvent('elder_20', 'Twilight Rest', 'You lie down as the day ends.', [
-        { text: 'Reflect Peacefully', type: 'check', stat: 'wis', dc: 12, success: 'Contentment fills you. (+Sanity)', fail: 'Unresolved thoughts trouble you.', onSuccess: () => modSanity(3), onFail: () => modSanity(-1) },
+        { text: 'Reflect Peacefully', type: 'check', stat: 'wis', dc: 12, success: 'Contentment fills you. (+3 SP)', fail: 'Unresolved thoughts trouble you.', onSuccess: () => modSanity(3), onFail: () => modSanity(-1) },
         { text: 'Dream of Youth', type: 'check', stat: 'int', dc: 10, success: 'Memory sharpens. (+1 INT)', fail: 'Fleeting visions fade.', onSuccess: () => state.stats.int++, onFail: () => {} },
         { text: 'Simply Sleep', type: 'flavor', effect: () => log("The world drifts away gently.")}
     ])
@@ -2964,7 +3113,15 @@ Elder: [
         Crime: [createEvent('crime_heist', 'Manor Heist', 'A noble villa is unguarded.', [{ text: 'Rob it', type: 'check', stat: 'dex', dc: 16, success: 'Jackpot! (+100g, +Infamy)', fail: 'Guards! (-HP, Jail)', onSuccess: () => { state.gold += 100; modRep('infamy', 10); }, onFail: () => { takeDamage(10); modRep('infamy', 5); } }, { text: 'Leave', type: 'flavor', effect: () => log("Too risky.") }, { text: 'Tip Guards', type: 'check', stat: 'cha', dc: 12, success: 'Reward! (+10g, +Honor)', fail: 'Ignored.', onSuccess: () => { state.gold+=10; modRep('honor', 5); }, onFail: () => {} }])],
         SocialFail: [createEvent('fail_social', 'Empty Streets', 'You wander the market but meet no one of interest.', [{ text: 'Go home', type: 'flavor', effect: () => log("A quiet day.") }, { text: 'Train Alone', type: 'check', stat: 'str', dc: 12, success: '+1 STR', fail: 'Tired.', onSuccess: () => state.stats.str++, onFail: () => {} }, { text: 'Read', type: 'check', stat: 'int', dc: 12, success: '+1 INT', fail: 'Boring.', onSuccess: () => state.stats.int++, onFail: () => {} }]), createEvent('fail_love', 'Cold Shoulder', 'Your attempts at courtship are met with polite refusal.', [{ text: 'Try again later', type: 'flavor', effect: () => log("There are other fish in the sea.") }, { text: 'Drink', type: 'flavor', effect: () => { state.gold = Math.max(0, state.gold-2); log("You drown your sorrows."); } }, { text: 'Write Poem', type: 'check', stat: 'cha', dc: 12, success: 'Practice makes perfect. (+1 CHA)', fail: 'Terrible.', onSuccess: () => state.stats.cha++, onFail: () => {} }])],
         Interactive: [createEvent('inter_bump', 'A Chance Encounter', 'You bump into a stranger carrying a heavy load.', [{ text: 'Help them', type: 'check', stat: 'str', dc: 10, success: 'They thank you profusely. (+Friendship)', fail: 'You drop it. They yell at you.', onSuccess: () => createRandomRel(20), onFail: () => {} }, { text: 'Walk away', type: 'flavor', effect: () => log("Not your problem.") }, { text: 'Apologize', type: 'check', stat: 'cha', dc: 10, success: 'They nod.', fail: 'They grumble.', onSuccess: () => {}, onFail: () => {} }])],
-        Jeopardy: [createEvent('sanity_break', 'Mental Snap', 'The pressure is too much. Reality bends.', [{ text: 'Scream', type: 'flavor', effect: () => { modSanity(-2); log("You lose yourself for a moment."); } }, { text: 'Hide', type: 'flavor', effect: () => log("You curl up in a corner.") }, { text: 'Run', type: 'flavor', effect: () => { state.health--; log("You run until you collapse."); } }]), createEvent('sanity_visions', 'Dark Visions', 'Shadows whisper your name.', [{ text: 'Pray', type: 'check', stat: 'wis', dc: 12, success: 'The voices fade.', fail: 'They scream louder. (-1 SP)', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }, { text: 'Listen', type: 'check', stat: 'int', dc: 14, success: 'Forbidden knowledge! (+1 INT)', fail: 'Madness.', onSuccess: () => state.stats.int++, onFail: () => modSanity(-2) }, { text: 'Ignore', type: 'check', stat: 'con', dc: 12, success: 'You push them away.', fail: 'They persist.', onSuccess: () => {}, onFail: () => modSanity(-1) }]), createEvent('sanity_final', 'Mental Break', 'Your mind shatters under the strain of existence.', [{ text: 'Hold it together', type: 'check', stat: 'wis', dc: 15, success: 'You claw back your sanity from the brink. (+1 SP)', fail: 'Your mind snaps. Massive shock. (-20 HP)', onSuccess: () => modSanity(1), onFail: () => { takeDamage(20); modSanity(-2); } }, { text: 'Give In', type: 'flavor', effect: () => { modSanity(-5); takeDamage(10); log("You embrace the madness."); } }, { text: 'Seek Help', type: 'flavor', req: s => s.gold >= 50, effect: () => { state.gold-=50; state.sanity=5; log("Healers restore your mind."); } }])]
+        Jeopardy: [createEvent('sanity_break', 'Mental Snap', 'The pressure is too much. Reality bends.', [{ text: 'Scream', type: 'flavor', effect: () => { modSanity(-2); log("You lose yourself for a moment."); } }, { text: 'Hide', type: 'flavor', effect: () => log("You curl up in a corner.") }, { text: 'Run', type: 'flavor', effect: () => { state.health--; log("You run until you collapse."); } }]), createEvent('sanity_visions', 'Dark Visions', 'Shadows whisper your name.', [{ text: 'Pray', type: 'check', stat: 'wis', dc: 12, success: 'The voices fade.', fail: 'They scream louder. (-1 SP)', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }, { text: 'Listen', type: 'check', stat: 'int', dc: 14, success: 'Forbidden knowledge! (+1 INT)', fail: 'Madness.', onSuccess: () => state.stats.int++, onFail: () => modSanity(-2) }, { text: 'Ignore', type: 'check', stat: 'con', dc: 12, success: 'You push them away.', fail: 'They persist.', onSuccess: () => {}, onFail: () => modSanity(-1) }]), createEvent('sanity_final', 'Mental Break', 'Your mind shatters under the strain of existence.', [{ text: 'Hold it together', type: 'check', stat: 'wis', dc: 15, success: 'You claw back your sanity from the brink. (+1 SP)', fail: 'Your mind snaps. Massive shock. (-20 HP)', onSuccess: () => modSanity(1), onFail: () => { takeDamage(20); modSanity(-2); } }, { text: 'Give In', type: 'flavor', effect: () => { modSanity(-5); takeDamage(10); log("You embrace the madness."); } }, { text: 'Seek Help', type: 'flavor', req: s => s.gold >= 50, effect: () => { state.gold-=50; state.sanity=5; log("Healers restore your mind."); } }])],
+        Financial: [
+            // Generic pool for NPCs asking PC for money
+            (npc) => createEvent(`fin_ask_${npc.id}`, `Financial Request`, `Your ${npc.relation} ${npc.name} approaches you, looking sheepish. "I am in dire straits. Could you spare some coin?"`, [
+                { text: 'Give 10g', type: 'flavor', req: s => s.gold >= 10, effect: () => { state.gold -= 10; modRel(npc.id, 15); log(`You helped ${npc.name} in their time of need.`); } },
+                { text: 'Refuse', type: 'flavor', effect: () => { modRel(npc.id, -10); log(`${npc.name} leaves, clearly upset.`); } },
+                { text: 'Give 50g', type: 'flavor', req: s => s.gold >= 50, effect: () => { state.gold -= 50; modRel(npc.id, 40); log(`You were incredibly generous. ${npc.name} weeps with gratitude.`); } }
+            ])
+        ]
     };
     
     // REMOVED POOLS.Childhood = POOLS.Infancy; 
@@ -3749,6 +3906,20 @@ Elder: [
         updateUI();
     }
 
+    // --- NEW: ROMAN NUMERAL HELPER ---
+    function romanize(num) {
+        if (!num || num <= 1) return "";
+        const lookup = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1};
+        let roman = '', i;
+        for ( i in lookup ) {
+            while ( num >= lookup[i] ) {
+                roman += i;
+                num -= lookup[i];
+            }
+        }
+        return " " + roman;
+    }
+
     function renderInventory() {
         const list = document.getElementById('inventory-list');
         const maxSlots = 10 + getModifier(state.stats.str);
@@ -3838,6 +4009,29 @@ Elder: [
     function addRelationship(name, relation, friendship, gender, rank, locIndex = null, isBlood = false, isFamily = false, specificAge = null, isKnown = true) {
         const location = locIndex !== null ? locIndex : Math.floor(Math.random() * CITIES.length);
         
+        // --- DYNASTIC NAMING SYSTEM ---
+        // If this is a family member (Blood/Kin), check for name collisions to assign Regnal Numbers (II, III, etc.)
+        if (isBlood || isFamily) {
+            // Get base name (strip existing numerals just in case, though usually input is clean)
+            const baseName = name.split(' ')[0]; 
+            
+            // Check Player
+            let count = 0;
+            if (state.name.split(' ')[0] === baseName) count++;
+            
+            // Check Relatives (Family/Blood only to avoid counting random merchants)
+            state.relationships.forEach(r => {
+                if ((r.isBlood || r.isFamily) && r.name.split(' ')[0] === baseName) {
+                    count++;
+                }
+            });
+
+            // If ancestors/relatives exist with this name, append the number
+            if (count > 0) {
+                name = `${baseName}${romanize(count + 1)}`;
+            }
+        }
+
         // DETERMINE AGE FIRST (Moved up for career logic)
         const age = specificAge !== null ? specificAge : (18 + Math.floor(Math.random()*40));
 
@@ -3970,6 +4164,19 @@ Elder: [
         // Apply genes
         state.appearance = GeneticEngine.mix(father, mother);
 
+        // Apply Mutation Stats (Beneficial)
+        if (state.appearance.mutations) {
+            state.appearance.mutations.forEach(m => {
+                if (m.stats) {
+                    for (let s in m.stats) {
+                        if (s !== 'ac') { // Skip AC, handled in combat
+                            state.stats[s] += m.stats[s];
+                        }
+                    }
+                }
+            });
+        }
+
         // --- NEW: DEFECT APPLICATION ---
         // If both parents are blood (triggered by the 5% spawn chance), Force a Defect
         if (father && mother && father.isBlood && mother.isBlood) {
@@ -4049,6 +4256,12 @@ Elder: [
         const isFriend = person.friendship > 20;
         const isEnemy = person.friendship < -20;
         const isLover = person.romance > 30;
+
+        // 10% Chance for Financial Request if Friend/Family
+        // UPDATED: Age check added (12+)
+        if ((isFriend || person.isFamily) && person.age >= 12 && Math.random() < 0.10) {
+            return POOLS.Financial[0](person);
+        }
 
         let type = 'neutral';
         if (isLover) type = 'lover';
@@ -4188,7 +4401,7 @@ Elder: [
                                          createEvent(`kid_snack_${person.id}`, `Sharing Snacks`, `Your ${person.relation} ${person.name} offers you a treat.`, [
                          { text: 'Accept', type: 'flavor', effect: () => { log("Yum! (+Rel)"); modRel(person.id, 15); } },
                          { text: 'Decline', type: 'flavor', effect: () => { log("You politely refuse."); } },
-                         { text: 'Trade', type: 'check', stat: 'cha', dc: 8, success: 'You get a better snack! (+Rel, +Sanity)', fail: 'They refuse.', onSuccess: () => { modRel(person.id, 15); modSanity(1); }, onFail: () => {} }
+                         { text: 'Trade', type: 'check', stat: 'cha', dc: 8, success: 'You get a better snack! (+Rel, +1 SP)', fail: 'They refuse.', onSuccess: () => { modRel(person.id, 15); modSanity(1); }, onFail: () => {} }
                     ]),
 
                     createEvent(`kid_draw_${person.id}`, `Drawing Together`, `Your ${person.relation} ${person.name} invites you to draw.`, [
@@ -4244,7 +4457,7 @@ Elder: [
         const pools = {
             lover: [
                 createEvent(`lov_1_${person.id}`, `A Quiet Stroll`, `Your ${person.relation} ${person.name} asks to walk beneath the starlight.`, [
-                    { text: 'Hold Hands', type: 'check', stat: 'cha', dc: 8, success: 'A tender moment. (+Romance, +Sanity)', fail: 'Your palms are sweaty.', onSuccess: () => { modRel(person.id, 10, 10); modSanity(1); }, onFail: () => modRel(person.id, 0, -1) },
+                    { text: 'Hold Hands', type: 'check', stat: 'cha', dc: 8, success: 'A tender moment. (+Romance, +1 SP)', fail: 'Your palms are sweaty.', onSuccess: () => { modRel(person.id, 10, 10); modSanity(1); }, onFail: () => modRel(person.id, 0, -1) },
                     { text: 'Recite Poetry', type: 'check', stat: 'int', dc: 10, success: 'They swoon at your words. (+Romance)', fail: 'You rhyme "love" with "turnip".', onSuccess: () => modRel(person.id, 10, 20), onFail: () => modRel(person.id, -2, -2) },
                     { text: 'Silence', type: 'check', stat: 'wis', dc: 8, success: 'Comfortable silence. (+Rel)', fail: 'Awkward silence.', onSuccess: () => modRel(person.id, 15), onFail: () => modRel(person.id, -2) }
                 ]),
@@ -4254,7 +4467,7 @@ Elder: [
                     { text: 'Ignore', type: 'flavor', effect: () => { modRel(person.id, 0, -10); log("They look disappointed."); } }
                 ]),
                 createEvent(`lov_3_${person.id}`, `Midnight Quarrel`, `A misunderstanding with your ${person.relation} ${person.name} turns heated.`, [
-                    { text: 'Apologize', type: 'check', stat: 'cha', dc: 8, success: 'Forgiveness is sweet. (+Sanity)', fail: 'They are still angry.', onSuccess: () => { modSanity(1); modRel(person.id, 10, 10); }, onFail: () => modRel(person.id, -10, -10) },
+                    { text: 'Apologize', type: 'check', stat: 'cha', dc: 8, success: 'Forgiveness is sweet. (+1 SP)', fail: 'They are still angry.', onSuccess: () => { modSanity(1); modRel(person.id, 10, 10); }, onFail: () => modRel(person.id, -10, -10) },
                     { text: 'Stand Ground', type: 'check', stat: 'wis', dc: 12, success: 'Logic prevails. They respect you.', fail: 'You sleep on the floor.', onSuccess: () => modRel(person.id, 15, 0), onFail: () => { modRel(person.id, -15, -15); modSanity(-1); } },
                     { text: 'Distract', type: 'check', stat: 'cha', dc: 10, success: 'You kiss them mid-sentence. (+Romance)', fail: 'They push you away.', onSuccess: () => modRel(person.id, 10, 15), onFail: () => modRel(person.id, -10, -10) }
                 ]),
@@ -4294,7 +4507,7 @@ Elder: [
                     { text: 'Show Off', type: 'check', stat: 'cha', dc: 12, success: 'A passionate display! (+Romance)', fail: 'Too much.', onSuccess: () => modRel(person.id, 0, 20), onFail: () => modRep('infamy', 1) }
                 ]),
                                 createEvent(`lov_11_${person.id}`, `Rainy Day`, `Your ${person.relation} ${person.name} forgot their cloak in the rain.`, [
-                    { text: 'Share Yours', type: 'check', stat: 'cha', dc: 8, success: 'They feel cherished. (+Romance, +Sanity)', fail: 'You get soaked too.', onSuccess: () => { modRel(person.id, 15, 10); modSanity(1); }, onFail: () => modSanity(-1) },
+                    { text: 'Share Yours', type: 'check', stat: 'cha', dc: 8, success: 'They feel cherished. (+Romance, +1 SP)', fail: 'You get soaked too.', onSuccess: () => { modRel(person.id, 15, 10); modSanity(1); }, onFail: () => modSanity(-1) },
                     { text: 'Run Together', type: 'check', stat: 'dex', dc: 10, success: 'Laughing all the way! (+Rel)', fail: 'Slipped in the mud.', onSuccess: () => modRel(person.id, 15), onFail: () => takeDamage(1) },
                     { text: 'Let Them Shiver', type: 'flavor', effect: () => { modRel(person.id, -10); log("They glare at you."); } }
                 ]),
@@ -4332,7 +4545,7 @@ Elder: [
                 createEvent(`lov_17_${person.id}`, `Morning Walk`, `Your ${person.relation} ${person.name} joins you for an early stroll.`, [
                     { text: 'Chat', type: 'check', stat: 'cha', dc: 8, success: 'A peaceful conversation. (+Rel)', fail: 'Awkward pauses.', onSuccess: () => modRel(person.id, 15), onFail: () => modRel(person.id, -5) },
                     { text: 'Silent Walk', type: 'flavor', effect: () => { modRel(person.id, 10); log("Comfortable silence shared."); } },
-                    { text: 'Jog Ahead', type: 'check', stat: 'dex', dc: 10, success: 'You race them playfully. (+Rel, +Sanity)', fail: 'Trip and fall.', onSuccess: () => { modRel(person.id, 15); modSanity(1); }, onFail: () => takeDamage(1) }
+                    { text: 'Jog Ahead', type: 'check', stat: 'dex', dc: 10, success: 'You race them playfully. (+Rel, +1 SP)', fail: 'Trip and fall.', onSuccess: () => { modRel(person.id, 15); modSanity(1); }, onFail: () => takeDamage(1) }
                 ]),
 
                 createEvent(`lov_18_${person.id}`, `Board Game`, `Your ${person.relation} ${person.name} challenges you to a friendly game.`, [
@@ -4501,7 +4714,7 @@ Elder: [
                     { text: 'Reject', type: 'flavor', effect: () => { modRel(person.id, -20); log("Rude."); } }
                 ]),
                 createEvent(`frn_8_${person.id}`, `Religious Festival`, `Your ${person.relation} ${person.name} drags you to the temple.`, [
-                    { text: 'Pray', type: 'check', stat: 'wis', dc: 8, success: 'You feel blessed. (+Piety, +Sanity, +Rel)', fail: 'You fall asleep.', onSuccess: () => { modRep('piety', 5); modSanity(1); modRel(person.id, 15); }, onFail: () => {} },
+                    { text: 'Pray', type: 'check', stat: 'wis', dc: 8, success: 'You feel blessed. (+Piety, +1 SP, +Rel)', fail: 'You fall asleep.', onSuccess: () => { modRep('piety', 5); modSanity(1); modRel(person.id, 15); }, onFail: () => {} },
                     { text: 'Donate', type: 'flavor', req: s => s.gold >= 2, effect: () => { state.gold -= 2; modRep('piety', 5); log("Generous."); } },
                     { text: 'Leave', type: 'flavor', effect: () => log("Not for you.") }
                 ]),
@@ -4716,6 +4929,7 @@ Elder: [
             state.rejectedJobs = []; // RESET JOB REJECTIONS
             state.flags.travelAllowed = false; 
             state.flags.traveledThisYear = false;
+            state.flags.requestedHouseFunds = false; // RESET STIPEND FLAG
             state.eventQueue = []; 
             
             generateMarket(state.location); // REGENERATE MARKET EVERY YEAR
@@ -4979,10 +5193,6 @@ Elder: [
             
             if (r.age > 55) {
                 // Curve starts gentle, gets steep
-                // Age 60: ~1.5%
-                // Age 70: ~3.5%
-                // Age 80: ~5.5%
-                // Age 90+: High risk
                 deathChance += (r.age - 55) * 0.002; 
             }
             
@@ -4994,10 +5204,24 @@ Elder: [
             if (Math.random() < deathChance) {
                 r.health = "Deceased";
                 
-                // Flavor text for cause of death
-                let cause = "passed away peacefully";
-                if (r.age < 50) cause = "died of a sudden illness";
-                else if (r.age > 80) cause = "succumbed to old age";
+                // --- NEW WACKY DEATH SYSTEM ---
+                let cause = "passed away";
+                const dieRoll = Math.random();
+
+                if (r.age > 75) {
+                    // Old Age dominates, but small chance of weirdness
+                    if (dieRoll < 0.90) cause = DEATH_CAUSES.old[Math.floor(Math.random() * DEATH_CAUSES.old.length)];
+                    else cause = DEATH_CAUSES.common[Math.floor(Math.random() * DEATH_CAUSES.common.length)];
+                } else if (r.age < 50) {
+                    // Premature deaths
+                    if (dieRoll < 0.5) cause = DEATH_CAUSES.common[Math.floor(Math.random() * DEATH_CAUSES.common.length)];
+                    else if (dieRoll < 0.8) cause = DEATH_CAUSES.violent[Math.floor(Math.random() * DEATH_CAUSES.violent.length)];
+                    else cause = DEATH_CAUSES.fantasy[Math.floor(Math.random() * DEATH_CAUSES.fantasy.length)];
+                } else {
+                    // Middle age mix
+                    if (dieRoll < 0.7) cause = DEATH_CAUSES.common[Math.floor(Math.random() * DEATH_CAUSES.common.length)];
+                    else cause = DEATH_CAUSES.fantasy[Math.floor(Math.random() * DEATH_CAUSES.fantasy.length)];
+                }
                 
                 // NEW: Record Death Details
                 r.deathCause = cause;
@@ -5101,6 +5325,7 @@ Elder: [
                                         type: 'flavor', 
                                         effect: () => { 
                                             modRel(r.id, 10); 
+                                            modSanity(1);
                                             log(`You attended the ceremony to show your support.`); 
                                         } 
                                     },
@@ -5547,7 +5772,7 @@ Elder: [
                         title: 'Wedding Invitation',
                         text: `You are invited to the arranged wedding of your ${targetNPC.relation} ${targetNPC.name}.`,
                         choices: [
-                            { text: 'Attend', type: 'flavor', effect: () => { modRel(targetNPC.id, 10); log("You paid your respects at the wedding."); } },
+                            { text: 'Attend', type: 'flavor', effect: () => { modRel(targetNPC.id, 10); modSanity(1); log("You paid your respects at the wedding."); } },
                             { text: 'Ignore', type: 'flavor', effect: () => log("You did not attend.") }
                         ]
                     });
@@ -5585,6 +5810,59 @@ Elder: [
                     // Log relevant contributions
                     if (donation >= 10) {
                         log(`<strong style="color:var(--gold)">CONTRIBUTION:</strong> Your ${npc.relation} ${npc.name} donated ${donation}g to the House treasury.`);
+                    }
+                }
+            }
+            
+            // --- NEW: NPC TREASURY REQUESTS ---
+            // If NPC is poor (< 20g) and not the ruler, they might ask for money
+            // UPDATED: Age check added (16+)
+            if (npc.gold < 20 && npc.id !== ruler.id && npc.age >= 16 && Math.random() < 0.2) {
+                // Calculate amount based on rank
+                let askAmt = 20;
+                if (npc.rank.includes("Heir")) askAmt = 100;
+                
+                if (state.house.treasury >= askAmt) {
+                    // Simulation Check (Simulated Charisma vs Lord)
+                    const check = Math.floor(Math.random() * 20) + 1 + getModifier(npc.stats.cha);
+                    
+                    if (ruler.id === 'PLAYER') {
+                        // PLAYER IS LORD: Generate Event
+                        state.eventQueue.push({
+                            id: `house_req_${npc.id}`,
+                            title: 'Petition for Funds',
+                            text: `Your ${npc.relation} ${npc.name} petitions the House for support. They ask for ${askAmt}g from the treasury. "Times are hard, my Lord."`,
+                            choices: [
+                                { 
+                                    text: `Approve (${askAmt}g)`, 
+                                    type: 'flavor', 
+                                    effect: () => { 
+                                        state.house.treasury -= askAmt; 
+                                        npc.gold += askAmt; 
+                                        modRel(npc.id, 10);
+                                        log(`You granted ${npc.name}'s request for funds.`);
+                                    } 
+                                },
+                                { 
+                                    text: 'Deny', 
+                                    type: 'flavor', 
+                                    effect: () => { 
+                                        modRel(npc.id, -10);
+                                        log(`You denied ${npc.name}'s petition.`);
+                                    } 
+                                }
+                            ]
+                        });
+                    } else {
+                        // AI LORD DECISION
+                        if (check >= 12) {
+                            state.house.treasury -= askAmt;
+                            npc.gold += askAmt;
+                            // Only log if interesting
+                            if(npc.isKnown && Math.random() > 0.5) {
+                                log(`<span style="color:var(--ink)">House:</span> ${npc.name} was granted a stipend of ${askAmt}g from the treasury.`);
+                            }
+                        }
                     }
                 }
             }
@@ -5674,7 +5952,8 @@ Elder: [
                 fail: 'They just laugh at you.',
                 onSuccess: () => { addRelationship(name, "Rival", -30, gender, rank, state.location); modRep('infamy', 2); },
                 onFail: () => { addRelationship(name, "Acquaintance", -10, gender, rank, state.location); }
-            }
+            },
+            { text: 'Walk Away', type: 'flavor', effect: () => log("You decide to keep to yourself.") }
         ]);
         renderEvent(evt);
         switchTab('log');
@@ -5687,7 +5966,6 @@ Elder: [
 
         const city = CITIES[state.location];
         const title = getLocalRulerTitle(state.location);
-        // Determine gendered title for text (simplification: default to male title or generic)
         const displayTitle = title === "King" ? "King/Queen" : (title === "Duke" ? "Duke/Duchess" : "Lord/Lady");
 
         if (state.reputation.renown < 50 && state.socialClass !== 'House') {
@@ -5696,22 +5974,28 @@ Elder: [
             return;
         }
 
-        log(`You attempt to gain audience with the ${displayTitle} of ${city.ruler}.`);
-        
         let dc = 18;
         if (state.socialClass === 'House') dc = 12;
         if (state.reputation.renown > 50) dc -= 5;
         
-        const roll = rollD20(getModifier(state.stats.cha));
-        if (roll.total >= dc) {
-            log(`<strong class="text-green-800">Granted!</strong> You meet the ${title}. They are impressed by your bearing.`);
-            modRep('renown', 5);
-            modSanity(1);
-            // Create the Lord NPC if not exists, or update interactions
-            renderEvent(POOLS.LordInteraction[0]);
-        } else {
-            log(`<strong class="text-red-800">Denied.</strong> The guards turn you away at the gate.`);
-        }
+        const evt = createEvent('lord_approach', `Audience with the ${title}`, `You stand before the gates of the ${city.ruler}'s keep.`, [
+            { 
+                text: 'Request Audience', type: 'check', stat: 'cha', dc: dc, 
+                success: `Granted! You meet the ${title}.`, 
+                fail: `Denied. The guards turn you away.`, 
+                onSuccess: () => {
+                    log(`<strong class="text-green-800">Granted!</strong> The ${title} is impressed by your bearing.`);
+                    modRep('renown', 5);
+                    modSanity(1);
+                    renderEvent(POOLS.LordInteraction[0]);
+                },
+                onFail: () => {
+                    log(`<strong class="text-red-800">Denied.</strong> The guards turn you away at the gate.`);
+                }
+            },
+            { text: 'Leave', type: 'flavor', effect: () => log("You decide you are not ready.") }
+        ]);
+        renderEvent(evt);
         switchTab('log');
     }
 
@@ -5720,14 +6004,63 @@ Elder: [
         if(!checkAge(16)) return;
         if(!checkActLimit('tournament', 1, "There are no active tournaments in the city right now.")) return;
 
-        log(`<strong>The Grand Tournament:</strong> Flags wave and the crowd roars.`);
+        // Dynamic Enemy Generator
+        const generateFighter = (tier) => {
+            const gender = Math.random() > 0.5 ? 'Male' : 'Female';
+            const name = getRandomName(gender);
+            const titles = ['the Bold', 'the Swift', 'Iron-Arm', 'of the Vale', 'the Cruel', 'Hammer-Hand',
+    'the Red', 'the Black', 'the White', 'the Golden', 'the Silver-Tongued',
+    'the Lionheart', 'the Wolfborn', 'the Falcon', 'the Bear', 'the Stag',
+    'the Unbroken', 'the Just', 'the Merciless', 'the Valiant', 'the Grim',
+    'the Bastard', 'the Oathbound', 'the Dragonsbane', 'the Kingslayer',
+    'the Giant-Killer', 'the Quiet', 'the Loud', 'Storm-Bringer', 'Stormborn',
+    'the Frostbitten', 'the Flame-Touched', 'the Ashen', 'the Cinder',
+    'the Dawnblade', 'the Duskbringer', 'the Shadow', 'the Veiled',
+    'the Watcher', 'the Wanderer', 'the Exiled', 'the Forsaken',
+    'the Ironclad', 'Stonefist', 'Steelheart', 'the Relentless',
+    'the Thunderer', 'the Whisper', 'the Blooded', 'the Scarred',
+    'the One-Eyed', 'the Red-Handed', 'the Blackshield', 'the Whitecloak',
+    'the Northman', 'of the Marches', 'of Highgarden', 'of Blackmoor',
+    'the Green', 'the Sable', 'the Ivory', 'the Brazen',
+    'the Fearless', 'the Resolute', 'the Untamed', 'the Wild',
+    'the Cunning', 'the Fox', 'the Hound', 'the Raven',
+    'the Stormcrow', 'the Longstride', 'the Surefoot',
+    'the Blade', 'the Broken', 'the Reforged',
+    'the Oathbreaker', 'the Redeemed', 'the Twice-Born',
+    'the Dragonsworn', 'the Wyrm-Slayer', 'the Shieldbearer',
+    'the Bannerlord', 'the Highborn', 'the Lowborn',
+    'the Tactician', 'the Conqueror', 'the Defiant',
+    'the Blackblade', 'the Sunforged', 'the Moonmarked',
+    'the Gilded', 'the Hollow', 'the Silent',
+    'the Pale', 'the Crimson', 'the Obsidian',
+    'the Mountain', 'the Riverborn', 'the Seafarer',
+    'the Deepdelver', 'the Pathfinder', 'the Farstrider',
+    'the Faithful', 'the Heretic', 'the Prophet',
+    'the Warden', 'the Marshal', 'the Champion',
+    'the Reckless', 'the Patient', 'the Unyielding',
+    'the Firebrand', 'the Coldhearted', 'the Iron-Willed'];
+            const title = titles[Math.floor(Math.random() * titles.length)];
+            
+            let hp = 15, ac = 12, atk = 2, dmg = 6;
+            
+            if (tier === 2) { // Semi-Final
+                hp = 25; ac = 14; atk = 4; dmg = 8;
+            } else if (tier === 3) { // Champion
+                hp = 40; ac = 16; atk = 6; dmg = 10;
+            }
+            
+            return { name: `${name} ${title}`, hp, ac, atk, dmg };
+        };
+
+        const e1 = generateFighter(1);
+        const e2 = generateFighter(2);
+        const e3 = generateFighter(3);
 
         // Round 3 (Final)
-        // Round 3 (Final)
-        const round3 = createEvent('tourney_r3', 'Tournament: The Final', 'You face the Champion, a giant in black plate.', [
+        const round3 = createEvent('tourney_r3', 'Tournament: The Final', `The Champion steps forward: <strong>${e3.name}</strong>.`, [
             { 
               text: 'Duel (Combat)', type: 'combat', 
-              enemy: { name: 'The Champion', hp: 40, ac: 16, atk: 6, dmg: 8 },
+              enemy: e3,
               success: 'VICTORY! You disarm the champion to thunderous applause!', 
               fail: 'You are crushed.', 
               onSuccess: () => { modRep('renown', 50); state.gold += 200; addItem('Champion Helm', 'Rare', 'Proof of victory.', 150, null, 3); log("You won 200g!"); },
@@ -5736,10 +6069,10 @@ Elder: [
         ]);
 
         // Round 2
-        const round2 = createEvent('tourney_r2', 'Tournament: Semi-Finals', 'Your opponent is a swift mercenary from the south.', [
+        const round2 = createEvent('tourney_r2', 'Tournament: Semi-Finals', `Your next opponent is <strong>${e2.name}</strong>.`, [
             { 
               text: 'Fight (Combat)', type: 'combat', 
-              enemy: { name: 'Mercenary', hp: 25, ac: 14, atk: 4, dmg: 6 },
+              enemy: e2,
               success: 'You batter through their guard.',
               fail: 'They are too fast. (-5 HP)',
               onSuccess: () => state.eventQueue.unshift(round3),
@@ -5748,10 +6081,10 @@ Elder: [
         ]);
 
         // Round 1
-        const round1 = createEvent('tourney_r1', 'Tournament: Qualifiers', 'A local knight challenges you.', [
+        const round1 = createEvent('tourney_r1', 'Tournament: Qualifiers', `A challenger approaches: <strong>${e1.name}</strong>.`, [
             { 
               text: 'Joust (Combat)', type: 'combat', 
-              enemy: { name: 'Local Knight', hp: 15, ac: 12, atk: 2, dmg: 4 },
+              enemy: e1,
               success: 'Your lance strikes true!',
               fail: 'You are unhorsed. (-5 HP)',
               onSuccess: () => state.eventQueue.unshift(round2),
@@ -5759,9 +6092,28 @@ Elder: [
             }
         ]);
 
-        state.eventQueue.unshift(round1);
+        const evt = createEvent('tourney_lobby', 'The Grand Tournament', 'Flags wave and the crowd roars. How will you participate?', [
+            { 
+                text: 'Enter Lists (Combat)', type: 'flavor', 
+                effect: () => {
+                    log(`<strong>The Grand Tournament:</strong> You enter the lists!`);
+                    state.eventQueue.unshift(round1);
+                }
+            },
+            {
+                text: 'Watch (5g)', type: 'flavor',
+                req: s => s.gold >= 5,
+                effect: () => {
+                    state.gold -= 5;
+                    modSanity(2);
+                    log("You enjoy a day of spectacle and cheering. (+2 Sanity)");
+                }
+            },
+            { text: 'Leave', type: 'flavor', effect: () => log("You leave the grounds.") }
+        ]);
+
+        renderEvent(evt);
         switchTab('log');
-        nextTurn();
     }
 
     function actTrain() {
@@ -5773,7 +6125,8 @@ Elder: [
             { text: 'Strength Drill', type: 'check', stat: 'str', dc: 12, success: 'You feel stronger! (+1 STR)', fail: 'You pull a muscle. No gain.', onSuccess: () => state.stats.str++, onFail: () => takeDamage(1) },
             { text: 'Agility Course', type: 'check', stat: 'dex', dc: 12, success: 'You feel faster! (+1 DEX)', fail: 'You trip and fall.', onSuccess: () => state.stats.dex++, onFail: () => takeDamage(1) },
             { text: 'Endurance Run', type: 'check', stat: 'con', dc: 12, success: 'You feel tougher! (+1 CON)', fail: 'You collapse breathless.', onSuccess: () => { state.stats.con++; state.maxHealth++; }, onFail: () => {} },
-            { text: 'Library Study', type: 'check', stat: 'int', dc: 12, success: 'You feel smarter! (+1 INT)', fail: 'You fall asleep reading.', onSuccess: () => state.stats.int++, onFail: () => {} }
+            { text: 'Library Study', type: 'check', stat: 'int', dc: 12, success: 'You feel smarter! (+1 INT)', fail: 'You fall asleep reading.', onSuccess: () => state.stats.int++, onFail: () => {} },
+            { text: 'Leave', type: 'flavor', effect: () => log("You decide not to train today.") }
         ]);
         renderEvent(evt);
         switchTab('log');
@@ -5787,7 +6140,8 @@ Elder: [
         const evt = createEvent('act_brothel', 'The Velvet Lantern', 'Music and perfume fill the air.', [
             { text: 'Common Company (10g)', type: 'flavor', req: s => s.gold >= 10, effect: () => { state.gold -= 10; modSanity(2); log("A pleasant distraction. (+2 SP)"); } },
             { text: 'Luxury Suite (50g)', type: 'flavor', req: s => s.gold >= 50, effect: () => { state.gold -= 50; modSanity(5); state.health = Math.min(state.maxHealth, state.health + 2); log("A night of pure hedonism. (+5 SP, +2 HP)"); } },
-            { text: 'Gather Rumors (20g)', type: 'check', stat: 'cha', dc: 12, req: s => s.gold >= 20, success: 'You learn juicy secrets. (+Renown)', fail: 'You just get drunk.', onSuccess: () => { state.gold -= 20; modRep('renown', 5); }, onFail: () => { state.gold -= 20; } }
+            { text: 'Gather Rumors (20g)', type: 'check', stat: 'cha', dc: 12, req: s => s.gold >= 20, success: 'You learn juicy secrets. (+Renown)', fail: 'You just get drunk.', onSuccess: () => { state.gold -= 20; modRep('renown', 5); }, onFail: () => { state.gold -= 20; } },
+            { text: 'Leave', type: 'flavor', effect: () => log("You step back out into the fresh air.") }
         ]);
         renderEvent(evt);
         switchTab('log');
@@ -5820,7 +6174,8 @@ Elder: [
               fail: 'You trigger a curse. (-Sanity)', 
               onSuccess: () => { addItem('Arcane Scroll', 'Rare', 'Ancient magic', 100); state.stats.int++; }, 
               onFail: () => { modSanity(-2); addTrait('Paranoid'); } 
-            }
+            },
+            { text: 'Leave', type: 'flavor', effect: () => log("The darkness is too forbidding today.") }
         ]);
         renderEvent(evt);
         switchTab('log');
@@ -5849,7 +6204,8 @@ Elder: [
               fail: 'Arrested! Fined heavily.', 
               onSuccess: () => { state.gold += 200; modRep('infamy', 10); }, 
               onFail: () => { state.gold = Math.floor(state.gold / 2); modRep('infamy', 10); log("You spent months in jail."); } 
-            }
+            },
+            { text: 'Back Out', type: 'flavor', effect: () => log("You lose your nerve.") }
         ]);
         renderEvent(evt);
         switchTab('log');
@@ -5865,7 +6221,8 @@ Elder: [
               fail: 'Distracting thoughts plague you.', 
               onSuccess: () => modSanity(1), 
               onFail: () => {} 
-            }
+            },
+            { text: 'Stop', type: 'flavor', effect: () => log("You cannot find the time.") }
         ]);
         renderEvent(evt);
         switchTab('log');
@@ -6114,11 +6471,19 @@ Elder: [
                 </div>
             `;
         } else if (state.location === r.locationIndex) {
+            // NEW: Added "Ask for Coin" button
+            // Only enabled if interacted < 1 (to prevent spam) and relationship > 0 or family
+            // UPDATED: Added Age Checks (Both must be 12+)
+            const canAsk = (r.friendship >= 0 || r.isFamily) && !state.interactions[id] && state.age >= 12 && r.age >= 12;
+            const askClass = canAsk ? "" : "opacity-50 cursor-not-allowed";
+            const askAction = canAsk ? `askNPCForGold('${id}')` : "";
+
             actions = `
                 <button onclick="startInteraction('${id}')" class="col-span-2 choice-btn text-lg justify-center bg-amber-900 border-amber-950 text-[#f4e4bc] hover:bg-amber-800 mb-2">
                     ⚔️ Approach
                 </button>
-                <button onclick="interact('${id}', 'gift')" class="choice-btn text-sm justify-center">🎁 Gift (5g)</button>
+                <button onclick="interact('${id}', 'gift')" class="choice-btn text-xs justify-center">🎁 Gift (5g)</button>
+                <button onclick="${askAction}" class="choice-btn text-xs justify-center ${askClass}">💰 Ask for Coin</button>
             `;
         } else {
             actions = `<button onclick="interact('${id}', 'letter')" class="col-span-2 choice-btn text-sm justify-center">🕊️ Send Letter (1g)</button>`;
@@ -6213,7 +6578,7 @@ Elder: [
 
             <div class="mb-4">
                 <div class="text-xs font-bold uppercase mb-1">Appearance</div>
-                <div class="text-sm italic mb-2">${ap.height}, ${ap.hair} Hair, ${ap.eyes} Eyes, ${ap.skin} Skin</div>
+                <div class="text-sm italic mb-2">${ap.height} Height, ${ap.hair} Hair, ${ap.eyes} Eyes, ${ap.skin} Skin</div>
                 <div class="text-xs font-bold uppercase mb-1">Mutations & Defects</div>
                 <div>${mutationsHtml}</div>
             </div>
@@ -6294,7 +6659,7 @@ Elder: [
             const title = isSpouse ? 'Spouse' : (r.relation === 'Suitor' ? 'Suitor' : 'Lover');
             if (isAdult || isTeen) {
                 let choices = [];
-                choices.push({ text: 'Woo & Romance', type: 'check', stat: 'cha', dc: 10, success: `Sparks fly! (+Romance, +Sanity)`, fail: `It falls flat.`, onSuccess: () => { modRel(id, 15, 20); modSanity(2); }, onFail: () => modRel(id, 0, -2) });
+                choices.push({ text: 'Woo & Romance', type: 'check', stat: 'cha', dc: 10, success: `Sparks fly! (+Romance, +2 SP)`, fail: `It falls flat.`, onSuccess: () => { modRel(id, 15, 20); modSanity(2); }, onFail: () => modRel(id, 0, -2) });
                 choices.push({ text: 'Deep Conversation', type: 'check', stat: 'wis', dc: 8, success: `You bond over shared dreams. (+Friendship)`, fail: `You argue instead.`, onSuccess: () => { modRel(id, 20); modSanity(1); }, onFail: () => { modRel(id, -10); } });
                 
                 if (!isSpouse && isLover && state.age >= 16) {
@@ -6353,7 +6718,7 @@ Elder: [
             if (isAdult) {
                 text = `You meet ${r.name} at the tavern.`;
                 choices = [
-                    { text: 'Drink Ale', type: 'check', stat: 'con', dc: 10, success: `A hearty night! (+Sanity)`, fail: `Hangover. (-HP)`, onSuccess: () => { modSanity(3); modRel(id, 15); }, onFail: () => { takeDamage(2); } },
+                    { text: 'Drink Ale', type: 'check', stat: 'con', dc: 10, success: `A hearty night! (+3 SP)`, fail: `Hangover. (-HP)`, onSuccess: () => { modSanity(3); modRel(id, 15); }, onFail: () => { takeDamage(2); } },
                     { text: 'Gossip', type: 'check', stat: 'int', dc: 10, success: `You learn secrets. (+Rel)`, fail: `Boring news.`, onSuccess: () => { modRel(id, 10); }, onFail: () => {} },
                     { text: 'Borrow Gold', type: 'check', stat: 'cha', dc: 12, success: `They lend you 10g.`, fail: `They refuse.`, onSuccess: () => { state.gold+=10; modRel(id, -5); }, onFail: () => modRel(id, -2) }
                 ];
@@ -6668,6 +7033,45 @@ Elder: [
     }
 
     // --- RELATIONSHIP SYSTEM ---
+    
+    // NEW: PC Asks NPC for Gold
+    function askNPCForGold(id) {
+        if(state.health <= 0) return;
+        // UPDATED: Age check (12+)
+        if (!checkAge(12)) return;
+
+        const r = state.relationships.find(x => x.id === id);
+        if(!r) return;
+
+        state.interactions[id] = 1; // Mark interaction used for year
+        closeNPC();
+        switchTab('log');
+
+        const chaMod = getModifier(state.stats.cha);
+        const roll = rollD20(chaMod);
+        const dc = 12 + (r.friendship < 20 ? 5 : 0); // Harder if not close friends
+
+        let amt = 10;
+        if (r.rank.includes('Lord') || r.rank.includes('Lady') || r.rank.includes('Noble')) amt = 50;
+        if (r.gold < amt) amt = Math.floor(r.gold / 2); // They can't give what they don't have
+
+        if (amt <= 0) {
+            log(`You asked ${r.name} for coin, but they have none to spare.`);
+            return;
+        }
+
+        if (roll.total >= dc) {
+            state.gold += amt;
+            r.gold -= amt;
+            log(`<strong style="color:green">SUCCESS:</strong> You asked ${r.name} for financial aid. They agreed and gave you ${amt}g. (Relationship Unchanged)`);
+            AudioEngine.pulse();
+        } else {
+            modRel(id, -10);
+            log(`<strong style="color:red">FAILURE:</strong> You asked ${r.name} for coin. They refused, looking offended. (Relationship Damaged)`);
+        }
+        updateUI();
+    }
+
     function interact(id, action) {
         if(state.health <= 0) return; // Guard
         const r = state.relationships.find(x => x.id === id);
@@ -6807,6 +7211,53 @@ Elder: [
     
     function withdrawFromHouse() {
         openTransaction('withdraw');
+    }
+
+    // NEW: House Treasury Request Logic (Player)
+    function requestHouseFunds() {
+        if(state.health <= 0) return;
+        // UPDATED: Age check (16+)
+        if (!checkAge(16)) return;
+
+        if(state.flags.requestedHouseFunds) {
+            showMsg("Limit Reached", "You have already petitioned the House this year.");
+            return;
+        }
+        
+        // Calculate amount based on rank
+        let askAmt = 50;
+        if (state.class.includes("Heir")) askAmt = 200;
+        if (state.house.treasury < askAmt) {
+            showMsg("Treasury Empty", "The House coffers are too low.");
+            return;
+        }
+
+        state.flags.requestedHouseFunds = true;
+        
+        const chaMod = getModifier(state.stats.cha);
+        const roll = rollD20(chaMod);
+        const dc = 12; // Standard DC
+
+        if (roll.total >= dc) {
+            state.house.treasury -= askAmt;
+            state.gold += askAmt;
+            log(`<strong style="color:var(--gold)">APPROVED:</strong> You petitioned your Lord for a stipend. Your silver tongue secured ${askAmt}g.`);
+            AudioEngine.pulse();
+        } else {
+            // Find Lord for flavor
+            const ruler = state.house.members.find(m => 
+                (m.rank.includes('Lord') || m.rank.includes('Lady') || m.rank.includes('King') || m.rank.includes('Queen') || m.rank.includes('Duke')) 
+                && !m.rank.includes('Emeritus')
+            );
+            const rulerName = ruler ? ruler.name : "The House Council";
+            
+            log(`<strong style="color:var(--failure)">DENIED:</strong> You petitioned ${rulerName} for funds, but were rebuffed.`);
+            // Relationship hit if Lord is NPC
+            if (ruler && ruler.id !== 'PLAYER') {
+                modRel(ruler.id, -5);
+            }
+        }
+        updateUI();
     }
 
     // NEW: LORD AUTHORITIES
@@ -7031,6 +7482,14 @@ Elder: [
                 </div>
             `;
 
+            // NEW: Logic for Non-Lord Actions (Request Stipend)
+            let memberActions = '';
+            if (!isLord) {
+                const reqClass = state.flags.requestedHouseFunds ? "opacity-50 cursor-not-allowed bg-gray-400" : "bg-amber-700 border-amber-900";
+                const reqText = state.flags.requestedHouseFunds ? "Stipend Requested" : "Request Stipend (CHA)";
+                memberActions = `<button onclick="requestHouseFunds()" class="choice-btn text-xs px-2 py-1 ${reqClass}" ${state.flags.requestedHouseFunds ? 'disabled' : ''}>${reqText}</button>`;
+            }
+
              holdingsHtml = `
                 <div class="holding-card mt-6">
                     <div class="holding-icon">🏰</div>
@@ -7043,7 +7502,7 @@ Elder: [
                         </div>
                         <div class="flex gap-2">
                             <button onclick="donateToHouse()" class="choice-btn text-xs px-2 py-1 bg-amber-700 border-amber-900">Donate</button>
-                            ${isLord ? `<button onclick="withdrawFromHouse()" class="choice-btn text-xs px-2 py-1 bg-amber-800 border-amber-950">Withdraw</button>` : ''}
+                            ${isLord ? `<button onclick="withdrawFromHouse()" class="choice-btn text-xs px-2 py-1 bg-amber-800 border-amber-950">Withdraw</button>` : memberActions}
                         </div>
                     </div>
 
@@ -7403,7 +7862,7 @@ Elder: [
 
         modRep('piety', 2);
         modSanity(1);
-        log(`You knelt before the grave of ${r.name}. Your mind feels clearer. (+Piety, +SP)`);
+        log(`You knelt before the grave of ${r.name}. Your mind feels clearer. (+Piety, +1 SP)`);
         updateUI();
         switchTab('log'); 
     }
@@ -7469,28 +7928,6 @@ Elder: [
         log(`<strong style="color:var(--gold)">ITEM GET:</strong> Found <span class="item-rarity-${rarity}">${name}</span>!`);
         updateUI();
         return true;
-    }
-
-    function buyMarketItem(shopId, itemIndex) {
-        if(state.health <= 0) return; // Guard for death
-        const shop = state.market.find(s => s.id === shopId);
-        if (!shop) return; // Safety check for invalid shop
-
-        const item = shop.items[itemIndex];
-        
-        if (state.gold >= item.value && !item.sold) {
-            const added = addItem(item.name, item.rarity, item.desc, Math.floor(item.value/2), item.effect, item.dr);
-            
-            if (added) {
-                state.gold -= item.value;
-                item.sold = true;
-                AudioEngine.pulse();
-                updateUI();
-                openShop(shopId); // Re-render to show Sold Out
-            } else {
-                showMsg("Inventory Full", "You are carrying too much.");
-            }
-        }
     }
 
     function sellItem(index) {
@@ -7858,6 +8295,15 @@ Elder: [
     function addTrait(trait) {
         if(state.traits.includes(trait)) return;
         state.traits.push(trait);
+        
+        // NEW: Apply Stat Modifiers from Traits
+        const def = TRAIT_LIBRARY[trait];
+        if (def && def.stats) {
+            for (let s in def.stats) {
+                state.stats[s] += def.stats[s];
+            }
+        }
+
         const list = document.getElementById('traits-list');
         if (state.traits.length === 1) list.innerHTML = '';
         
@@ -8031,11 +8477,11 @@ Elder: [
             infant: [
                 createEvent(`par_inf_cry_${child.id}`, `Sleepless Night`, `${child.name} is crying uncontrollably.`, [
                     { text: 'Comfort Them', type: 'check', stat: 'con', dc: 10, success: 'They settle down. (+Rel)', fail: 'You are exhausted. (-1 HP)', onSuccess: () => modRel(child.id, 10), onFail: () => takeDamage(1) },
-                    { text: 'Sing Lullaby', type: 'check', stat: 'cha', dc: 10, success: 'They sleep peacefully. (+Rel, +Sanity)', fail: 'They cry louder.', onSuccess: () => { modRel(child.id, 15); modSanity(1); }, onFail: () => modSanity(-1) },
+                    { text: 'Sing Lullaby', type: 'check', stat: 'cha', dc: 10, success: 'They sleep peacefully. (+Rel, +1 SP)', fail: 'They cry louder.', onSuccess: () => { modRel(child.id, 15); modSanity(1); }, onFail: () => modSanity(-1) },
                     { text: 'Ignore', type: 'flavor', effect: () => { modRel(child.id, -5); modSanity(-1); log("A long night."); } }
                 ]),
                 createEvent(`par_inf_word_${child.id}`, `First Words`, `${child.name} is babbling and looking at you.`, [
-                    { text: 'Teach "Mama/Papa"', type: 'check', stat: 'cha', dc: 12, success: 'They say it! (+Sanity)', fail: 'They just drool.', onSuccess: () => modSanity(3), onFail: () => {} },
+                    { text: 'Teach "Mama/Papa"', type: 'check', stat: 'cha', dc: 12, success: 'They say it! (+3 SP)', fail: 'They just drool.', onSuccess: () => modSanity(3), onFail: () => {} },
                     { text: 'Teach "Sword"', type: 'check', stat: 'str', dc: 12, success: 'A warrior born! (+Rel)', fail: 'Goo-goo.', onSuccess: () => modRel(child.id, 15), onFail: () => {} },
                     { text: 'Smile', type: 'flavor', effect: () => { modRel(child.id, 10); log("A happy moment."); } }
                 ])
@@ -8189,24 +8635,6 @@ Elder: [
             }
         ]);
         renderEvent(evt);
-    }
-
-    function marryNPC(id) {
-        const r = state.relationships.find(x => x.id === id);
-        if(!r) return;
-        r.relation = 'Spouse';
-        state.flags.married = true;
-        log(`<strong style="color:var(--gold)">MARRIAGE:</strong> You and ${r.name} are joined in holy matrimony!`);
-        updateUI();
-    }
-
-    function getRelLabel(val) {
-        if (val <= -50) return "Enemy";
-        if (val < 0) return "Disliked";
-        if (val < 30) return "Acquaintance";
-        if (val < 60) return "Friend";
-        if (val < 90) return "Good Friend";
-        return "Best Friend";
     }
 
     // Initialize Game
