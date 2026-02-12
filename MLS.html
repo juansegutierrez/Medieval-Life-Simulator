@@ -2858,7 +2858,19 @@ Elder: [
                     onSuccess: () => { addHonorific('Trollsbane'); modRep('renown', 30); }, 
                     onFail: () => takeDamage(5) 
                 },
-                { text: 'Persuade (CHA)', type: 'check', stat: 'cha', dc: 15, success: 'You tricked it into letting you pass.', fail: 'It eats you.', onSuccess: () => { addHonorific('Silver-Tongue'); }, onFail: () => takeDamage(15) },
+                { 
+                    text: 'Persuade (CHA)', type: 'check', stat: 'cha', dc: 15, 
+                    success: 'You tricked it into letting you pass.', 
+                    fail: 'The troll roars! "NO TRICKS!" It attacks!', 
+                    onSuccess: () => { addHonorific('Silver-Tongue'); }, 
+                    onFail: () => {
+                        CombatEngine.start(
+                            { name: 'Enraged Troll', hp: 40, ac: 14, atk: 5, dmg: 10 },
+                            () => { log("You survived the enraged beast!"); addHonorific('Trollsbane'); },
+                            () => { log("The troll feasted upon your bones."); }
+                        );
+                    } 
+                },
                 { text: 'Pay Toll (50g)', type: 'flavor', req: s => s.gold >= 50, effect: () => { state.gold -= 50; log("Costly, but safe."); } }
             ]),
 
@@ -4029,7 +4041,8 @@ Elder: [
 
     // --- NEW EVENT GENERATION SYSTEM ---
     function generateSocialEvent() {
-        const livingKnown = state.relationships.filter(r => r.health !== 'Deceased');
+        // UPDATED: Filter now requires 'isKnown' to be true to prevent random merchants/strangers
+        const livingKnown = state.relationships.filter(r => r.health !== 'Deceased' && r.isKnown);
         if (livingKnown.length === 0) return null;
 
         const person = livingKnown[Math.floor(Math.random() * livingKnown.length)];
@@ -4992,7 +5005,7 @@ Elder: [
 
                 // EDITED: Only log death if NPC is KNOWN to player
                 if (r.isKnown) {
-                    log(`<span style="color:var(--failure)">† ${r.name} (${r.relation}) has ${cause} at age ${r.age}.</span>`);
+                    log(`<span style="color:var(--failure)">† Your ${r.relation} ${r.name} has ${cause} at age ${r.age}.</span>`);
                     if(r.friendship > 20 || r.isFamily) modSanity(-1);
                 }
                 
@@ -5005,7 +5018,7 @@ Elder: [
                  const career = CAREERS[jobKey];
                  r.occupation = career.ranks[0].title;
                  if (r.isKnown) {
-                    log(`<span style="color:var(--ink)">Career:</span> ${r.name} has begun working as a ${r.occupation}.`);
+                    log(`<span style="color:var(--ink)">Career:</span> Your ${r.relation} ${r.name} has begun working as a ${r.occupation}.`);
                  }
             }
 
@@ -5027,7 +5040,7 @@ Elder: [
                      if (r.occupation !== rank.title) {
                         r.occupation = rank.title;
                         if (r.isKnown) {
-                            log(`<span style="color:var(--ink)">Career:</span> ${r.name} is now a ${r.occupation}.`);
+                            log(`<span style="color:var(--ink)">Career:</span> Your ${r.relation} ${r.name} is now a ${r.occupation}.`);
                         }
                      }
                 }
@@ -5180,7 +5193,7 @@ Elder: [
                         }
                         
                         if (r.isKnown) {
-                            log(`<span style="color:var(--ink)">News:</span> ${r.name} is with child.`);
+                            log(`<span style="color:var(--ink)">News:</span> Your ${r.relation} ${r.name} is with child.`);
                         }
                     }
                 }
@@ -5258,7 +5271,7 @@ Elder: [
             state.eventQueue.push({
                 id: 'house_career_demand',
                 title: 'Family Expectations',
-                text: `Lord ${rulerNPC.name} summons you to the solar. The hearth fire crackles, but their gaze is cold.<br><br>"You are sixteen now, ${state.name}. It is time you contributed to the House's legacy. I expect you to take up a vocation befitting your station. Do not idle away your bloodline."`,
+                text: `Your ${rulerNPC.relation} ${rulerNPC.name} summons you to the solar. The hearth fire crackles, but their gaze is cold.<br><br>"You are sixteen now, ${state.name}. It is time you contributed to the House's legacy. I expect you to take up a vocation befitting your station. Do not idle away your bloodline."`,
                 choices: [
                     { 
                         text: 'Seek Knighthood', 
@@ -5293,7 +5306,7 @@ Elder: [
                         effect: () => { 
                             modRel(rulerNPC.id, -30); 
                             modRep('infamy', 5);
-                            log(`<span style="color:var(--failure)">DISAPPOINTMENT:</span> You refused the Lord's command. "Useless," they mutter. Your standing in the House falls.`); 
+                            log(`<span style="color:var(--failure)">DISAPPOINTMENT:</span> You refused your ${rulerNPC.relation}'s command. "Useless," they mutter. Your standing in the House falls.`); 
                         } 
                     }
                 ]
@@ -5333,7 +5346,7 @@ Elder: [
             // Population boost from construction attraction
             h.population += Math.floor(tmpl.capPerLvl * 0.1); 
             
-            log(`<strong style="color:var(--royal)">HOUSE:</strong> ${ruler.name} ordered the expansion of <strong>${h.name}</strong> (Lvl ${h.level}).`);
+            log(`<strong style="color:var(--royal)">HOUSE:</strong> Your ${rulerNPC.relation} ${rulerNPC.name} ordered the expansion of <strong>${h.name}</strong> (Lvl ${h.level}).`);
             return; // One major action per year
         }
 
@@ -5365,7 +5378,7 @@ Elder: [
                     capacity: tmpl.basePop + tmpl.capPerLvl,
                     defense: tmpl.baseDef + tmpl.defPerLvl
                 });
-                log(`<strong style="color:var(--royal)">HOUSE:</strong> ${ruler.name} commissioned the construction of <strong>${newName}</strong>.`);
+                log(`<strong style="color:var(--royal)">HOUSE:</strong> Your ${rulerNPC.relation} ${rulerNPC.name} commissioned the construction of <strong>${newName}</strong>.`);
                 return; // Action taken
             }
         }
@@ -5411,7 +5424,7 @@ Elder: [
                 state.eventQueue.push({
                     id: 'house_marriage_' + state.age,
                     title: 'Arranged Marriage',
-                    text: `Lord ${rulerNPC.name} has arranged a union to strengthen the House.<br><br>
+                    text: `Your ${rulerNPC.relation} ${rulerNPC.name} has arranged a union to strengthen the House.<br><br>
                            Candidate: <strong>${spouse.name}</strong> (${spouse.age}, ${spouse.occupation})<br>
                            <button class="text-xs underline text-amber-900 mt-2" onclick="openNPC('${spouse.id}')">Inspect Candidate Details</button>`,
                     choices: [
@@ -5439,7 +5452,7 @@ Elder: [
                                 
                                 if (state.house.treasury >= cost) {
                                     state.house.treasury -= cost;
-                                    log(`<span style="color:var(--royal)">DUTY:</span> You accepted the match. Lord ${rulerNPC.name} funded a <strong>${weddingType}</strong> (${cost}g) from the treasury.`); 
+                                    log(`<span style="color:var(--royal)">DUTY:</span> You accepted the match. Your ${rulerNPC.relation} ${rulerNPC.name} funded a <strong>${weddingType}</strong> (${cost}g) from the treasury.`); 
                                 } else {
                                     log(`<span style="color:var(--royal)">DUTY:</span> You accepted the match. The House treasury could only afford a modest blessing.`);
                                 }
@@ -5451,7 +5464,7 @@ Elder: [
                             effect: () => { 
                                 modRel(rulerNPC.id, -30); 
                                 modRep('infamy', 5); 
-                                log(`<span style="color:var(--failure)">REFUSAL:</span> You spurned the Lord's arrangement. Tension rises in the House.`); 
+                                log(`<span style="color:var(--failure)">REFUSAL:</span> You spurned your ${rulerNPC.relation}'s arrangement. Tension rises in the House.`); 
                             } 
                         }
                     ]
@@ -5522,9 +5535,9 @@ Elder: [
                 }
 
                 if (funded) {
-                    log(`<strong style="color:var(--royal)">HOUSE:</strong> Lord ${rulerNPC.name} arranged a <strong>${weddingType}</strong> (${cost}g) between ${targetNPC.name} and ${spouseName}.`);
+                    log(`<strong style="color:var(--royal)">HOUSE:</strong> Your ${rulerNPC.relation} ${rulerNPC.name} arranged a <strong>${weddingType}</strong> (${cost}g) between your ${targetNPC.relation} ${targetNPC.name} and ${spouseName}.`);
                 } else {
-                    log(`<strong style="color:var(--royal)">HOUSE:</strong> Lord ${rulerNPC.name} arranged a humble marriage between ${targetNPC.name} and ${spouseName}.`);
+                    log(`<strong style="color:var(--royal)">HOUSE:</strong> Your ${rulerNPC.relation} ${rulerNPC.name} arranged a humble marriage between your ${targetNPC.relation} ${targetNPC.name} and ${spouseName}.`);
                 }
                 
                 // Trigger invite for player if they know the NPC
@@ -5532,7 +5545,7 @@ Elder: [
                      state.eventQueue.push({
                         id: `wedding_invite_npc_${targetNPC.id}`,
                         title: 'Wedding Invitation',
-                        text: `You are invited to the arranged wedding of ${targetNPC.name}.`,
+                        text: `You are invited to the arranged wedding of your ${targetNPC.relation} ${targetNPC.name}.`,
                         choices: [
                             { text: 'Attend', type: 'flavor', effect: () => { modRel(targetNPC.id, 10); log("You paid your respects at the wedding."); } },
                             { text: 'Ignore', type: 'flavor', effect: () => log("You did not attend.") }
@@ -5541,7 +5554,7 @@ Elder: [
                 }
 
             } else {
-                log(`<strong style="color:var(--stress)">SCANDAL:</strong> ${targetNPC.name} publicly refused a marriage arranged by Lord ${rulerNPC.name}!`);
+                log(`<strong style="color:var(--stress)">SCANDAL:</strong> Your ${targetNPC.relation} ${targetNPC.name} publicly refused a marriage arranged by ${rulerNPC.name}!`);
             }
             return;
         }
@@ -5550,7 +5563,7 @@ Elder: [
         if (Math.random() < 0.15 && state.house.treasury > 500) {
             const amt = 50 + Math.floor(Math.random() * 200);
             state.house.treasury -= amt;
-            log(`<strong style="color:var(--royal)">HOUSE:</strong> ${ruler.name} withdrew ${amt}g from the treasury for courtly expenses.`);
+            log(`<strong style="color:var(--royal)">HOUSE:</strong> Your ${rulerNPC.relation} ${rulerNPC.name} withdrew ${amt}g from the treasury for courtly expenses.`);
         }
 
         // 4. Member Contributions
@@ -5571,7 +5584,7 @@ Elder: [
                     state.house.treasury += donation;
                     // Log relevant contributions
                     if (donation >= 10) {
-                        log(`<strong style="color:var(--gold)">CONTRIBUTION:</strong> ${npc.name} donated ${donation}g to the House treasury.`);
+                        log(`<strong style="color:var(--gold)">CONTRIBUTION:</strong> Your ${npc.relation} ${npc.name} donated ${donation}g to the House treasury.`);
                     }
                 }
             }
@@ -6014,6 +6027,16 @@ Elder: [
     // NEW HELPER: Standardize NPC Name Display with Honorifics
     function getNPCName(r) {
         let n = r.name;
+        
+        // Knightly Prefix (System Update)
+        let prefix = "";
+        const isJobKnight = r.occupation && r.occupation.includes('Knight');
+        const isLegacyKnight = r.rank === 'Sir' || r.rank === 'Dame';
+        
+        if (isJobKnight || isLegacyKnight) {
+            prefix = r.gender === 'Female' ? "Dame " : "Ser ";
+        }
+
         // Append House Name (If member of player's house)
         if (state.house && state.house.members && state.house.members.some(m => m.id === r.id)) {
             n += ` ${state.house.name}`;
@@ -6022,7 +6045,7 @@ Elder: [
         if (r.occupation) {
             n += ` the ${r.occupation}`;
         }
-        return n;
+        return prefix + n;
     }
 
     function openNPC(id) {
@@ -7732,6 +7755,12 @@ Elder: [
 
             // Honorific Update (UPDATED)
             let displayName = state.name;
+            
+            // Knightly Honorifics (System Update)
+            if (state.occupation && state.occupation.id === 'knight' && state.occupation.rankIndex >= 2) {
+                const prefix = state.gender === 'Female' ? "Dame " : "Ser ";
+                displayName = prefix + displayName;
+            }
             
             // 1. Append House Name if noble
             if (state.house) {
