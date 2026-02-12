@@ -1840,15 +1840,16 @@
     };
 
     const CITIES = [
-        { name: "Chep (Capital)", ruler: "House Chep", desc: "The royal seat of power, founded by Hero Ren.", x: 50, y: 50 },
-        { name: "Frosthold", ruler: "House Grimward", desc: "A fortress of ice and stone in the far north.", x: 50, y: 15 },
-        { name: "Goldspire", ruler: "House Valdoria", desc: "A glittering city of trade carved into western cliffs.", x: 15, y: 60 },
-        { name: "Arcania", ruler: "House Moonshadow", desc: "A hub of knowledge built atop ancient ruins.", x: 80, y: 70 },
-        { name: "Verdant Reach", ruler: "House Sunstrider", desc: "Nestled in the deep, mystical southern forests.", x: 50, y: 85 },
-        { name: "Sky Bastion", ruler: "House Stormbreaker", desc: "A mountain stronghold touching the clouds.", x: 85, y: 25 },
-        { name: "Ironport", ruler: "House Ironheart", desc: "The industrial heart, forging steel for the realm.", x: 20, y: 35 },
-        { name: "Tidecaller's Keep", ruler: "House Thalor", desc: "A fortress withstanding the eternal ocean storms.", x: 10, y: 80 }
+        { name: "Chep (Capital)", ruler: "House Chep", desc: "A sprawling walled capital of crowded markets, towering cathedrals, guildhalls, and narrow cobbled streets radiating from the royal citadel founded by Hero Ren.", x: 50, y: 50 },
+        { name: "Frosthold", ruler: "House Grimward", desc: "A wind-bitten northern city of timbered halls and stone keeps, its people hardened by long winters and its harbor choked with ice most of the year.", x: 50, y: 15 },
+        { name: "Goldspire", ruler: "House Valdoria", desc: "A wealthy cliffside trade city where terraced districts climb the western bluffs, its markets rich with foreign coin and its streets alive with merchants and sailors.", x: 15, y: 60 },
+        { name: "Arcania", ruler: "House Moonshadow", desc: "A scholarly city built atop ancient foundations, filled with scriptoria, academies, crumbling ruins, and scholars who debate beneath lamplit arcades.", x: 80, y: 70 },
+        { name: "Verdan", ruler: "House Sunstrider", desc: "A forest-woven city of wooden palisades and green courtyards, where hunters, herbalists, and foresters dwell beneath the canopy of the southern woods.", x: 50, y: 85 },
+        { name: "Skybast", ruler: "House Stormbreaker", desc: "A highland city carved into mountain slopes, its steep streets connected by stairways and rope lifts, bells echoing through thin alpine air.", x: 85, y: 25 },
+        { name: "Ironport", ruler: "House Ironheart", desc: "A smoke-veiled river port of foundries, shipyards, and crowded workers' quarters, where anvils ring day and night and barges carry steel across the realm.", x: 20, y: 35 },
+        { name: "Tidecall", ruler: "House Thalor", desc: "A storm-lashed coastal city of seawalls, lighthouses, and salt-stained stone, its docks packed with fishing vessels and deep-sea traders alike.", x: 10, y: 80 }
     ];
+
 
     // --- MARKET DATA & LOGIC ---
     const SHOP_POOLS = {
@@ -2084,7 +2085,17 @@ m: ["Aethelred", "Alaric", "Alistair", "Alvric", "Baldric", "Beren", "Berengar",
     "Fendrel", "Gwydion", "Hrothgar", "Ithric", "Jovian", "Kaelor", "Lucaniel", "Maelric", 
     "Orric", "Pryderi", "Rhydderch", "Thalric", "Ulmar", "Veyron", "Wystan", "Juanse", "Ricky",
     "Max", "Jon", "Arcenio", "Tom", "Sean", "Noah", "Karl", "Dindi", "Lucifer", "Ren", "Finn", 
-    "Alec", "Zeke", "Ron", "Jake", "Giovan", "Eros", "Sevon"], 
+    "Alec", "Zeke", "Ron", "Jake", "Giovan", "Eros", "Sevon", "Aeron", "Aldwin", "Almeric", 
+    "Anselm", "Arthric", "Auberon", "Baelor", "Bastian", "Belisarius", "Bors", "Brandr", "Branwen", 
+    "Bricen", "Caelan", "Calder", "Cassiel", "Cedric", "Cillian", "Corentin", "Darianth", "Darius", 
+    "Daxton", "Decimus", "Drogan", "Edgard", "Elric", "Elwin", "Emeric", "Evander", "Fenris", "Fintan", 
+    "Gaius", "Garrick", "Gideon", "Godfrey", "Griffin", "Hadric", "Hawke", "Helric", "Heron",
+    "Iagan", "Iskander", "Jorvik", "Kaedric", "Kaevan", "Kendric", "Leoric", "Loric",
+    "Luther", "Maelor", "Marius", "Matthias", "Merrick", "Nerian", "Norwin", "Octavian",
+    "Orion", "Owyn", "Phineas", "Quillan", "Rhydian", "Riven", "Rowan", "Sebric",
+    "Severin", "Silas", "Stellan", "Sullivan", "Tarian", "Theron", "Torin", "Tristan",
+    "Urian", "Vaelin", "Valen", "Varian", "Vesper", "Victarion", "Warrick", "Weston",
+    "Wilric", "Wysten", "Xavian", "Yorvan", "Zarek", "Zavian"], 
 f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "Annelise", 
     "Arden", "Arlena", "Bilda", "Beatrix", "Branwen", "Brunhild", "Cadence", "Claricent", 
     "Constance", "Cyrene", "Dagmar", "Daria", "Ealdgyth", "Edith", "Eira", "Elanor", "Elspeth", 
@@ -2098,7 +2109,16 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
     "Fenella", "Gwenora", "Helisent", "Ilyana", "Isabetta", "Jovienne", "Kerensa", "Leandra", 
     "Lilith", "Meliora", "Nerissa", "Oriana", "Parthenia", "Queniva", "Rhiannon", "Seraphine", 
     "Thessaly", "Vespera", "Ylva", "Zinnia", "Aeliana", "Branwyn", "Catriona", "Dextra", "Evelina",
-    "Denise", "Sam", "Savanna", "Anna", "Crystal", "Delores", "Star", "Payton"]
+    "Denise", "Sam", "Savanna", "Anna", "Crystal", "Delores", "Star", "Payton", "Aveline", "Aurelia", 
+    "Astraea", "Almira", "Amaris", "Anwyn", "Arlisse", "Ariadne", "Belladonna", "Brielle", "Bryony", 
+    "Caelia", "Calanthe", "Celandine", "Ceridwen", "Clarimond", "Cordelia", "Corisande", "Daelira", 
+    "Desdemona", "Drusilla", "Elaria", "Elowen", "Elara", "Emeralda", "Elysia", "Endellion", "Evadne", 
+    "Faelina", "Fiora", "Floriana", "Galadriel", "Ginevra", "Griselda", "Hadewyn", "Haleth", "Helena", 
+    "Hestia", "Illyria", "Ione", "Isadora", "Jessamine", "Kaelira", "Kalista", "Lavinia", "Lorelei", 
+    "Lucinda", "Lysandra", "Maerwynn", "Maribelle", "Mariselle", "Mirelda", "Miriel", "Naerys", "Nerina", 
+    "Noctra", "Odelia", "Olivette", "Persephone", "Petronella", "Quilla", "Ravena", "Renata", "Rosaline",
+    "Rowenna", "Sable", "Selene", "Serilda", "Solenne", "Sylvara", "Tamsin", "Tempest", "Thalira", "Valessa", 
+    "Valora", "Velora", "Verena", "Vivienne", "Wynne", "Xanthe", "Yvaine", "Zafira", "Zarael", "Zephira"]
     };
 
     function createEvent(id, title, text, choices) {
@@ -2121,6 +2141,47 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             playerMiss: ["Your swing goes wide as they sidestep.", "The enemy parries your blow effortlessly.", "You lose your footing slightly, missing the mark.", "Your attack clangs harmlessly off their armor."],
             enemyHit: ["The enemy strikes you with brutal force!", "A jagged blade bites into your shoulder!", "You weren't fast enough to block that one.", "The blow staggers you!"],
             enemyMiss: ["You narrowly dodge the incoming strike!", "Your armor absorbs the impact.", "You parry the blow with a flick of your wrist.", "The enemy overextends, missing you completely."]
+        },
+
+        // NEW: Dynamic Enemy Generator
+        generateEnemy: function(tier) {
+            const types = ['Bandit', 'Wolf', 'Guard', 'Mercenary', 'Cultist', 'Knight', 'Berserker', 'Assassin'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            // Base Stats (8 + random + tier)
+            const rollStat = () => 8 + Math.floor(Math.random() * 6) + tier;
+            const str = rollStat();
+            const dex = rollStat();
+            const con = rollStat();
+            
+            const strMod = Math.floor((str - 10) / 2);
+            const dexMod = Math.floor((dex - 10) / 2);
+            const conMod = Math.floor((con - 10) / 2);
+            
+            // HP: Base 10 + (Tier * 5) + ConMod
+            const hp = 10 + (tier * 5) + (conMod * tier);
+            
+            // AC: 10 + DexMod + (Tier-based Armor)
+            const ac = 10 + dexMod + Math.floor(tier * 1.5);
+            
+            // Atk: Proficiency (Tier) + Main Stat (Max of Str/Dex)
+            const atk = Math.max(strMod, dexMod) + Math.floor(tier / 2);
+            
+            // Dmg: Weapon Die (4) + Tier + StrMod
+            const dmg = Math.max(1, 4 + tier + strMod);
+
+            return {
+                id: 'enemy_' + Math.random().toString(36).substr(2,9),
+                name: `${type} (Tier ${tier})`,
+                maxHp: hp,
+                hp: hp,
+                ac: ac,
+                atk: atk,
+                dmg: dmg,
+                stats: { str, dex, con },
+                tier: tier,
+                gold: Math.floor(Math.random() * 10 * tier) + 5
+            };
         },
 
         start: function(enemyData, onWin, onLose) {
@@ -2154,48 +2215,69 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 dmgMod: dmgBonus
             };
 
-            this.enemy = {
-                id: enemyData.id || 'enemy',
-                name: enemyData.name || 'Enemy',
-                maxHp: enemyData.hp || 10,
-                hp: enemyData.hp || 10,
-                ac: enemyData.ac || 10,
-                atk: enemyData.atk || 0,
-                dmg: enemyData.dmg || 4,
-                icon: enemyData.icon || '👺',
-                xp: enemyData.xp || 10,
-                gold: enemyData.gold || 0
-            };
+            // Support both Manual Object and Tier Integer
+            if (typeof enemyData === 'number') {
+                this.enemy = this.generateEnemy(enemyData);
+            } else {
+                this.enemy = {
+                    id: enemyData.id || 'enemy',
+                    name: enemyData.name || 'Enemy',
+                    maxHp: enemyData.hp || 10,
+                    hp: enemyData.hp || 10,
+                    ac: enemyData.ac || 10,
+                    atk: enemyData.atk || 0,
+                    dmg: enemyData.dmg || 4,
+                    icon: enemyData.icon || '👺',
+                    xp: enemyData.xp || 10,
+                    gold: enemyData.gold || 0
+                };
+            }
 
             document.getElementById('combat-modal').classList.remove('hidden');
             document.getElementById('combat-log-area').innerHTML = ""; // Clear log
             this.log(`<strong>Battle Commences!</strong> You face ${this.enemy.name}.`);
             
-            // Render Controls dynamically to include abilities
-            const controls = document.getElementById('combat-controls');
-            let abilityBtn = '';
-            
-            // Check for Seer (Psychic)
-            const mutations = state.appearance.mutations || [];
-            if (mutations.some(m => m.combatAbility === 'psychic')) {
-                abilityBtn = `<button onclick="CombatEngine.playerAction('psychic')" class="choice-btn justify-center bg-purple-900 text-white border-purple-950 hover:bg-purple-800 col-span-2">🔮 Psychic Blast</button>`;
-            }
-
-            controls.innerHTML = `
-                <button onclick="CombatEngine.playerAction('attack')" class="choice-btn justify-center bg-red-900 text-white border-red-950 hover:bg-red-800 text-lg">⚔️ Attack</button>
-                <button onclick="CombatEngine.playerAction('defend')" class="choice-btn justify-center bg-blue-900 text-white border-blue-950 hover:bg-blue-800">🛡️ Defend</button>
-                <button onclick="CombatEngine.playerAction('item')" class="choice-btn justify-center">🎒 Item (Potion)</button>
-                <button onclick="CombatEngine.playerAction('flee')" class="choice-btn justify-center opacity-80 hover:opacity-100">🏃 Flee</button>
-                ${abilityBtn}
-            `;
-
+            this.renderControls('combat');
             this.render();
+        },
+
+        // New Helper to switch control schemes
+        renderControls: function(mode) {
+            const controls = document.getElementById('combat-controls');
+            if (mode === 'combat') {
+                // Standard Controls
+                let abilityBtn = '';
+                const mutations = state.appearance.mutations || [];
+                if (mutations.some(m => m.combatAbility === 'psychic')) {
+                    abilityBtn = `<button onclick="CombatEngine.playerAction('psychic')" class="choice-btn justify-center bg-purple-900 text-white border-purple-950 hover:bg-purple-800 col-span-2">🔮 Psychic Blast</button>`;
+                }
+
+                controls.innerHTML = `
+                    <button onclick="CombatEngine.playerAction('attack')" class="choice-btn justify-center bg-red-900 text-white border-red-950 hover:bg-red-800 text-lg">⚔️ Attack</button>
+                    <button onclick="CombatEngine.playerAction('defend')" class="choice-btn justify-center bg-blue-900 text-white border-blue-950 hover:bg-blue-800">🛡️ Defend</button>
+                    <button onclick="CombatEngine.playerAction('item')" class="choice-btn justify-center">🎒 Item (Potion)</button>
+                    <button onclick="CombatEngine.playerAction('flee')" class="choice-btn justify-center opacity-80 hover:opacity-100">🏃 Flee</button>
+                    ${abilityBtn}
+                `;
+            } else if (mode === 'victory') {
+                // Victory Phase Controls
+                controls.innerHTML = `
+                    <button onclick="CombatEngine.resolveVictory('finish')" class="choice-btn justify-center bg-red-900 text-white border-red-950 hover:bg-red-800 text-lg col-span-2">☠️ Finish Them (Loot & Glory)</button>
+                    <button onclick="CombatEngine.resolveVictory('mercy')" class="choice-btn justify-center bg-blue-900 text-white border-blue-950 hover:bg-blue-800 text-lg col-span-2">🕊️ Show Mercy (Honor)</button>
+                `;
+            } else if (mode === 'defeat') {
+                // Defeat Phase Controls
+                controls.innerHTML = `
+                    <button onclick="CombatEngine.resolveDefeat('honor')" class="choice-btn justify-center bg-red-900 text-white border-red-950 hover:bg-red-800 text-lg col-span-2">⚔️ Die with Honor</button>
+                    <button onclick="CombatEngine.resolveDefeat('beg')" class="choice-btn justify-center bg-amber-700 text-white border-amber-900 text-lg">🙏 Beg for Mercy (CHA)</button>
+                    <button onclick="CombatEngine.resolveDefeat('crawl')" class="choice-btn justify-center bg-stone-700 text-white border-stone-900 text-lg">🪱 Crawl Away (DEX)</button>
+                `;
+            }
         },
 
         log: function(msg, type='normal') {
             const logEl = document.getElementById('combat-log-area');
             const div = document.createElement('div');
-            // Basic styling is handled by CSS in #combat-log-area div
             if (type === 'crit') div.className = "text-amber-700 font-bold";
             if (type === 'hit') div.className = "text-red-900";
             if (type === 'heal') div.className = "text-green-800 font-bold";
@@ -2223,8 +2305,11 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             document.getElementById('combat-round').innerText = `Round ${this.round}`;
 
             // Disable buttons if not player turn
-            const btns = document.querySelectorAll('#combat-controls button');
-            btns.forEach(b => b.disabled = (this.turn !== 'player'));
+            // Note: We don't disable during resolution phases, handled by custom render
+            if (this.active) {
+                const btns = document.querySelectorAll('#combat-controls button');
+                btns.forEach(b => b.disabled = (this.turn !== 'player'));
+            }
         },
 
         playerAction: async function(action) {
@@ -2250,9 +2335,7 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 this.render();
                 
                 if (this.enemy.hp <= 0) {
-                    this.log(`<strong>${this.enemy.name}</strong> collapses, mind shattered!`, 'crit');
-                    await new Promise(r => setTimeout(r, 1000));
-                    this.endCombat(true, false);
+                    this.triggerPhase('victory');
                     return;
                 }
             } else if (action === 'flee') {
@@ -2293,9 +2376,8 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             if (!this.active) return;
             await this.performAttack(this.enemy, this.player, false);
 
-            if (this.player.hp <= 0) {
-                this.endCombat(false, false);
-            } else {
+            // Phase trigger handled inside performAttack
+            if (this.player.hp > 0 && this.active) {
                 this.round++;
                 this.modifiers.playerDefending = false; 
                 this.turn = 'player';
@@ -2362,11 +2444,76 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
 
             if (defender.hp <= 0) {
                 if (isPlayer) {
-                    this.endCombat(false, false);
+                    // Player won, trigger Victory Phase
+                    await new Promise(r => setTimeout(r, 800));
+                    this.triggerPhase('victory');
                 } else {
-                    this.log(`<strong>${this.enemy.name}</strong> collapses into the dirt!`, 'crit');
-                    await new Promise(r => setTimeout(r, 1000));
-                    this.endCombat(true, false);
+                    // Enemy won (Player died), trigger Defeat Phase
+                    await new Promise(r => setTimeout(r, 800));
+                    this.triggerPhase('defeat');
+                }
+            }
+        },
+
+        triggerPhase: function(phase) {
+            this.active = false; // Stop turns
+            if (phase === 'victory') {
+                this.log(`<strong>${this.enemy.name}</strong> falls to their knees! Their fate is in your hands.`, 'crit');
+                this.renderControls('victory');
+            } else {
+                this.log(`<strong>You have fallen!</strong> Darkness creeps in...`, 'hit');
+                this.renderControls('defeat');
+            }
+        },
+
+        resolveVictory: function(choice) {
+            if (choice === 'finish') {
+                const gold = this.enemy.gold || Math.floor(Math.random() * 10) + 1;
+                state.gold += gold;
+                modRep('renown', 10);
+                this.log(`You strike the final blow. Found ${gold}g. (+Renown)`, 'crit');
+                setTimeout(() => this.endCombat(true, false), 1000);
+            } else {
+                modRep('honor', 15);
+                this.log(`You spare their life. They flee in shame. (+Honor)`, 'heal');
+                setTimeout(() => this.endCombat(true, false), 1000);
+            }
+        },
+
+        resolveDefeat: function(choice) {
+            if (choice === 'honor') {
+                this.log(`You accept your fate.`, 'miss');
+                setTimeout(() => this.endCombat(false, false), 1000);
+            } else if (choice === 'beg') {
+                const cha = getModifier(state.stats.cha);
+                const dc = 12; // Base DC
+                const roll = Math.floor(Math.random()*20)+1 + cha;
+                this.log(`Begging (CHA): ${roll} vs DC ${dc}`);
+                
+                if (roll >= dc) {
+                    this.log(`The enemy spits on you but leaves you alive. You lose your dignity.`, 'miss');
+                    modRep('renown', -20);
+                    modRep('infamy', 10);
+                    state.health = 1; // Survive with 1 HP
+                    this.endCombat(false, true); // Treat as fleeing
+                } else {
+                    this.log(`They laugh and strike.`, 'hit');
+                    setTimeout(() => this.endCombat(false, false), 1000);
+                }
+            } else if (choice === 'crawl') {
+                const dex = getModifier(state.stats.dex);
+                const dc = 14; 
+                const roll = Math.floor(Math.random()*20)+1 + dex;
+                this.log(`Crawling (DEX): ${roll} vs DC ${dc}`);
+                
+                if (roll >= dc) {
+                    this.log(`You drag yourself into the shadows.`, 'heal');
+                    state.health = 1; // Survive with 1 HP
+                    addTrait('Limp'); 
+                    this.endCombat(false, true); // Treat as fleeing
+                } else {
+                    this.log(`You are caught.`, 'hit');
+                    setTimeout(() => this.endCombat(false, false), 1000);
                 }
             }
         },
@@ -2378,9 +2525,7 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             if (fled) {
                 log("You live to fight another day.");
             } else if (victory) {
-                const gold = this.enemy.gold || Math.floor(Math.random() * 10) + 1;
-                state.gold += gold;
-                log(`<strong style="color:green">VICTORY!</strong> You defeated the ${this.enemy.name} and found ${gold}g.`);
+                // Rewards handled in resolveVictory now
                 if (this.callbacks.onWin) this.callbacks.onWin();
             } else {
                 log(`<strong style="color:red">DEFEAT!</strong> You fell in battle.`);
@@ -6008,37 +6153,7 @@ Elder: [
         const generateFighter = (tier) => {
             const gender = Math.random() > 0.5 ? 'Male' : 'Female';
             const name = getRandomName(gender);
-            const titles = ['the Bold', 'the Swift', 'Iron-Arm', 'of the Vale', 'the Cruel', 'Hammer-Hand',
-    'the Red', 'the Black', 'the White', 'the Golden', 'the Silver-Tongued',
-    'the Lionheart', 'the Wolfborn', 'the Falcon', 'the Bear', 'the Stag',
-    'the Unbroken', 'the Just', 'the Merciless', 'the Valiant', 'the Grim',
-    'the Bastard', 'the Oathbound', 'the Dragonsbane', 'the Kingslayer',
-    'the Giant-Killer', 'the Quiet', 'the Loud', 'Storm-Bringer', 'Stormborn',
-    'the Frostbitten', 'the Flame-Touched', 'the Ashen', 'the Cinder',
-    'the Dawnblade', 'the Duskbringer', 'the Shadow', 'the Veiled',
-    'the Watcher', 'the Wanderer', 'the Exiled', 'the Forsaken',
-    'the Ironclad', 'Stonefist', 'Steelheart', 'the Relentless',
-    'the Thunderer', 'the Whisper', 'the Blooded', 'the Scarred',
-    'the One-Eyed', 'the Red-Handed', 'the Blackshield', 'the Whitecloak',
-    'the Northman', 'of the Marches', 'of Highgarden', 'of Blackmoor',
-    'the Green', 'the Sable', 'the Ivory', 'the Brazen',
-    'the Fearless', 'the Resolute', 'the Untamed', 'the Wild',
-    'the Cunning', 'the Fox', 'the Hound', 'the Raven',
-    'the Stormcrow', 'the Longstride', 'the Surefoot',
-    'the Blade', 'the Broken', 'the Reforged',
-    'the Oathbreaker', 'the Redeemed', 'the Twice-Born',
-    'the Dragonsworn', 'the Wyrm-Slayer', 'the Shieldbearer',
-    'the Bannerlord', 'the Highborn', 'the Lowborn',
-    'the Tactician', 'the Conqueror', 'the Defiant',
-    'the Blackblade', 'the Sunforged', 'the Moonmarked',
-    'the Gilded', 'the Hollow', 'the Silent',
-    'the Pale', 'the Crimson', 'the Obsidian',
-    'the Mountain', 'the Riverborn', 'the Seafarer',
-    'the Deepdelver', 'the Pathfinder', 'the Farstrider',
-    'the Faithful', 'the Heretic', 'the Prophet',
-    'the Warden', 'the Marshal', 'the Champion',
-    'the Reckless', 'the Patient', 'the Unyielding',
-    'the Firebrand', 'the Coldhearted', 'the Iron-Willed'];
+            const titles = ['the Bold', 'the Swift', 'Iron-Arm', 'of the Vale', 'the Cruel', 'Hammer-Hand'];
             const title = titles[Math.floor(Math.random() * titles.length)];
             
             let hp = 15, ac = 12, atk = 2, dmg = 6;
