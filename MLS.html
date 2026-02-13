@@ -6172,14 +6172,22 @@ Elder: [
         const e3 = generateFighter(3);
 
         // Round 3 (Final)
-        const round3 = createEvent('tourney_r3', 'Tournament: The Final', `The Champion steps forward: <strong>${e3.name}</strong>.`, [
+        const round3 = createEvent('tourney_r3', 'Tournament: The Final', `The Champion steps forward: <strong>${e3.name}</strong>. The crowd goes silent.`, [
             { 
               text: 'Duel (Combat)', type: 'combat', 
               enemy: e3,
               success: 'VICTORY! You disarm the champion to thunderous applause!', 
               fail: 'You are crushed.', 
-              onSuccess: () => { modRep('renown', 50); state.gold += 200; addItem('Champion Helm', 'Rare', 'Proof of victory.', 150, null, 3); log("You won 200g!"); },
+              onSuccess: () => { modRep('renown', 50); state.gold += 200; addItem('Champion Helm', 'Rare', 'Proof of victory.', 150, null, 3); log("You won the Grand Prize: 200g!"); },
               onFail: () => { takeDamage(10); addTrait('Limp'); }
+            },
+            {
+                text: 'Withdraw', type: 'flavor',
+                effect: () => {
+                    state.gold += 80;
+                    modRep('renown', 20);
+                    log("You withdraw with the runner-up purse (80g). A wise choice, perhaps.");
+                }
             }
         ]);
 
@@ -6192,6 +6200,14 @@ Elder: [
               fail: 'They are too fast. (-5 HP)',
               onSuccess: () => state.eventQueue.unshift(round3),
               onFail: () => { takeDamage(5); log("Eliminated in Round 2."); }
+            },
+            {
+                text: 'Withdraw', type: 'flavor',
+                effect: () => {
+                    state.gold += 20;
+                    modRep('renown', 5);
+                    log("You withdraw with the qualifier's purse (20g).");
+                }
             }
         ]);
 
@@ -6204,6 +6220,10 @@ Elder: [
               fail: 'You are unhorsed. (-5 HP)',
               onSuccess: () => state.eventQueue.unshift(round2),
               onFail: () => { takeDamage(5); log("Eliminated in Round 1."); }
+            },
+            {
+                text: 'Withdraw', type: 'flavor',
+                effect: () => log("You step down before the first bout. The crowd boos slightly.")
             }
         ]);
 
@@ -6578,6 +6598,12 @@ Elder: [
         
         let actions = '';
         
+        // --- ARCANE UPDATE: LOCK CHECK ---
+        const isLocked = state.flags.lockedInChronicle;
+        const lockAttr = isLocked ? 'disabled' : '';
+        const lockClass = isLocked ? 'opacity-50 cursor-not-allowed' : '';
+        const lockTooltip = isLocked ? ' title="You are busy with an event"' : '';
+
         if (r.health === "Deceased") {
             actions = `
                 <div class="col-span-2 text-center p-3 border border-gray-400 bg-gray-200 rounded text-gray-600 italic">
@@ -6590,18 +6616,19 @@ Elder: [
             // Only enabled if interacted < 1 (to prevent spam) and relationship > 0 or family
             // UPDATED: Added Age Checks (Both must be 12+)
             const canAsk = (r.friendship >= 0 || r.isFamily) && !state.interactions[id] && state.age >= 12 && r.age >= 12;
-            const askClass = canAsk ? "" : "opacity-50 cursor-not-allowed";
-            const askAction = canAsk ? `askNPCForGold('${id}')` : "";
+            // Apply lock class if event is locked, otherwise check canAsk logic
+            const askClass = (canAsk && !isLocked) ? "" : "opacity-50 cursor-not-allowed";
+            const askAction = (canAsk && !isLocked) ? `askNPCForGold('${id}')` : "";
 
             actions = `
-                <button onclick="startInteraction('${id}')" class="col-span-2 choice-btn text-lg justify-center bg-amber-900 border-amber-950 text-[#f4e4bc] hover:bg-amber-800 mb-2">
+                <button onclick="startInteraction('${id}')" ${lockAttr} class="col-span-2 choice-btn text-lg justify-center bg-amber-900 border-amber-950 text-[#f4e4bc] hover:bg-amber-800 mb-2 ${lockClass}" ${lockTooltip}>
                     ⚔️ Approach
                 </button>
-                <button onclick="interact('${id}', 'gift')" class="choice-btn text-xs justify-center">🎁 Gift (5g)</button>
-                <button onclick="${askAction}" class="choice-btn text-xs justify-center ${askClass}">💰 Ask for Coin</button>
+                <button onclick="interact('${id}', 'gift')" ${lockAttr} class="choice-btn text-xs justify-center ${lockClass}" ${lockTooltip}>🎁 Gift (5g)</button>
+                <button onclick="${askAction}" ${lockAttr} class="choice-btn text-xs justify-center ${askClass}">💰 Ask for Coin</button>
             `;
         } else {
-            actions = `<button onclick="interact('${id}', 'letter')" class="col-span-2 choice-btn text-sm justify-center">🕊️ Send Letter (1g)</button>`;
+            actions = `<button onclick="interact('${id}', 'letter')" ${lockAttr} class="col-span-2 choice-btn text-sm justify-center ${lockClass}" ${lockTooltip}>🕊️ Send Letter (1g)</button>`;
         }
 
         const hpDisplay = r.health === "Deceased" ? "Deceased" : `${r.hp}/${r.maxHp}`;
@@ -8161,19 +8188,21 @@ Elder: [
             nextTurn();
         } else if (choice.type === 'combat') {
             // INTEGRATION: Combat System
+            // ARCANE FIX: Removed double nextTurn() calls. CombatEngine.endCombat calls nextTurn(), 
+            // so calling it here caused the next event in the queue (e.g. Round 2) to be skipped/overwritten.
             CombatEngine.start(
                 choice.enemy, 
                 () => { // On Victory
                     if(choice.success) log(choice.success);
                     if(choice.onSuccess) choice.onSuccess();
                     updateUI();
-                    nextTurn(); 
+                    // nextTurn(); REMOVED
                 },
                 () => { // On Defeat/Flee
                     if(choice.fail) log(choice.fail);
                     if(choice.onFail) choice.onFail();
                     updateUI();
-                    nextTurn();
+                    // nextTurn(); REMOVED
                 }
             );
         } else if (choice.type === 'check') {
