@@ -523,10 +523,31 @@
 
         /* Inventory Styling (Card Based) */
         .inventory-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 10px;
+            display: block; /* UPDATED: Block layout to allow flow around float */
             padding: 4px;
+        }
+
+        .inventory-card {
+            background: rgba(255,255,255,0.4);
+            border: 2px solid var(--leather);
+            border-radius: 6px;
+            padding: 8px;
+            display: inline-flex; /* UPDATED: Inline for flow */
+            flex-direction: column;
+            justify-content: space-between;
+            width: 145px; /* Fixed width for consistency */
+            margin: 5px; /* Spacing */
+            vertical-align: top;
+            min-height: 110px;
+            transition: transform 0.2s, background 0.2s;
+            position: relative;
+        }
+
+        .inventory-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255,255,255,0.6);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 10;
         }
 
         .inventory-card {
@@ -1944,9 +1965,9 @@
             const title = gender === 'Male' ? 'Sir' : 'Dame';
             
             // Create the Knight NPC
-            // Rank depends on context: House -> Sworn Sword, Independent -> Knight
+            // Rank depends on context: House -> Sworn Knight, Independent -> Knight
             const isHouse = state.socialClass === 'House' && state.house;
-            const rank = isHouse ? "Sworn Sword" : title;
+            const rank = isHouse ? "Sworn Knight" : title;
             
             const knight = addRelationship(name, "Mentor", 50, gender, "Noble", state.location, false, false, 28 + Math.floor(Math.random() * 25));
             knight.occupation = "Knight"; 
@@ -1996,7 +2017,7 @@
 
         // Find potential masters in the House
         const knights = state.relationships.filter(r => 
-            (r.rank.includes('Sir') || r.rank.includes('Dame') || r.rank === 'Sworn Sword' || (r.occupation && r.occupation.includes('Knight'))) &&
+            (r.rank.includes('Sir') || r.rank.includes('Dame') || r.rank === 'Sworn Knight' || (r.occupation && r.occupation.includes('Knight'))) &&
             r.id !== 'PLAYER' &&
             r.health !== 'Deceased' &&
             state.house.members.some(m => m.id === r.id)
@@ -4341,8 +4362,8 @@ Elder: [
         
         addHouseMember(state.name, state.gender, rank, state.location, "PLAYER");
         
-        const sw = addRelationship(getRandomName('Male'), "Sworn Sword", 100, "Male", "Knight", state.location);
-        addHouseMember(sw.name, sw.gender, "Sworn Sword", sw.locationIndex, sw.id);
+        const sw = addRelationship(getRandomName('Male'), "Sworn Knight", 100, "Male", "Knight", state.location);
+        addHouseMember(sw.name, sw.gender, "Sworn Knight", sw.locationIndex, sw.id);
     }
     
     function ennoblePlayer() {
@@ -4540,7 +4561,7 @@ Elder: [
         if (state.inventory.length === 0) { 
             invHtml = `<p class="italic opacity-50 text-center mt-4">Your satchel is empty.</p>`; 
         } else {
-            invHtml = `<h4 class="font-bold text-sm mb-2 border-b border-black/10">Acquired Items</h4><div class="inventory-grid">` + state.inventory.map((item, idx) => {
+            invHtml = `<h4 class="font-bold text-sm mb-2 border-b border-black/10 clear-both">Acquired Items</h4><div class="inventory-grid">` + state.inventory.map((item, idx) => {
                 const canUse = item.effect && (item.effect.hp || item.effect.sp || item.effect.trait);
                 const equipSlot = getEquipSlot(item.name);
                 
@@ -4573,16 +4594,19 @@ Elder: [
             }).join('') + `</div>`;
         }
 
+        // UPDATED: Float layout for "Flow Around" effect + Scroll Fix
         list.innerHTML = `
-        <div class="flex flex-col md:flex-row gap-4 items-start h-full">
-            <div class="w-full md:w-auto flex-shrink-0 bg-black/5 p-4 rounded border border-[#5d4037]/20 flex flex-col items-center">
+        <div class="h-full overflow-y-auto pr-2 scrollbar-thin">
+            <!-- Equipped Panel (Floated) -->
+            <div class="w-full md:w-auto float-none md:float-left mr-0 md:mr-4 mb-4 bg-black/5 p-4 rounded border border-[#5d4037]/20 flex flex-col items-center">
                 <h3 class="font-bold text-center mb-2 text-[#5d4037] uppercase text-xs tracking-widest">Equipped</h3>
                 ${equipHtml}
             </div>
-            <div class="flex-grow w-full overflow-y-auto pr-2">
-                ${overviewHtml}
-                ${invHtml}
-            </div>
+            
+            <!-- Content wrapping around -->
+            ${overviewHtml}
+            ${invHtml}
+            <div style="clear:both;"></div>
         </div>`;
     }
 
@@ -7176,8 +7200,8 @@ Elder: [
         }
 
         // ARCANE UPDATE: Non-House Knight Liege Logic
-        if (!liegeDisplay && (r.occupation.includes('Knight') || r.rank === 'Sworn Sword')) {
-            if (r.rank === 'Sworn Sword') {
+        if (!liegeDisplay && (r.occupation.includes('Knight') || r.rank === 'Sworn Knight')) {
+            if (r.rank === 'Sworn Knight') {
                 liegeDisplay = `<p><strong>Liege:</strong> <span class="text-royal font-bold">You</span></p>`;
             } else {
                 liegeDisplay = `<p><strong>Liege:</strong> <span class="text-royal font-bold">The Realm</span></p>`;
@@ -7662,7 +7686,7 @@ Elder: [
             `You have served ${masterName} faithfully as a Squire. The night of your vigil has passed, and the sun rises on a new day. Your master draws their sword. "Kneel, Squire. Rise, Knight."<br><br>How will you serve?`,
             [
                 {
-                    text: 'Sworn Sword (Stipend, Locked Location)',
+                    text: 'Sworn Knight (Stipend, Locked Location)',
                     type: 'flavor',
                     effect: () => {
                         state.occupation.rankIndex = 2; // Sworn Knight
@@ -8222,6 +8246,56 @@ Elder: [
         }
     }
 
+    // --- NEW: RECRUIT KNIGHT FUNCTION ---
+    function recruitSwornKnight(holdingIndex) {
+        if(state.health <= 0) return;
+        
+        // Safety check
+        if (!state.house || !state.house.holdings[holdingIndex]) return;
+        
+        const h = state.house.holdings[holdingIndex];
+        const cost = 50; // Cost to recruit and equip
+
+        if (state.house.treasury >= cost) {
+            state.house.treasury -= cost;
+            
+            // Generate Knight Details
+            const gender = Math.random() > 0.5 ? 'Male' : 'Female';
+            const name = getRandomName(gender);
+            
+            // Create the NPC
+            const knight = addRelationship(name, "Sworn Knight", 60, gender, "Knight", h.locationIndex);
+            
+            // Assign Specific Properties
+            knight.assignedHolding = holdingIndex; // Link to specific holding index
+            knight.occupation = "Sworn Knight";
+            knight.rank = "Sworn Knight";
+            
+            // Equip the Knight
+            knight.inventory.push({ 
+                name: 'House Mail', 
+                rarity: 'Uncommon', 
+                desc: `Chainmail bearing the sigil of ${state.house.name}.`, 
+                value: 50, 
+                dr: 4 
+            });
+            knight.inventory.push({ 
+                ...WEAPON_LIBRARY.longsword, 
+                weapon: WEAPON_LIBRARY.longsword,
+                value: 25 
+            });
+
+            // Add to House Member List
+            addHouseMember(name, gender, "Sworn Knight", h.locationIndex, knight.id);
+
+            log(`<strong style="color:var(--royal)">Recruitment:</strong> You recruited <strong>${getNPCName(knight)}</strong> to guard <strong>${h.name}</strong>. (-${cost}g)`);
+            AudioEngine.pulse();
+            updateUI();
+        } else {
+            showMsg("Treasury Low", `Recruiting and equipping a Sworn Knight costs ${cost}g from the House Treasury.`);
+        }
+    }
+
     function setHouseTrait(traitName) {
         if(state.health <= 0) return;
         state.house.trait = traitName;
@@ -8278,7 +8352,7 @@ Elder: [
         let successionHtml = '';
 
         if(state.socialClass === 'House') {
-            const isLord = state.class.includes("Lord") || state.class.includes("Lady");
+            const isLord = state.class.includes("Lord") || state.class.includes("Lady") || state.class.includes("King") || state.class.includes("Queen") || state.class.includes("Duke") || state.class.includes("Duchess");
             
             // BUILD HOLDINGS LIST
             const holdingsList = (h.holdings || []).map((prop, idx) => {
@@ -8310,12 +8384,13 @@ Elder: [
 
                 // ARCANE UPDATE: IDENTIFY HOUSE KNIGHTS STATIONED HERE
                 // Find NPCs who are: 1) At this location, 2) In the House, 3) Have a Knightly rank/job, 4) Alive
+                // ENHANCED FILTER: Respects 'assignedHolding' index if present, falls back to location if undefined
                 const stationedKnights = state.relationships.filter(r => 
-                    r.locationIndex === prop.locationIndex && 
                     r.health !== 'Deceased' &&
                     state.house.members.some(m => m.id === r.id) &&
-                    (r.rank === 'Sworn Sword' || r.rank.includes('Sir') || r.rank.includes('Dame') || (r.occupation && r.occupation.includes('Knight'))) &&
-                    r.id !== 'PLAYER'
+                    (r.rank === 'Sworn Knight' || r.rank.includes('Sir') || r.rank.includes('Dame') || (r.occupation && r.occupation.includes('Knight'))) &&
+                    r.id !== 'PLAYER' &&
+                    (r.assignedHolding === idx || (r.assignedHolding === undefined && r.locationIndex === prop.locationIndex))
                 );
 
                 let knightsHtml = '';
@@ -8354,7 +8429,10 @@ Elder: [
                     const disabledAttr = isUpgraded ? "disabled" : "";
 
                     lordControls = `
-                    <div class="mt-2 pt-2 border-t border-black/10 flex justify-end">
+                    <div class="mt-2 pt-2 border-t border-black/10 flex justify-end gap-2">
+                        <button onclick="recruitSwornKnight(${idx})" class="choice-btn text-[10px] px-2 py-1 bg-blue-900 border-blue-950 text-white hover:bg-blue-800">
+                            Recruit Knight (50g)
+                        </button>
                         <button onclick="upgradeHolding(${idx})" ${disabledAttr} class="choice-btn text-[10px] px-2 py-1 ${btnClass}">
                             ${btnText}
                         </button>
@@ -9156,7 +9234,8 @@ Elder: [
             let displayName = state.name;
             
             // Knightly Honorifics (System Update)
-            if (state.occupation && state.occupation.id === 'knight' && state.occupation.rankIndex >= 2) {
+            // UPDATED: Now applies to Hedge Knights (Rank 1) and above
+            if (state.occupation && state.occupation.id === 'knight' && state.occupation.rankIndex >= 1) {
                 const prefix = state.gender === 'Female' ? "Dame " : "Ser ";
                 displayName = prefix + displayName;
             }
@@ -9167,7 +9246,8 @@ Elder: [
             }
 
             // 2. Append Honorific (Default: Occupation Title)
-            if (state.primaryHonorific) {
+            // UPDATED: Filters out redundant knight titles from suffixes
+            if (state.primaryHonorific && !['Sir', 'Dame', 'Ser'].includes(state.primaryHonorific)) {
                 displayName += ` the ${state.primaryHonorific}`;
             }
 
