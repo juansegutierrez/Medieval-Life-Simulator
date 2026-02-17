@@ -6894,13 +6894,11 @@ Elder: [
         }
 
         // Append House Name (If member of player's house)
-        if (state.house && state.house.members && state.house.members.some(m => m.id === r.id)) {
+        // ARCANE FIX: Ensure we don't double add if name already contains it
+        if (state.house && state.house.members && state.house.members.some(m => m.id === r.id) && !n.includes(state.house.name)) {
             n += ` ${state.house.name}`;
         }
-        // Append Occupational Honorific
-        if (r.occupation) {
-            n += ` the ${r.occupation}`;
-        }
+        // Append Occupational Honorific (Optional, kept simple for names)
         return prefix + n;
     }
 
@@ -6950,11 +6948,38 @@ Elder: [
                 // ARCANE UPDATE: Determine Liege for House Members
                 if (ruler) {
                     if (ruler.id === r.id) {
-                        // They are the liege
-                        liegeDisplay = `<span class="text-xs opacity-70 italic">Head of House</span>`;
+                        // They are the Head of House. Determine External Liege.
+                        const houseName = state.house.name;
+                        
+                        if (houseName === 'Chep') {
+                            liegeDisplay = `<span class="text-xs opacity-70 italic">The Crown (No Liege)</span>`;
+                        } 
+                        else if (GREATER_HOUSES_INFO[houseName]) {
+                            // Greater House Duke -> Liege is King
+                            liegeDisplay = `<p><strong>Liege:</strong> <span class="text-royal font-bold">The King (House Chep)</span></p>`;
+                        } 
+                        else {
+                            // Lesser House -> Liege is City Ruler
+                            const currentCity = CITIES[r.locationIndex];
+                            let lordTitle = currentCity.ruler; // e.g. "Greater House Valdoria"
+                            
+                            if (lordTitle.includes("Chep")) {
+                                lordTitle = "The King (House Chep)";
+                            } else {
+                                // Extract House Name for Duke title
+                                const rulingHouse = lordTitle.replace("Greater House ", "").replace("Royal House ", "");
+                                lordTitle = `Duke of ${rulingHouse}`;
+                            }
+                            liegeDisplay = `<p><strong>Liege:</strong> <span class="text-royal font-bold">${lordTitle}</span></p>`;
+                        }
                     } else {
                         // They serve the ruler
-                        const liegeName = ruler.id === 'PLAYER' ? 'You' : ruler.name;
+                        // ARCANE UPDATE: Use getNPCName for full title display
+                        let liegeName = 'You';
+                        if (ruler.id !== 'PLAYER') {
+                            const rulerRel = state.relationships.find(x => x.id === ruler.id);
+                            liegeName = rulerRel ? getNPCName(rulerRel) : ruler.name;
+                        }
                         liegeDisplay = `<p><strong>Liege:</strong> <span class="text-royal font-bold">${liegeName}</span></p>`;
                     }
                 } else {
@@ -7134,8 +7159,8 @@ Elder: [
                     ${deathInfo}
                     <p><strong>Relation:</strong> ${r.relation}</p>
                     <p><strong>Class:</strong> ${socialClassDisplay}</p>
-                    <p><strong>Claim:</strong> ${successionDisplay}</p>
                     ${liegeDisplay}
+                    <p><strong>Claim:</strong> ${successionDisplay}</p>
                 </div>
             </div>
 
@@ -8098,6 +8123,31 @@ Elder: [
                 }
                 commoners = pop - (soldiers + servants + knights);
 
+                // ARCANE UPDATE: IDENTIFY HOUSE KNIGHTS STATIONED HERE
+                // Find NPCs who are: 1) At this location, 2) In the House, 3) Have a Knightly rank/job, 4) Alive
+                const stationedKnights = state.relationships.filter(r => 
+                    r.locationIndex === prop.locationIndex && 
+                    r.health !== 'Deceased' &&
+                    state.house.members.some(m => m.id === r.id) &&
+                    (r.rank === 'Sworn Sword' || r.rank.includes('Sir') || r.rank.includes('Dame') || (r.occupation && r.occupation.includes('Knight'))) &&
+                    r.id !== 'PLAYER'
+                );
+
+                let knightsHtml = '';
+                if (stationedKnights.length > 0) {
+                    knightsHtml = `
+                    <div class="mt-2 pt-2 border-t border-black/5">
+                        <div class="text-[9px] uppercase font-bold opacity-60 mb-1">Stationed Swords</div>
+                        <div class="flex flex-wrap gap-1">
+                            ${stationedKnights.map(k => `
+                                <button onclick="openNPC('${k.id}')" class="choice-btn text-[10px] px-2 py-1 bg-blue-900/10 border-blue-900/30 text-blue-900 hover:bg-blue-900 hover:text-white transition-colors flex items-center gap-1">
+                                    <span>🛡️</span> <span>${k.name}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>`;
+                }
+
                 const demogHtml = `
                 <div class="mt-2 pt-2 border-t border-black/10 text-[10px] grid grid-cols-4 gap-1 text-center opacity-80">
                     <div>🌾 Common Folk: ${commoners.toLocaleString()}</div>
@@ -8141,6 +8191,7 @@ Elder: [
                         <div class="flex items-center gap-1 justify-end"><span class="text-lg">🛡️</span> <span>${prop.defense} Def</span></div>
                     </div>
                     ${demogHtml}
+                    ${knightsHtml}
                     ${lordControls}
                 </div>`;
             }).join('');
@@ -8940,7 +8991,10 @@ Elder: [
                 let masterName = "The Order";
                 if (state.knighthood.masterId) {
                     const m = state.relationships.find(r => r.id === state.knighthood.masterId);
-                    if(m) masterName = m.name;
+                    if(m) {
+                        // ARCANE FIX: Use getNPCName for Liege display
+                        masterName = getNPCName(m);
+                    }
                 } else if (state.house) {
                     masterName = `House ${state.house.name}`;
                 }
