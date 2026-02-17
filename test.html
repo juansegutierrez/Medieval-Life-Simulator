@@ -1630,6 +1630,7 @@
         jobHistory: {},
         rejectedJobs: [], // Stores rejected job IDs for the current year
         traits: [], // ACQUIRED TRAITS
+        combatSkills: [], // Learned Combat Abilities
         inventory: [],
         equipped: { head: null, armor: null, mainHand: null, offHand: null, accessory: null }, // NEW: Equipment Slots
         market: [], // NEW: Stores current year's shops
@@ -1934,36 +1935,115 @@
     }
 
     function becomeSquire(masterId) {
+        // --- ARCANE UPDATE: MANDATORY KNIGHT GENERATION ---
+        // One cannot learn the arts of chivalry from thin air. 
+        // If no master is specified, the Fates (or the House) provide one.
+        if (!masterId) {
+            const gender = Math.random() > 0.5 ? 'Male' : 'Female';
+            const name = getRandomName(gender);
+            const title = gender === 'Male' ? 'Sir' : 'Dame';
+            
+            // Create the Knight NPC
+            // Rank depends on context: House -> Sworn Sword, Independent -> Knight
+            const isHouse = state.socialClass === 'House' && state.house;
+            const rank = isHouse ? "Sworn Sword" : title;
+            
+            const knight = addRelationship(name, "Mentor", 50, gender, "Noble", state.location, false, false, 28 + Math.floor(Math.random() * 25));
+            knight.occupation = "Knight"; 
+            knight.rank = rank;
+            
+            // Equip the Master
+            knight.inventory.push({ name: 'Fine Steel Sword', rarity: 'Uncommon', desc: 'A blade of quality.', value: 50 });
+            
+            if (isHouse) {
+                addHouseMember(knight.name, gender, rank, state.location, knight.id);
+                log(`<strong>House Assignment:</strong> ${state.house.name} has assigned <strong>${getNPCName(knight)}</strong> as your mentor.`);
+            } else {
+                log(`<strong>Mentorship:</strong> You have been assigned to squire for <strong>${getNPCName(knight)}</strong>.`);
+            }
+            
+            masterId = knight.id;
+        }
+
         // Set State
         state.knighthood = { rank: 'Squire', masterId: masterId, isSworn: false, stipend: 0 };
         state.occupation = { id: 'knight', rankIndex: 0, performance: 50, stress: 0, workStance: 'normal', years: 0 };
         state.flags.employed = true;
         addHonorific("Squire");
         
-        // Log
-        let masterName = "The Order";
-        if (masterId) {
-            const master = state.relationships.find(r => r.id === masterId);
-            if (master) masterName = master.name;
-        } else if (state.house) {
-            masterName = `House ${state.house.name}`;
-        }
+        // Log check
+        const master = state.relationships.find(r => r.id === masterId);
+        const masterName = master ? getNPCName(master) : "a Mystery Knight";
         
-        log(`<strong>Career:</strong> You are now a Squire to ${masterName}.`);
+        log(`<strong>Career:</strong> You have taken the vows of a Squire under ${masterName}.`);
         updateUI();
     }
 
     function requestHouseSquiring() {
         if(state.health <= 0) return;
-        if(state.house.members.length < 2) { // Just player
-             showMsg("No Knights", "Your House has no knights to train you.");
-             return;
-        }
         
-        // Find a knight in family
-        // Simply simulate finding one
-        log(`<strong style="color:var(--royal)">HOUSE:</strong> You petitioned your family for training.`);
-        becomeSquire(null); // Null masterId implies House training
+        // Find Lord
+        let ruler = state.house.members.find(m => 
+            !m.rank.includes('Emeritus') && !m.rank.includes('Dowager') && !m.rank.includes('Mother') && !m.rank.includes('Consort') &&
+            (m.rank.includes('Lord') || m.rank.includes('Lady') || m.rank.includes('King') || m.rank.includes('Queen') || m.rank.includes('Duke') || m.rank.includes('Duchess'))
+        );
+        
+        // Fallback if no ruler found
+        if (!ruler) ruler = { name: "The Council", id: "COUNCIL" };
+
+        const rulerNPC = state.relationships.find(r => r.id === ruler.id);
+        const rulerName = rulerNPC ? rulerNPC.name : ruler.name;
+
+        // Find potential masters in the House
+        const knights = state.relationships.filter(r => 
+            (r.rank.includes('Sir') || r.rank.includes('Dame') || r.rank === 'Sworn Sword' || (r.occupation && r.occupation.includes('Knight'))) &&
+            r.id !== 'PLAYER' &&
+            r.health !== 'Deceased' &&
+            state.house.members.some(m => m.id === r.id)
+        );
+
+        let masterId = null;
+        let masterName = "a Household Knight";
+        
+        if (knights.length > 0) {
+            const m = knights[Math.floor(Math.random() * knights.length)];
+            masterId = m.id;
+            masterName = m.name;
+        }
+
+        const evt = createEvent(
+            'req_squire_house',
+            'Petition for Squiring',
+            `You approach ${rulerName} in the great hall. "I am of age," you say. "I wish to serve the House by the sword. Will you find me a master?"`,
+            [
+                {
+                    text: 'Ask Respectfully',
+                    type: 'check',
+                    stat: 'cha',
+                    dc: 10,
+                    success: `${rulerName} nods approvingly. "You shall train under ${masterName}."`,
+                    fail: `${rulerName} sighs. "We have no knights to spare for you. Report to the barracks."`,
+                    onSuccess: () => {
+                        // Pass specific ID or null (which now triggers generation of a NEW knight)
+                        becomeSquire(masterId); 
+                        if(rulerNPC) modRel(rulerNPC.id, 10);
+                    },
+                    onFail: () => {
+                        // LOGIC CHANGE: Failing to get a squire position sends you to the Guard/Garrison
+                        // A squire MUST have a knight. If no knight, you are just a soldier.
+                        joinJob('guard');
+                    }
+                },
+                {
+                    text: 'Leave',
+                    type: 'flavor',
+                    effect: () => log("You decide to wait.")
+                }
+            ]
+        );
+        
+        renderEvent(evt);
+        switchTab('log');
     }
 
     // 4. DATA: HOUSE & CITY SYSTEM
@@ -2378,7 +2458,7 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             this.turn = 'player';
             this.callbacks = { onWin, onLose };
             this.logHistory = [];
-            this.modifiers = { playerDefending: false };
+            this.modifiers = { playerDefending: false, enemyStunned: false };
 
             const pArmor = getPlayerArmor();
             
@@ -2455,6 +2535,15 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 let abilityBtn = '';
                 const mutations = state.appearance.mutations || [];
                 
+                // SKILL BUTTONS
+                let skillBtns = '';
+                if (state.combatSkills.includes('precision_strike')) {
+                    skillBtns += `<button onclick="CombatEngine.playerAction('precision_strike')" class="choice-btn justify-center bg-sky-900 text-white border-sky-950 hover:bg-sky-800 text-sm">🎯 Precision</button>`;
+                }
+                if (state.combatSkills.includes('shield_bash')) {
+                    skillBtns += `<button onclick="CombatEngine.playerAction('shield_bash')" class="choice-btn justify-center bg-stone-700 text-white border-stone-900 hover:bg-stone-600 text-sm">🛡️ Bash</button>`;
+                }
+
                 // PSYCHIC ABILITY CHECK
                 if (mutations.some(m => m.combatAbility === 'psychic')) {
                     abilityBtn += `<button onclick="CombatEngine.playerAction('psychic')" class="choice-btn justify-center bg-purple-900 text-white border-purple-950 hover:bg-purple-800 col-span-2 mt-1">🔮 Psychic Blast</button>`;
@@ -2468,7 +2557,8 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 controls.innerHTML = `
                     <button onclick="CombatEngine.playerAction('attack')" class="choice-btn justify-center bg-red-900 text-white border-red-950 hover:bg-red-800 text-lg">⚔️ Attack</button>
                     <button onclick="CombatEngine.playerAction('defend')" class="choice-btn justify-center bg-blue-900 text-white border-blue-950 hover:bg-blue-800">🛡️ Defend</button>
-                    <button onclick="CombatEngine.playerAction('item')" class="choice-btn justify-center">🎒 Item (Potion)</button>
+                    ${skillBtns}
+                    <button onclick="CombatEngine.playerAction('item')" class="choice-btn justify-center">🎒 Item</button>
                     <button onclick="CombatEngine.playerAction('flee')" class="choice-btn justify-center opacity-80 hover:opacity-100">🏃 Flee</button>
                     ${abilityBtn}
                 `;
@@ -2533,6 +2623,26 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             } else if (action === 'defend') {
                 this.modifiers.playerDefending = true;
                 this.log(`<strong>${this.player.name}</strong> braces for impact! (+2 AC)`, 'normal');
+            } else if (action === 'precision_strike') {
+                const oldAtk = this.player.atk;
+                this.player.atk += 5;
+                this.log(`<strong>${this.player.name}</strong> focuses! (+5 Hit)`);
+                await this.performAttack(this.player, this.enemy, true);
+                this.player.atk = oldAtk;
+            } else if (action === 'shield_bash') {
+                const d20 = Math.floor(Math.random() * 20) + 1;
+                const total = d20 + this.player.atk;
+                this.log(`<strong>${this.player.name}</strong> attempts Shield Bash!`);
+                if (total >= this.enemy.ac) {
+                    const dmg = Math.max(1, 2 + Math.floor(getModifier(state.stats.str)/2));
+                    this.enemy.hp -= dmg;
+                    this.modifiers.enemyStunned = true;
+                    this.log(`<strong>CRASH!</strong> Staggered the enemy! (${dmg} DMG)`, 'hit');
+                } else {
+                    this.log(`Shield Bash missed.`, 'miss');
+                }
+                this.render();
+                if (this.enemy.hp <= 0) { this.triggerPhase('victory'); return; }
             } else if (action === 'psychic') {
                 // Psychic Blast Logic
                 const wisMod = getModifier(state.stats.wis);
@@ -2605,7 +2715,13 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
 
         enemyTurn: async function() {
             if (!this.active) return;
-            await this.performAttack(this.enemy, this.player, false);
+            
+            if (this.modifiers.enemyStunned) {
+                this.log(`<strong>${this.enemy.name}</strong> is reeling and cannot attack!`, 'crit');
+                this.modifiers.enemyStunned = false;
+            } else {
+                await this.performAttack(this.enemy, this.player, false);
+            }
 
             // Phase trigger handled inside performAttack
             if (this.player.hp > 0 && this.active) {
@@ -5963,15 +6079,6 @@ Elder: [
                 text: `Your ${rulerNPC.relation} ${rulerNPC.name} summons you to the solar. The hearth fire crackles, but their gaze is cold.<br><br>"You are sixteen now, ${state.name}. It is time you contributed to the House's legacy. I expect you to take up a vocation befitting your station. Do not idle away your bloodline."`,
                 choices: [
                     { 
-                        text: 'Seek Knighthood', 
-                        type: 'flavor', 
-                        effect: () => { 
-                            modRel(rulerNPC.id, 10);
-                            log("You bowed and promised to pursue the path of the sword.");
-                            attemptJob('knight'); 
-                        } 
-                    },
-                    { 
                         text: 'Study Diplomacy', 
                         type: 'flavor', 
                         effect: () => { 
@@ -6328,6 +6435,64 @@ Elder: [
                             }
                         }
                     }
+                }
+            }
+        });
+
+        // 5. FORCED SQUIRING (PC & NPC)
+        const potentialSquires = state.house.members.filter(m => {
+            const r = (m.id === 'PLAYER') ? { age: state.age, occupation: state.occupation, id: 'PLAYER' } : state.relationships.find(x => x.id === m.id);
+            if (!r || r.health === 'Deceased') return false;
+            // Age 8-14, Unemployed
+            return r.age >= 8 && r.age <= 14 && !r.occupation;
+        });
+
+        potentialSquires.forEach(m => {
+            if (Math.random() > 0.3) return; // 30% chance per year
+
+            const isPlayer = m.id === 'PLAYER';
+            const rulerIsPlayer = (ruler.id === 'PLAYER');
+
+            if (rulerIsPlayer) {
+                // Player is Lord: NPC asks Player
+                if (!isPlayer) {
+                    const npc = state.relationships.find(r => r.id === m.id);
+                    state.eventQueue.push({
+                        id: `squire_req_${m.id}`,
+                        title: 'Petition for Training',
+                        text: `Your kinsman <strong>${npc.name}</strong> (${npc.age}) approaches you. "My Lord, I wish to serve the House. Please assign me a knight."`,
+                        choices: [
+                            { 
+                                text: 'Assign Master', 
+                                type: 'flavor', 
+                                effect: () => { 
+                                    npc.occupation = "Squire"; 
+                                    modRel(m.id, 15);
+                                    log(`You assigned ${npc.name} to squire for a household knight.`);
+                                } 
+                            },
+                            { text: 'Refuse', type: 'flavor', effect: () => { modRel(m.id, -10); log(`You denied ${npc.name}'s request.`); } }
+                        ]
+                    });
+                }
+            } else {
+                // AI Lord
+                if (isPlayer) {
+                    // Lord forces Player
+                    state.eventQueue.push({
+                        id: 'force_squire_pc',
+                        title: 'The Lord\'s Command',
+                        text: `${rulerNPC.name} summons you. "You are idling away your potential. You shall squire immediately."`,
+                        choices: [
+                            { text: 'Accept', type: 'flavor', effect: () => { becomeSquire(null); modRel(rulerNPC.id, 5); } },
+                            { text: 'Refuse', type: 'flavor', effect: () => { modRel(rulerNPC.id, -15); modRep('infamy', 2); log("You defied the Lord."); } }
+                        ]
+                    });
+                } else {
+                    // Lord forces NPC
+                    const npc = state.relationships.find(r => r.id === m.id);
+                    npc.occupation = "Squire";
+                    if(npc.isKnown) log(`<span style="color:var(--ink)">House:</span> ${rulerNPC.name} ordered ${npc.name} to begin squiring.`);
                 }
             }
         });
@@ -7424,6 +7589,16 @@ Elder: [
                 else state.stats.dex++;
                 log("Training as a Squire has improved your physique. (+1 STR/DEX)");
 
+                // Unlock Skills
+                if (occ.years === 1 && !state.combatSkills.includes('precision_strike')) {
+                    state.combatSkills.push('precision_strike');
+                    log(`<strong style="color:var(--royal)">TRAINING:</strong> You have mastered <strong>Precision Strike</strong>.`);
+                }
+                if (occ.years === 3 && !state.combatSkills.includes('shield_bash')) {
+                    state.combatSkills.push('shield_bash');
+                    log(`<strong style="color:var(--royal)">TRAINING:</strong> You have mastered <strong>Shield Bash</strong>.`);
+                }
+
                 // Knighting Trigger (Age 21 OR 5 Years Service)
                 if (state.age >= 21 || occ.years >= 5) {
                     triggerKnightingCeremony();
@@ -7526,7 +7701,17 @@ Elder: [
             const k = state.knighthood;
             const occ = state.occupation;
             const master = state.relationships.find(r => r.id === k.masterId);
-            const masterName = master ? master.name : (state.house ? `House ${state.house.name}` : "The Order");
+            
+            // LOGIC UPDATE: Make Master Clickable if NPC
+            let masterDisplay = state.house ? `House ${state.house.name}` : "The Order";
+            if (master) {
+                masterDisplay = `<button onclick="openNPC('${master.id}')" class="text-blue-900 font-bold underline hover:text-blue-700 transition-colors text-left">${master.name}</button>`;
+            } else if (k.masterId === 'COUNCIL') {
+                masterDisplay = "The Council";
+            } else if (!state.house && !master) {
+                // Fallback for independent knights
+                masterDisplay = "The Realm";
+            }
             
             // Determine Status Badge
             let statusBadge = '';
@@ -7545,9 +7730,9 @@ Elder: [
                     </div>
                     
                     <div class="bg-white/50 p-2 rounded mb-3 text-sm border border-black/5">
-                        <div class="flex justify-between mb-1">
+                        <div class="flex justify-between items-center mb-1">
                             <span class="opacity-70">Allegiance:</span>
-                            <span class="font-bold">${masterName}</span>
+                            ${masterDisplay}
                         </div>
                         <div class="flex justify-between mb-1">
                             <span class="opacity-70">Stipend:</span>
@@ -8137,7 +8322,7 @@ Elder: [
                 if (stationedKnights.length > 0) {
                     knightsHtml = `
                     <div class="mt-2 pt-2 border-t border-black/5">
-                        <div class="text-[9px] uppercase font-bold opacity-60 mb-1">Stationed Swords</div>
+                        <div class="text-[9px] uppercase font-bold opacity-60 mb-1">Stationed Swords (${stationedKnights.length})</div>
                         <div class="flex flex-wrap gap-1">
                             ${stationedKnights.map(k => `
                                 <button onclick="openNPC('${k.id}')" class="choice-btn text-[10px] px-2 py-1 bg-blue-900/10 border-blue-900/30 text-blue-900 hover:bg-blue-900 hover:text-white transition-colors flex items-center gap-1">
@@ -8146,6 +8331,8 @@ Elder: [
                             `).join('')}
                         </div>
                     </div>`;
+                } else {
+                    knightsHtml = `<div class="mt-2 pt-2 border-t border-black/5 text-[10px] italic opacity-50">No knights currently stationed here.</div>`;
                 }
 
                 const demogHtml = `
@@ -8174,26 +8361,30 @@ Elder: [
                     </div>`;
                 }
 
+                // CHANGED: Use <details> for clickable/expandable interaction
                 return `
-                <div class="bg-white/40 p-3 rounded border border-leather/30 text-left mb-2">
-                    <div class="flex justify-between items-start">
+                <details class="bg-white/40 rounded border border-leather/30 text-left mb-2 group">
+                    <summary class="p-3 cursor-pointer list-none flex justify-between items-center hover:bg-white/60 transition-colors select-none">
                         <div>
-                            <div class="font-bold text-amber-900">${prop.name}</div>
-                            <div class="text-xs italic opacity-70">${prop.desc}</div>
+                            <div class="font-bold text-amber-900 group-open:text-amber-950">${prop.name}</div>
                             <div class="text-xs font-bold text-amber-800 mt-1">📍 ${locName}</div> 
                         </div>
                         <div class="text-right">
                             <div class="text-xs font-bold bg-amber-100 px-1 rounded border border-amber-200">Lvl ${prop.level} ${prop.type}</div>
+                            <div class="text-[10px] opacity-50 mt-1 group-open:hidden">▼ Details</div>
                         </div>
+                    </summary>
+                    <div class="px-3 pb-3 border-t border-black/5 bg-white/20">
+                        <div class="text-xs italic opacity-70 mb-2 mt-2">${prop.desc}</div>
+                        <div class="mt-2 grid grid-cols-2 text-xs gap-2">
+                            <div class="flex items-center gap-1" title="Population / Capacity"><span class="text-lg">👥</span> <span>${prop.population.toLocaleString()} / ${prop.capacity.toLocaleString()}</span></div>
+                            <div class="flex items-center gap-1 justify-end"><span class="text-lg">🛡️</span> <span>${prop.defense} Def</span></div>
+                        </div>
+                        ${demogHtml}
+                        ${knightsHtml}
+                        ${lordControls}
                     </div>
-                    <div class="mt-2 grid grid-cols-2 text-xs gap-2">
-                        <div class="flex items-center gap-1" title="Population / Capacity"><span class="text-lg">👥</span> <span>${prop.population.toLocaleString()} / ${prop.capacity.toLocaleString()}</span></div>
-                        <div class="flex items-center gap-1 justify-end"><span class="text-lg">🛡️</span> <span>${prop.defense} Def</span></div>
-                    </div>
-                    ${demogHtml}
-                    ${knightsHtml}
-                    ${lordControls}
-                </div>`;
+                </details>`;
             }).join('');
 
             // LORD PURCHASE CONTROLS
