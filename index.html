@@ -809,8 +809,6 @@
         </div>
     </div>
 
-    <!-- REMOVED: Fate Lock Modal -->
-
     <!-- Shop Modal -->
     <div id="shop-modal" class="modal-overlay hidden">
         <div class="modal-box text-left relative">
@@ -1019,7 +1017,7 @@
                     <div>
                         <h3 class="font-bold mb-2">Vitals</h3>
                         <p><strong>Health:</strong> <span id="hp-display" class="text-green-800 font-bold">10 / 10</span></p>
-                        <p><strong>Armor:</strong> <span id="armor-display" class="text-blue-900 font-bold">0</span></p>
+                        <p><strong>Armor Class:</strong> <span id="armor-display" class="text-blue-900 font-bold">10</span></p>
                         <p><strong>Sanity:</strong> <span id="sp-display" class="text-purple-800 font-bold">8 / 8</span></p>
                         <p><strong>Sex:</strong> <span id="sex-display">Unknown</span></p>
                         <p><strong>Gold:</strong> <span id="gold-display">0</span> GP</p>
@@ -1082,10 +1080,10 @@
             </div>
             
              <!-- Tab: Inventory -->
-             <div id="inv-tab" class="tab-content hidden p-6 overflow-y-auto">
-                <h2 class="text-3xl font-medieval mb-4 border-b border-black/20 pb-2">Inventory</h2>
-                <div id="inventory-list" class="inventory-grid">
-                    <p class="italic opacity-50 col-span-full text-center">Your satchel is empty.</p>
+             <div id="inv-tab" class="tab-content hidden p-6 flex flex-col h-full overflow-hidden">
+                <h2 class="text-3xl font-medieval mb-4 border-b border-black/20 pb-2 flex-shrink-0">Inventory</h2>
+                <div id="inventory-list" class="flex-grow overflow-hidden">
+                    <p class="italic opacity-50 text-center mt-10">Your satchel is empty.</p>
                 </div>
             </div>
 
@@ -1169,7 +1167,7 @@
     };
 
     const MUTATION_POOL = [
-    // ===== COMMON (cosmetic, rumor-tier) =====
+    // ===== COMMON (Cosmetic, rumor-tier) =====
     { name: "Birthmark", rarity: "Common", desc: "A distinct mark on the skin." },
     { name: "Freckles", rarity: "Common", desc: "Sun-kissed spots across the face." },
     { name: "Cleft Chin", rarity: "Common", desc: "A prominent, noble jawline." },
@@ -1180,34 +1178,45 @@
     { name: "Unusual Voice", rarity: "Common", desc: "A voice that sounds rough, airy, or oddly musical." },
     { name: "Asymmetrical Face", rarity: "Common", desc: "Subtle imbalance in facial features." },
 
-    // ===== UNCOMMON (noticeable, whispered about) =====
+    // ===== UNCOMMON (Noticeable, Minor Stats) =====
     { name: "Heterochromia", rarity: "Uncommon", desc: "Eyes of two different colors. (+1 CHA)", stats: { cha: 1 } },
-    { name: "Albinism", rarity: "Uncommon", desc: "Complete lack of pigment." },
-    { name: "Vitiligo", rarity: "Uncommon", desc: "Patches of unpigmented skin." },
+    { name: "Albinism", rarity: "Uncommon", desc: "Complete lack of pigment. (-1 STR, +2 INT)", stats: { str: -1, int: 2 } },
+    { name: "Vitiligo", rarity: "Uncommon", desc: "Patches of unpigmented skin. (+1 CHA)", stats: { cha: 1 } },
     { name: "Sharp Teeth", rarity: "Uncommon", desc: "Slightly pointed canines. (+1 STR)", stats: { str: 1 } },
     { name: "Double Pupil", rarity: "Uncommon", desc: "Two pupils in one eye. (+1 WIS)", stats: { wis: 1 } },
-    { name: "Extended Canines", rarity: "Uncommon", desc: "Fangs just long enough to be unsettling." },
-    { name: "Unusual Ear Shape", rarity: "Uncommon", desc: "Ears taper, curl, or angle unnaturally." },
+    { name: "Extended Canines", rarity: "Uncommon", desc: "Fangs just long enough to be unsettling. (+1 CHA)", stats: { cha: 1 } },
+    { name: "Unusual Ear Shape", rarity: "Uncommon", desc: "Ears taper, curl, or angle unnaturally. (+1 WIS)", stats: { wis: 1 } },
     { name: "Heat-Resistant Skin", rarity: "Uncommon", desc: "Skin rarely blisters or burns. (+1 CON)", stats: { con: 1 } },
+    { name: "Flexible Joints", rarity: "Uncommon", desc: "Double-jointed fingers and elbows. (+1 DEX)", stats: { dex: 1 } },
+    { name: "Resonant Voice", rarity: "Uncommon", desc: "A booming voice that commands attention. (+1 CHA)", stats: { cha: 1 } },
+    { name: "Nocturnal Eyes", rarity: "Uncommon", desc: "Eyes that reflect light in the dark. (+1 WIS)", stats: { wis: 1 } },
 
-    // ===== RARE (distinctive, earns a nickname) =====
-    { name: "Webbed Fingers", rarity: "Rare", desc: "Skin between fingers, good for swimming." },
-    { name: "Cat Eyes", rarity: "Rare", desc: "Vertical slit pupils. (+1 WIS)", stats: { wis: 1 } },
-    { name: "Forked Tongue", rarity: "Rare", desc: "A split tongue capable of precise movement." },
-    { name: "Stone Nails", rarity: "Rare", desc: "Hard, grayish nails resistant to breakage. (+1 STR)", stats: { str: 1 } },
+    // ===== RARE (Distinctive, Strong Stats) =====
+    { name: "Webbed Fingers", rarity: "Rare", desc: "Skin between fingers, good for swimming. (+2 DEX)", stats: { dex: 2 } },
+    { name: "Cat Eyes", rarity: "Rare", desc: "Vertical slit pupils. Night vision. (+2 WIS)", stats: { wis: 2 } },
+    { name: "Forked Tongue", rarity: "Rare", desc: "A split tongue capable of precise movement. (+1 CHA, +1 INT)", stats: { cha: 1, int: 1 } },
+    { name: "Stone Nails", rarity: "Rare", desc: "Hard, grayish nails resistant to breakage. (+2 STR)", stats: { str: 2 } },
     { name: "Thickened Bones", rarity: "Rare", desc: "Bones are unusually dense and heavy. (+2 CON)", stats: { con: 2 } },
-    { name: "Shadow Veins", rarity: "Rare", desc: "Dark veins visible beneath the skin." },
+    { name: "Shadow Veins", rarity: "Rare", desc: "Dark veins visible beneath the skin. (+2 INT)", stats: { int: 2 } },
+    { name: "Iron Stomach", rarity: "Rare", desc: "Can digest almost anything without sickness. (+2 CON)", stats: { con: 2 } },
+    { name: "Adrenaline Glands", rarity: "Rare", desc: "Bursts of incredible speed in danger. (+2 DEX)", stats: { dex: 2 } },
+    { name: "Eidetic Memory", rarity: "Rare", desc: "Perfect recall of visual information. (+2 INT)", stats: { int: 2 } },
 
-    // ===== EPIC (unnatural, feared or revered) =====
-    { name: "Scales", rarity: "Epic", desc: "Patches of hardened, scaled skin. (+2 AC Natural Armor)", stats: { ac: 2 } }, // Handled in armor calc
-    { name: "Bioluminescence", rarity: "Epic", desc: "Skin glows faintly in absolute darkness." },
-    { name: "Third Eye", rarity: "Epic", desc: "A dormant eye in the center of the forehead. (+2 INT)", stats: { int: 2 } },
-    { name: "Horns", rarity: "Epic", desc: "Small bony protrusions on the forehead." },
+    // ===== EPIC (Unnatural, Major Stats) =====
+    { name: "Scales", rarity: "Epic", desc: "Patches of hardened, scaled skin. (+2 AC, +1 CON)", stats: { ac: 2, con: 1 } }, 
+    { name: "Bioluminescence", rarity: "Epic", desc: "Skin glows faintly. Mesmerizing. (+3 CHA)", stats: { cha: 3 } },
+    { name: "Third Eye", rarity: "Epic", desc: "A dormant eye in the center of the forehead. (+3 WIS)", stats: { wis: 3 } },
+    { name: "Horns", rarity: "Epic", desc: "Bony protrusions on the forehead. (+2 STR, +1 CON)", stats: { str: 2, con: 1 } },
+    { name: "Giant Blood", rarity: "Epic", desc: "Massive stature, towering over others. (+3 STR, +1 CON, -1 DEX)", stats: { str: 3, con: 1, dex: -1 } },
+    { name: "Regeneration", rarity: "Epic", desc: "Wounds close visibly fast. (+3 CON)", stats: { con: 3 } },
 
-    // ===== LEGENDARY (myth-tier, almost unique) =====
-    { name: "Seer", rarity: "Legendary", desc: "Innate ability to perceive beyond linear time. (+2 WIS, Psychic Blast)", stats: { wis: 2 }, combatAbility: 'psychic' },
+    // ===== LEGENDARY (Myth-tier, Abilities) =====
+    { name: "Seer", rarity: "Legendary", desc: "Innate ability to perceive time. (+4 WIS, Psychic Blast)", stats: { wis: 4 }, combatAbility: 'psychic' },
+    { name: "Fire Blood", rarity: "Legendary", desc: "Dragon ancestry. Exhale flames. (+2 STR, +2 CHA, Fire Breath)", stats: { str: 2, cha: 2 }, combatAbility: 'firebreath' },
+    { name: "Titan's Strength", rarity: "Legendary", desc: "Muscles like steel cables. (+5 STR)", stats: { str: 5 } },
+    { name: "Shadow Soul", rarity: "Legendary", desc: "One with the darkness. (+5 DEX)", stats: { dex: 5 } },
 
-    // ===== DEFECTS (Inbreeding/Bad Luck) - NOW WITH STAT IMPACTS =====
+    // ===== DEFECTS (Inbreeding/Bad Luck) =====
     { name: "Habsburg Jaw", rarity: "Defect", desc: "A painfully prominent underbite. (-2 CHA)", stats: { cha: -2 } },
     { name: "Hemophilia", rarity: "Defect", desc: "Blood does not clot. (-2 CON)", stats: { con: -2 } },
     { name: "Clubfoot", rarity: "Defect", desc: "A twisted foot. (-2 DEX)", stats: { dex: -2 } },
@@ -1279,9 +1288,38 @@
         ]
     };
 
+    // --- MOVED WEAPON LIBRARY HERE TO FIX INITIALIZATION ERROR ---
+    const WEAPON_LIBRARY = {
+        unarmed: { name: "Fists", type: "strength", dmg: 1, cost: 0, rarity: "Common", desc: "Your bare hands." },
+        dagger: { name: "Iron Dagger", type: "finesse", dmg: 4, cost: 15, rarity: "Common", desc: "Fast and concealable. (1d4 Dmg)" },
+        cudgel: { name: "Wooden Cudgel", type: "strength", dmg: 4, cost: 2, rarity: "Common", desc: "A stout stick. (1d4 Dmg)" },
+        shortsword: { name: "Shortsword", type: "finesse", dmg: 6, cost: 25, rarity: "Common", desc: "A soldier's sidearm. (1d6 Dmg)" },
+        mace: { name: "Heavy Mace", type: "strength", dmg: 6, cost: 30, rarity: "Common", desc: "Crushes bone. (1d6 Dmg)" },
+        spear: { name: "Spear", type: "strength", dmg: 6, cost: 10, rarity: "Common", desc: "Good reach. (1d6 Dmg)" },
+        longsword: { name: "Longsword", type: "strength", dmg: 8, cost: 50, rarity: "Uncommon", desc: "Versatile steel blade. (1d8 Dmg)" },
+        battleaxe: { name: "Battleaxe", type: "strength", dmg: 8, cost: 50, rarity: "Uncommon", desc: "A brutal cleaver. (1d8 Dmg)" },
+        greatsword: { name: "Greatsword", type: "strength", dmg: 12, cost: 100, rarity: "Rare", desc: "Requires two hands. (1d12 Dmg)" },
+        warhammer: { name: "Warhammer", type: "strength", dmg: 10, cost: 80, rarity: "Rare", desc: "Armor piercer. (1d10 Dmg)" },
+        rapier: { name: "Noble Rapier", type: "finesse", dmg: 8, cost: 75, rarity: "Uncommon", desc: "Elegant and deadly. (1d8 Dmg)" },
+        excalibur: { name: "Excalibur", type: "strength", dmg: 20, cost: 5000, rarity: "Artifact", desc: "The Sword of Kings. (1d20 Dmg)" },
+        frostfang: { name: "Frostfang", type: "strength", dmg: 12, cost: 2000, rarity: "Legendary", desc: "Cold to the touch. (1d12+Frost)" }
+    };
+
     // --- NEW: NPC INVENTORY GENERATOR ---
     function generateNPCInventory(occupation, rank) {
         const items = [];
+        // UPDATED: Helper to add weapon from library
+        const addWep = (key) => {
+            const w = WEAPON_LIBRARY[key];
+            if(w) items.push({
+                name: w.name, 
+                rarity: w.rarity, 
+                desc: w.desc, 
+                value: w.cost, 
+                id: Math.random().toString(36).substr(2, 9),
+                weapon: w // Attach stats
+            });
+        };
         const add = (name, rarity, desc, val) => items.push({name, rarity, desc, value: val, id: Math.random().toString(36).substr(2, 9)});
 
         // Basic Wealth/Rank Items
@@ -1293,26 +1331,26 @@
             if(Math.random() > 0.8) add('Jeweled Brooch', 'Rare', 'Sparkling gemstone.', 80);
         } else {
             add('Rough Clothes', 'Common', 'Wool and linen.', 1);
-            if(Math.random() > 0.5) add('Dagger', 'Common', 'Simple iron blade.', 5);
+            if(Math.random() > 0.5) addWep('dagger');
             add('Waterskin', 'Common', 'Leather pouch.', 1);
         }
 
         // Occupation Specifics
         const jobLower = (occupation || "").toLowerCase();
         
-        if (jobLower.includes('smith')) { add('Hammer', 'Common', 'Heavy tool.', 5); add('Apron', 'Common', 'Leather.', 2); }
-        else if (jobLower.includes('farm')) { add('Hoe', 'Common', 'Farming tool.', 3); add('Seeds', 'Common', 'Bag of grain.', 1); }
-        else if (jobLower.includes('merchant') || jobLower.includes('peddler') || jobLower.includes('shop')) { add('Ledger', 'Common', 'Account book.', 5); add('Trade Goods', 'Uncommon', 'Assorted wares.', 20); }
+        if (jobLower.includes('smith')) { addWep('warhammer'); add('Apron', 'Common', 'Leather.', 2); }
+        else if (jobLower.includes('farm')) { addWep('cudgel'); add('Seeds', 'Common', 'Bag of grain.', 1); }
+        else if (jobLower.includes('merchant') || jobLower.includes('peddler') || jobLower.includes('shop')) { addWep('dagger'); add('Trade Goods', 'Uncommon', 'Assorted wares.', 20); }
         else if (jobLower.includes('knight') || jobLower.includes('guard') || jobLower.includes('soldier') || jobLower.includes('captain') || jobLower.includes('squire')) { 
-            add('Longsword', 'Uncommon', 'Steel blade.', 40); 
-            add('Chainmail', 'Uncommon', 'Protection.', 50); 
+            addWep('longsword'); 
+            add('Chainmail', 'Uncommon', 'Protection.', 50, null, 4); // Added DR 4
         }
-        else if (jobLower.includes('clerg') || jobLower.includes('priest')) { add('Holy Symbol', 'Common', 'Wooden icon.', 5); add('Prayer Beads', 'Common', 'For focus.', 2); }
+        else if (jobLower.includes('clerg') || jobLower.includes('priest')) { addWep('mace'); add('Prayer Beads', 'Common', 'For focus.', 2); }
         else if (jobLower.includes('scholar') || jobLower.includes('scribe') || jobLower.includes('mage') || jobLower.includes('alc')) { add('Scroll', 'Uncommon', 'Parchment.', 10); add('Quill & Ink', 'Common', 'Writing set.', 5); }
-        else if (jobLower.includes('thief') || jobLower.includes('crim')) { add('Lockpicks', 'Uncommon', 'Thieves tools.', 15); }
+        else if (jobLower.includes('thief') || jobLower.includes('crim')) { addWep('dagger'); add('Lockpicks', 'Uncommon', 'Thieves tools.', 15); }
         else if (jobLower.includes('artist') || jobLower.includes('paint')) { add('Paints', 'Common', 'Colorful dyes.', 5); }
         else if (jobLower.includes('bake') || jobLower.includes('cook')) { add('Rolling Pin', 'Common', 'Wood.', 2); add('Flour', 'Common', 'Sack.', 1); }
-        else if (jobLower.includes('hunt')) { add('Shortbow', 'Common', 'Yew wood.', 15); add('Arrows', 'Common', 'Quiver.', 2); }
+        else if (jobLower.includes('hunt')) { addWep('spear'); add('Shortbow', 'Common', 'Yew wood.', 15); }
         
         return items;
     }
@@ -1370,8 +1408,17 @@
             if (mutations.length < 2 && Math.random() < 0.20) {
                 let m2 = this.getRandomMutation();
                 // Avoid duplicates
-                if (m2.name !== mutations[0].name) {
+                if (!mutations.some(m => m.name === m2.name)) {
                     mutations.push(m2);
+                }
+            }
+
+            // 5. Very Rare Chance for 3rd Mutation (5%) - UPDATED
+            if (mutations.length < 3 && Math.random() < 0.05) {
+                let m3 = this.getRandomMutation();
+                // Avoid duplicates
+                if (!mutations.some(m => m.name === m3.name)) {
+                    mutations.push(m3);
                 }
             }
             
@@ -1456,6 +1503,21 @@
                      let m2 = this.getRandomMutation();
                      if (!mutations.some(m => m.name === m2.name)) {
                          mutations.push(m2);
+                     }
+                 }
+            }
+
+            // 4. Very Rare Chance for 3rd Mutation (5%) - UPDATED
+            if (mutations.length < 3 && Math.random() < 0.05) {
+                 const remainingParents = uniqueParentMutations.filter(m => !mutations.includes(m));
+                 
+                 // Prefer inheritance if available (50/50), otherwise random
+                 if (remainingParents.length > 0 && Math.random() < 0.5) {
+                     mutations.push(remainingParents[Math.floor(Math.random() * remainingParents.length)]);
+                 } else {
+                     let m3 = this.getRandomMutation();
+                     if (!mutations.some(m => m.name === m3.name)) {
+                         mutations.push(m3);
                      }
                  }
             }
@@ -1555,6 +1617,7 @@
         nextCanonAge: null, // NEW: Destiny Tracker
         honorifics: [], // ADDED: List of earned titles
         primaryHonorific: null, // ADDED: Current display title
+        cityHouses: {}, // NEW: Persistent local houses per city
         flags: {
             literate: false,
             criminal: false,
@@ -1709,7 +1772,6 @@
             req: { age: 14, stat: 'str', val: 12, class: 'House' },
             dc: 14, stat: 'str',
             ranks: [
-                { title: "Page", wage: 3, stressMod: 2 },
                 { title: "Squire", wage: 5, stressMod: 4 },
                 { title: "Knight", wage: 30, stressMod: 5 },
                 { title: "Knight Lieutenant", wage: 40, stressMod: 7 },
@@ -1841,16 +1903,15 @@
     };
 
     const CITIES = [
-        { name: "Chep (Capital)", ruler: "House Chep", desc: "A sprawling walled capital of crowded markets, towering cathedrals, guildhalls, and narrow cobbled streets radiating from the royal citadel founded by Hero Ren.", x: 50, y: 50 },
-        { name: "Frosthold", ruler: "House Grimward", desc: "A wind-bitten northern city of timbered halls and stone keeps, its people hardened by long winters and its harbor choked with ice most of the year.", x: 50, y: 15 },
-        { name: "Goldspire", ruler: "House Valdoria", desc: "A wealthy cliffside trade city where terraced districts climb the western bluffs, its markets rich with foreign coin and its streets alive with merchants and sailors.", x: 15, y: 60 },
-        { name: "Arcania", ruler: "House Moonshadow", desc: "A scholarly city built atop ancient foundations, filled with scriptoria, academies, crumbling ruins, and scholars who debate beneath lamplit arcades.", x: 80, y: 70 },
-        { name: "Verdan", ruler: "House Sunstrider", desc: "A forest-woven city of wooden palisades and green courtyards, where hunters, herbalists, and foresters dwell beneath the canopy of the southern woods.", x: 50, y: 85 },
-        { name: "Skybast", ruler: "House Stormbreaker", desc: "A highland city carved into mountain slopes, its steep streets connected by stairways and rope lifts, bells echoing through thin alpine air.", x: 85, y: 25 },
-        { name: "Ironport", ruler: "House Ironheart", desc: "A smoke-veiled river port of foundries, shipyards, and crowded workers' quarters, where anvils ring day and night and barges carry steel across the realm.", x: 20, y: 35 },
-        { name: "Tidecall", ruler: "House Thalor", desc: "A storm-lashed coastal city of seawalls, lighthouses, and salt-stained stone, its docks packed with fishing vessels and deep-sea traders alike.", x: 10, y: 80 }
+        { name: "Chep (Capital)", ruler: "Royal House Chep", desc: "A sprawling walled capital of crowded markets, towering cathedrals, guildhalls, and narrow cobbled streets radiating from the royal citadel founded by Hero Ren.", x: 50, y: 50 },
+        { name: "Frosthold", ruler: "Greater House Grimward", desc: "A wind-bitten northern city of timbered halls and stone keeps, its people hardened by long winters and its harbor choked with ice most of the year.", x: 50, y: 15 },
+        { name: "Goldspire", ruler: "Greater House Valdoria", desc: "A wealthy cliffside trade city where terraced districts climb the western bluffs, its markets rich with foreign coin and its streets alive with merchants and sailors.", x: 15, y: 60 },
+        { name: "Arcania", ruler: "Greater House Moonshadow", desc: "A scholarly city built atop ancient foundations, filled with scriptoria, academies, crumbling ruins, and scholars who debate beneath lamplit arcades.", x: 80, y: 70 },
+        { name: "Verdan", ruler: "Greater House Sunstrider", desc: "A forest-woven city of wooden palisades and green courtyards, where hunters, herbalists, and foresters dwell beneath the canopy of the southern woods.", x: 50, y: 85 },
+        { name: "Skybast", ruler: "Greater House Stormbreaker", desc: "A highland city carved into mountain slopes, its steep streets connected by stairways and rope lifts, bells echoing through thin alpine air.", x: 85, y: 25 },
+        { name: "Ironport", ruler: "Greater House Ironheart", desc: "A smoke-veiled river port of foundries, shipyards, and crowded workers' quarters, where anvils ring day and night and barges carry steel across the realm.", x: 20, y: 35 },
+        { name: "Tidecall", ruler: "Greater House Thalor", desc: "A storm-lashed coastal city of seawalls, lighthouses, and salt-stained stone, its docks packed with fishing vessels and deep-sea traders alike.", x: 10, y: 80 }
     ];
-
 
     // --- MARKET DATA & LOGIC ---
     const SHOP_POOLS = {
@@ -1869,11 +1930,16 @@
             name: "Smithy", icon: "⚔️",
             items: [
                 { name: "Whetstone", rarity: "Common", desc: "Sharpen your blade.", value: 5 },
-                { name: "Iron Dagger", rarity: "Common", desc: "Simple sidearm.", value: 15 },
+                // WEAPONS FROM LIBRARY
+                { ...WEAPON_LIBRARY.dagger, weapon: WEAPON_LIBRARY.dagger, value: WEAPON_LIBRARY.dagger.cost },
+                { ...WEAPON_LIBRARY.spear, weapon: WEAPON_LIBRARY.spear, value: WEAPON_LIBRARY.spear.cost },
+                { ...WEAPON_LIBRARY.shortsword, weapon: WEAPON_LIBRARY.shortsword, value: WEAPON_LIBRARY.shortsword.cost },
+                { ...WEAPON_LIBRARY.mace, weapon: WEAPON_LIBRARY.mace, value: WEAPON_LIBRARY.mace.cost },
+                { ...WEAPON_LIBRARY.longsword, weapon: WEAPON_LIBRARY.longsword, value: WEAPON_LIBRARY.longsword.cost },
+                { ...WEAPON_LIBRARY.battleaxe, weapon: WEAPON_LIBRARY.battleaxe, value: WEAPON_LIBRARY.battleaxe.cost },
+                { ...WEAPON_LIBRARY.greatsword, weapon: WEAPON_LIBRARY.greatsword, value: WEAPON_LIBRARY.greatsword.cost },
                 { name: "Chain Shirt", rarity: "Uncommon", desc: "Protect your vitals.", value: 50, dr: 2 },
-                { name: "Steel Sword", rarity: "Uncommon", desc: "A soldier's weapon.", value: 45 },
                 { name: "Heavy Shield", rarity: "Uncommon", desc: "Block incoming blows.", value: 30, dr: 1 },
-                { name: "Masterwork Helm", rarity: "Rare", desc: "Fit for a knight.", value: 150, dr: 3 },
                 { name: "Plate Armor", rarity: "VeryRare", desc: "Heavy protection.", value: 500, dr: 5 }
             ]
         },
@@ -2035,8 +2101,8 @@
         const item = shop.items[itemIndex];
         
         if (state.gold >= item.value && !item.sold) {
-            // UPDATED: Robust version with inventory check and DR
-            const added = addItem(item.name, item.rarity, item.desc, Math.floor(item.value/2), item.effect, item.dr);
+            // UPDATED: Pass weapon object if present
+            const added = addItem(item.name, item.rarity, item.desc, Math.floor(item.value/2), item.effect, item.dr, item.weapon);
             
             if (added) {
                 state.gold -= item.value;
@@ -2051,25 +2117,7 @@
     }
 
     // --- CONSOLIDATED UTILITIES ---
-    function marryNPC(id) {
-        const r = state.relationships.find(x => x.id === id);
-        if(!r) return;
-        r.relation = 'Spouse';
-        state.flags.married = true;
-        log(`<strong style="color:var(--gold)">MARRIAGE:</strong> You and ${r.name} are joined in holy matrimony!`);
-        updateUI();
-    }
-
-    function getRelLabel(val) {
-        if (val <= -50) return "Enemy";
-        if (val < 0) return "Disliked";
-        if (val < 30) return "Acquaintance";
-        if (val < 60) return "Friend";
-        if (val < 90) return "Good Friend";
-        return "Best Friend";
-    }
-
-    // --- END MARKET DATA ---
+    // (Removed duplicate marryNPC and getRelLabel from here as they are defined below in Relationship System)
 
     const NPC_NAMES = {
 m: ["Aethelred", "Alaric", "Alistair", "Alvric", "Baldric", "Beren", "Berengar", "Cadeyrn", 
@@ -2127,6 +2175,9 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
     }
 
     /* --- COMBAT ENGINE --- */
+    
+    // (WEAPON LIBRARY REMOVED - MOVED UP TO TOP)
+
     const CombatEngine = {
         active: false,
         player: null,
@@ -2194,10 +2245,25 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             this.modifiers = { playerDefending: false };
 
             const pArmor = getPlayerArmor();
-            const pDex = getModifier(state.stats.dex);
+            
+            // --- WEAPON LOGIC UPDATE ---
+            // Check equipped main hand, fallback to Unarmed
+            let weapon = WEAPON_LIBRARY.unarmed;
+            if (state.equipped.mainHand && state.equipped.mainHand.weapon) {
+                weapon = state.equipped.mainHand.weapon;
+            }
+
             const pStr = getModifier(state.stats.str);
-            const atkBonus = Math.max(pStr, pDex);
-            const dmgBonus = pStr;
+            const pDex = getModifier(state.stats.dex);
+            
+            // Determine Hit/Dmg Mod based on weapon type
+            let combatMod = pStr; // Default Strength
+            if (weapon.type === 'finesse') {
+                combatMod = Math.max(pStr, pDex); // Finesse uses higher of STR/DEX
+            }
+
+            const atkBonus = combatMod;
+            const dmgBonus = combatMod;
 
             // Check for Mutation Armor (Scales)
             let natArmor = 0;
@@ -2213,7 +2279,9 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 hp: state.health,
                 ac: 10 + pDex + pArmor + natArmor,
                 atk: atkBonus,
-                dmgMod: dmgBonus
+                dmgMod: dmgBonus,
+                dmgDie: weapon.dmg, // Use weapon die (e.g. 8 for d8)
+                weaponName: weapon.name
             };
 
             // Support both Manual Object and Tier Integer
@@ -2237,6 +2305,7 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             document.getElementById('combat-modal').classList.remove('hidden');
             document.getElementById('combat-log-area').innerHTML = ""; // Clear log
             this.log(`<strong>Battle Commences!</strong> You face ${this.enemy.name}.`);
+            this.log(`<em>Wielding: ${this.player.weaponName} (1d${this.player.dmgDie}${formatMod(this.player.dmgMod)})</em>`, 'miss');
             
             this.renderControls('combat');
             this.render();
@@ -2249,8 +2318,15 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 // Standard Controls
                 let abilityBtn = '';
                 const mutations = state.appearance.mutations || [];
+                
+                // PSYCHIC ABILITY CHECK
                 if (mutations.some(m => m.combatAbility === 'psychic')) {
-                    abilityBtn = `<button onclick="CombatEngine.playerAction('psychic')" class="choice-btn justify-center bg-purple-900 text-white border-purple-950 hover:bg-purple-800 col-span-2">🔮 Psychic Blast</button>`;
+                    abilityBtn += `<button onclick="CombatEngine.playerAction('psychic')" class="choice-btn justify-center bg-purple-900 text-white border-purple-950 hover:bg-purple-800 col-span-2 mt-1">🔮 Psychic Blast</button>`;
+                }
+                
+                // FIRE BREATH CHECK
+                if (mutations.some(m => m.combatAbility === 'firebreath')) {
+                    abilityBtn += `<button onclick="CombatEngine.playerAction('firebreath')" class="choice-btn justify-center bg-orange-700 text-white border-orange-900 hover:bg-orange-600 col-span-2 mt-1">🔥 Fire Breath</button>`;
                 }
 
                 controls.innerHTML = `
@@ -2339,6 +2415,24 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                     this.triggerPhase('victory');
                     return;
                 }
+            } else if (action === 'firebreath') {
+                // Fire Breath Logic
+                const conMod = getModifier(state.stats.con);
+                const dmg = Math.floor(Math.random() * 10) + 5 + conMod; // 1d10 + 5 + CON
+                
+                this.log(`<strong>${this.player.name}</strong> exhales a torrent of searing flames!`, 'crit');
+                document.getElementById('combat-enemy').classList.add('anim-shake');
+                setTimeout(() => document.getElementById('combat-enemy').classList.remove('anim-shake'), 300);
+                
+                this.enemy.hp -= dmg;
+                this.log(`The fire engulfs the enemy for <strong>${dmg} DMG</strong>!`, 'hit');
+                
+                this.render();
+                
+                if (this.enemy.hp <= 0) {
+                    this.triggerPhase('victory');
+                    return;
+                }
             } else if (action === 'flee') {
                 const roll = Math.floor(Math.random() * 20) + 1;
                 const bonus = getModifier(state.stats.dex);
@@ -2412,7 +2506,11 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             this.log(`<em>${attacker.name} rolls: ${d20} + ${hitMod} = ${total} (vs AC ${targetAC})</em>`);
 
             if (isHit) {
-                let baseDmg = Math.floor(Math.random() * (attacker.dmg || 6)) + 1;
+                // UPDATED DAMAGE CALCULATION
+                // Use attacker.dmgDie if available (Player), else fall back to 'dmg' property (Enemy)
+                const dieSize = attacker.dmgDie || attacker.dmg || 4; 
+                let baseDmg = Math.floor(Math.random() * dieSize) + 1;
+                
                 if (attacker.dmgMod) baseDmg += attacker.dmgMod;
                 if (isCrit) baseDmg *= 2;
                 
@@ -3219,7 +3317,18 @@ Elder: [
             ]),
 
             createEvent('canon_sword', 'The Sword in the Stone', 'Legend says only the worthy can pull it.', [
-                { text: 'Pull (STR)', type: 'check', stat: 'str', dc: 20, success: 'IT MOVES! You hold the blade!', fail: 'It does not budge.', onSuccess: () => { addHonorific('Chosen One'); addItem('Excalibur', 'Artifact', 'The Sword of Kings.', 1000); modRep('renown', 100); }, onFail: () => log("You are not the one.") },
+                { 
+                    text: 'Pull (STR)', type: 'check', stat: 'str', dc: 20, 
+                    success: 'IT MOVES! You hold the blade!', 
+                    fail: 'It does not budge.', 
+                    onSuccess: () => { 
+                        addHonorific('Chosen One'); 
+                        // UPDATED: Award Excalibur as real weapon
+                        addItem(WEAPON_LIBRARY.excalibur.name, 'Artifact', WEAPON_LIBRARY.excalibur.desc, 1000, null, 0, WEAPON_LIBRARY.excalibur); 
+                        modRep('renown', 100); 
+                    }, 
+                    onFail: () => log("You are not the one.") 
+                },
                 { text: 'Study (INT)', type: 'check', stat: 'int', dc: 15, success: 'You realize it is a magnetic trick.', fail: 'Just a rock.', onSuccess: () => { addHonorific('The Skeptic'); state.stats.int++; }, onFail: () => {} },
                 { text: 'Ignore', type: 'flavor', effect: () => log("Fairy tales.") }
             ]),
@@ -3258,14 +3367,14 @@ Elder: [
         Quest: [createEvent('quest_monster', 'The Beast', 'A monster plagues the local farms.', [{ text: 'Slay it', type: 'check', stat: 'str', dc: 15, success: 'The beast falls! (+Renown, +50g)', fail: 'It mauls you.', onSuccess: () => { modRep('renown', 10); state.gold += 50; }, onFail: () => takeDamage(10) }, { text: 'Track it', type: 'check', stat: 'wis', dc: 14, success: 'You find its lair and loot it. (+30g)', fail: 'You get lost.', onSuccess: () => state.gold += 30, onFail: () => {} }, { text: 'Set Trap', type: 'check', stat: 'int', dc: 14, success: 'Smart catch! (+40g)', fail: 'Trap failed.', onSuccess: () => state.gold += 40, onFail: () => {} }])],
         Crime: [createEvent('crime_heist', 'Manor Heist', 'A noble villa is unguarded.', [{ text: 'Rob it', type: 'check', stat: 'dex', dc: 16, success: 'Jackpot! (+100g, +Infamy)', fail: 'Guards! (-HP, Jail)', onSuccess: () => { state.gold += 100; modRep('infamy', 10); }, onFail: () => { takeDamage(10); modRep('infamy', 5); } }, { text: 'Leave', type: 'flavor', effect: () => log("Too risky.") }, { text: 'Tip Guards', type: 'check', stat: 'cha', dc: 12, success: 'Reward! (+10g, +Honor)', fail: 'Ignored.', onSuccess: () => { state.gold+=10; modRep('honor', 5); }, onFail: () => {} }])],
         SocialFail: [createEvent('fail_social', 'Empty Streets', 'You wander the market but meet no one of interest.', [{ text: 'Go home', type: 'flavor', effect: () => log("A quiet day.") }, { text: 'Train Alone', type: 'check', stat: 'str', dc: 12, success: '+1 STR', fail: 'Tired.', onSuccess: () => state.stats.str++, onFail: () => {} }, { text: 'Read', type: 'check', stat: 'int', dc: 12, success: '+1 INT', fail: 'Boring.', onSuccess: () => state.stats.int++, onFail: () => {} }]), createEvent('fail_love', 'Cold Shoulder', 'Your attempts at courtship are met with polite refusal.', [{ text: 'Try again later', type: 'flavor', effect: () => log("There are other fish in the sea.") }, { text: 'Drink', type: 'flavor', effect: () => { state.gold = Math.max(0, state.gold-2); log("You drown your sorrows."); } }, { text: 'Write Poem', type: 'check', stat: 'cha', dc: 12, success: 'Practice makes perfect. (+1 CHA)', fail: 'Terrible.', onSuccess: () => state.stats.cha++, onFail: () => {} }])],
-        Interactive: [createEvent('inter_bump', 'A Chance Encounter', 'You bump into a stranger carrying a heavy load.', [{ text: 'Help them', type: 'check', stat: 'str', dc: 10, success: 'They thank you profusely. (+Friendship)', fail: 'You drop it. They yell at you.', onSuccess: () => createRandomRel(20), onFail: () => {} }, { text: 'Walk away', type: 'flavor', effect: () => log("Not your problem.") }, { text: 'Apologize', type: 'check', stat: 'cha', dc: 10, success: 'They nod.', fail: 'They grumble.', onSuccess: () => {}, onFail: () => {} }])],
+        Interactive: [createEvent('inter_bump', 'A Chance Encounter', 'You bump into a stranger carrying a heavy load.', [{ text: 'Help them', type: 'check', stat: 'str', dc: 10, success: 'They thank you profusely. (+Rel)', fail: 'You drop it. They yell at you.', onSuccess: () => createRandomRel(20), onFail: () => {} }, { text: 'Walk away', type: 'flavor', effect: () => log("Not your problem.") }, { text: 'Apologize', type: 'check', stat: 'cha', dc: 10, success: 'They nod.', fail: 'They grumble.', onSuccess: () => {}, onFail: () => {} }])],
         Jeopardy: [createEvent('sanity_break', 'Mental Snap', 'The pressure is too much. Reality bends.', [{ text: 'Scream', type: 'flavor', effect: () => { modSanity(-2); log("You lose yourself for a moment."); } }, { text: 'Hide', type: 'flavor', effect: () => log("You curl up in a corner.") }, { text: 'Run', type: 'flavor', effect: () => { state.health--; log("You run until you collapse."); } }]), createEvent('sanity_visions', 'Dark Visions', 'Shadows whisper your name.', [{ text: 'Pray', type: 'check', stat: 'wis', dc: 12, success: 'The voices fade.', fail: 'They scream louder. (-1 SP)', onSuccess: () => modSanity(1), onFail: () => modSanity(-1) }, { text: 'Listen', type: 'check', stat: 'int', dc: 14, success: 'Forbidden knowledge! (+1 INT)', fail: 'Madness.', onSuccess: () => state.stats.int++, onFail: () => modSanity(-2) }, { text: 'Ignore', type: 'check', stat: 'con', dc: 12, success: 'You push them away.', fail: 'They persist.', onSuccess: () => {}, onFail: () => modSanity(-1) }]), createEvent('sanity_final', 'Mental Break', 'Your mind shatters under the strain of existence.', [{ text: 'Hold it together', type: 'check', stat: 'wis', dc: 15, success: 'You claw back your sanity from the brink. (+1 SP)', fail: 'Your mind snaps. Massive shock. (-20 HP)', onSuccess: () => modSanity(1), onFail: () => { takeDamage(20); modSanity(-2); } }, { text: 'Give In', type: 'flavor', effect: () => { modSanity(-5); takeDamage(10); log("You embrace the madness."); } }, { text: 'Seek Help', type: 'flavor', req: s => s.gold >= 50, effect: () => { state.gold-=50; state.sanity=5; log("Healers restore your mind."); } }])],
         Financial: [
             // Generic pool for NPCs asking PC for money
             (npc) => createEvent(`fin_ask_${npc.id}`, `Financial Request`, `Your ${npc.relation} ${npc.name} approaches you, looking sheepish. "I am in dire straits. Could you spare some coin?"`, [
-                { text: 'Give 10g', type: 'flavor', req: s => s.gold >= 10, effect: () => { state.gold -= 10; modRel(npc.id, 15); log(`You helped ${npc.name} in their time of need.`); } },
-                { text: 'Refuse', type: 'flavor', effect: () => { modRel(npc.id, -10); log(`${npc.name} leaves, clearly upset.`); } },
-                { text: 'Give 50g', type: 'flavor', req: s => s.gold >= 50, effect: () => { state.gold -= 50; modRel(npc.id, 40); log(`You were incredibly generous. ${npc.name} weeps with gratitude.`); } }
+                { text: 'Give 10g', type: 'flavor', req: s => s.gold >= 10, effect: () => { state.gold -= 10; modRel(npc.id, 15); log(`You helped ${npc.name} in their time of need. (+Rel)`); } },
+                { text: 'Refuse', type: 'flavor', effect: () => { modRel(npc.id, -10); log(`${npc.name} leaves, clearly upset. (-Rel)`); } },
+                { text: 'Give 50g', type: 'flavor', req: s => s.gold >= 50, effect: () => { state.gold -= 50; modRel(npc.id, 40); log(`You were incredibly generous. ${npc.name} weeps with gratitude. (+Rel)`); } }
             ])
         ]
     };
@@ -4066,6 +4175,41 @@ Elder: [
         return " " + roman;
     }
 
+    function getPlayerAC() {
+        const base = 10;
+        const dexMod = getModifier(state.stats.dex);
+        const armorBonus = getPlayerArmor();
+        let natArmor = 0;
+        if (state.appearance.mutations) {
+            state.appearance.mutations.forEach(m => {
+                if (m.stats && m.stats.ac) natArmor += m.stats.ac;
+            });
+        }
+        return base + dexMod + armorBonus + natArmor;
+    }
+
+    // --- NEW: COMBAT STATS HELPER ---
+    function getPlayerCombatStats() {
+        const pStr = getModifier(state.stats.str);
+        const pDex = getModifier(state.stats.dex);
+        let weapon = WEAPON_LIBRARY.unarmed;
+        if (state.equipped.mainHand && state.equipped.mainHand.weapon) {
+            weapon = state.equipped.mainHand.weapon;
+        }
+
+        let atkMod = pStr;
+        if (weapon.type === 'finesse') atkMod = Math.max(pStr, pDex);
+
+        const dmgDie = weapon.dmg || 1;
+        const dmgMod = atkMod; // Simplified 5e logic
+
+        return {
+            name: weapon.name,
+            atk: atkMod >= 0 ? `+${atkMod}` : atkMod,
+            dmg: `1d${dmgDie}${dmgMod >= 0 ? '+' + dmgMod : dmgMod}`
+        };
+    }
+
     function renderInventory() {
         const list = document.getElementById('inventory-list');
         const maxSlots = 10 + getModifier(state.stats.str);
@@ -4079,20 +4223,20 @@ Elder: [
             { id: 'accessory', icon: '💍', label: 'Accessory' }
         ];
 
-        let equipHtml = `<div class="paper-doll-grid">`;
+        let equipHtml = `<div class="paper-doll-grid" style="border-bottom:none; margin:0; width:auto;">`;
         equipHtml += slots.map(s => {
             const item = state.equipped[s.id];
             const slotClass = `slot-${s.id}`;
             
             if (item) {
-                // Determine DR Text for equipped items
-                const drText = item.dr ? `(+${item.dr} DR)` : '';
+                const drText = item.dr ? `(+${item.dr} AC)` : '';
+                const wepText = item.weapon ? `(1d${item.weapon.dmg})` : ''; // Show weapon dmg
                 return `
                 <div class="equip-slot filled item-rarity-${item.rarity} ${slotClass}" onclick="unequipItem('${s.id}')" title="${item.name}: ${item.desc}">
                     <div class="equip-remove">x</div>
                     <div class="equip-icon">${s.icon}</div>
                     <div class="text-[9px] font-bold truncate w-full text-center mt-1 leading-tight">${item.name}</div>
-                    <div class="equip-label">${s.label} ${drText}</div>
+                    <div class="equip-label">${s.label} ${drText} ${wepText}</div>
                 </div>`;
             } else {
                 return `
@@ -4104,20 +4248,47 @@ Elder: [
         }).join('');
         equipHtml += `</div>`;
 
-        // 2. Render Capacity & Grid
-        const currentArmor = getPlayerArmor();
-        const capacityHtml = `<div class="col-span-full flex justify-between items-center text-xs opacity-70 mb-2 font-bold">
-            <span class="text-amber-900 text-sm">💰 ${state.gold} GP</span>
-            <span class="text-blue-900 text-sm" title="Total Damage Reduction">🛡️ ${currentArmor} DR</span>
-            <span>Backpack: ${state.inventory.length} / ${maxSlots}</span>
+        // 2. Render Overview Panel (Stats)
+        const currentAC = getPlayerAC();
+        const combatStats = getPlayerCombatStats();
+        
+        const overviewHtml = `
+        <div class="mb-4 bg-amber-900/10 rounded-lg p-3 border border-amber-900/20 grid grid-cols-2 gap-4 text-sm">
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between border-b border-black/10 pb-1">
+                    <span class="font-bold text-amber-900">💰 Treasury</span>
+                    <span class="font-medieval text-lg">${state.gold} gp</span>
+                </div>
+                <div class="flex justify-between border-b border-black/10 pb-1">
+                    <span class="font-bold text-blue-900">🛡️ Armor Class</span>
+                    <span class="font-bold text-lg">${currentAC}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-bold text-gray-700">🎒 Capacity</span>
+                    <span>${state.inventory.length} / ${maxSlots}</span>
+                </div>
+            </div>
+            <div class="flex flex-col gap-1">
+                <div class="flex justify-between border-b border-black/10 pb-1">
+                    <span class="font-bold text-red-900">⚔️ Weapon</span>
+                    <span class="text-xs truncate ml-2 text-right">${combatStats.name}</span>
+                </div>
+                <div class="flex justify-between border-b border-black/10 pb-1">
+                    <span class="font-bold text-red-900">🎯 Attack</span>
+                    <span class="font-bold">${combatStats.atk}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="font-bold text-red-900">💥 Damage</span>
+                    <span class="font-bold">${combatStats.dmg}</span>
+                </div>
+            </div>
         </div>`;
 
         let invHtml = '';
         if (state.inventory.length === 0) { 
-            invHtml = `<p class="italic opacity-50 col-span-full text-center mt-4">Your satchel is empty.</p>`; 
+            invHtml = `<p class="italic opacity-50 text-center mt-4">Your satchel is empty.</p>`; 
         } else {
-            invHtml = state.inventory.map((item, idx) => {
-                // Determine if item is usable
+            invHtml = `<h4 class="font-bold text-sm mb-2 border-b border-black/10">Acquired Items</h4><div class="inventory-grid">` + state.inventory.map((item, idx) => {
                 const canUse = item.effect && (item.effect.hp || item.effect.sp || item.effect.trait);
                 const equipSlot = getEquipSlot(item.name);
                 
@@ -4128,17 +4299,18 @@ Elder: [
                 } else if (canUse) {
                     primaryBtn = `<button onclick="useItem(${idx})" class="inv-btn btn-use">Use</button>`;
                 } else {
-                    primaryBtn = `<span class="flex-1"></span>`; // Spacer
+                    primaryBtn = `<span class="flex-1"></span>`; 
                 }
 
-                // DR Badge Logic
                 const drBadge = item.dr ? `<span class="ml-1 text-[9px] bg-blue-100 text-blue-900 border border-blue-200 px-1 rounded font-bold">🛡️ ${item.dr}</span>` : '';
+                // NEW: Damage Badge
+                const dmgBadge = item.weapon ? `<span class="ml-1 text-[9px] bg-red-100 text-red-900 border border-red-200 px-1 rounded font-bold">⚔️ 1d${item.weapon.dmg}</span>` : '';
 
                 return `
                 <div class="inventory-card">
                     <div>
                         <div class="inv-rarity-badge item-rarity-${item.rarity}">${item.rarity}</div>
-                        <div class="inv-item-header item-rarity-${item.rarity}">${item.name} ${drBadge}</div>
+                        <div class="inv-item-header item-rarity-${item.rarity}">${item.name} ${drBadge} ${dmgBadge}</div>
                         <div class="inv-item-desc">${item.desc}</div>
                     </div>
                     <div class="inv-actions">
@@ -4146,10 +4318,20 @@ Elder: [
                         <button onclick="sellItem(${idx})" class="inv-btn btn-sell">Sell (${item.value}g)</button>
                     </div>
                 </div>`;
-            }).join('');
+            }).join('') + `</div>`;
         }
 
-        list.innerHTML = equipHtml + capacityHtml + invHtml;
+        list.innerHTML = `
+        <div class="flex flex-col md:flex-row gap-4 items-start h-full">
+            <div class="w-full md:w-auto flex-shrink-0 bg-black/5 p-4 rounded border border-[#5d4037]/20 flex flex-col items-center">
+                <h3 class="font-bold text-center mb-2 text-[#5d4037] uppercase text-xs tracking-widest">Equipped</h3>
+                ${equipHtml}
+            </div>
+            <div class="flex-grow w-full overflow-y-auto pr-2">
+                ${overviewHtml}
+                ${invHtml}
+            </div>
+        </div>`;
     }
 
     function addRelationship(name, relation, friendship, gender, rank, locIndex = null, isBlood = false, isFamily = false, specificAge = null, isKnown = true) {
@@ -5462,8 +5644,8 @@ Elder: [
                                         effect: () => { 
                                             state.gold -= 15; 
                                             modRel(r.id, 25); 
-                                            modSanity(1);
-                                            log(`You attended the wedding and presented a fine gift. ${r.name} was touched.`); 
+                                            modSanity(2);
+                                            log(`You attended the wedding and presented a fine gift. ${r.name} was touched. (+2 SP)`); 
                                         } 
                                     },
                                     { 
@@ -5472,7 +5654,7 @@ Elder: [
                                         effect: () => { 
                                             modRel(r.id, 10); 
                                             modSanity(1);
-                                            log(`You attended the ceremony to show your support.`); 
+                                            log(`You attended the ceremony to show your support. (+1 SP)`); 
                                         } 
                                     },
                                     { 
@@ -5955,7 +6137,7 @@ Elder: [
                     state.house.treasury += donation;
                     // Log relevant contributions
                     if (donation >= 10) {
-                        log(`<strong style="color:var(--gold)">CONTRIBUTION:</strong> Your ${npc.relation} ${npc.name} donated ${donation}g to the House treasury.`);
+                        log(`<strong style="color:var(--royal)">HOUSE:</strong> Your ${npc.relation} ${npc.name} donated ${donation}g to the House treasury.`);
                     }
                 }
             }
@@ -6398,15 +6580,58 @@ Elder: [
             } else {
                 action = `<button onclick="attemptTravel(${index})" class="text-xs bg-leather text-white px-2 py-1 rounded bg-[#5d4037]">Travel ${timeText}</button>`;
             }
+
+            // --- NEW: Generate/Retrieve Lesser Houses ---
+            if (!state.cityHouses[index]) {
+                const numHouses = Math.floor(Math.random() * 6) + 1; // 1d6
+                const houses = [];
+                for(let i=0; i<numHouses; i++) {
+                    const name = HOUSE_NAMES.lesser[Math.floor(Math.random() * HOUSE_NAMES.lesser.length)];
+                    const sigil = TIER_DATA.lesser.sigils[Math.floor(Math.random() * TIER_DATA.lesser.sigils.length)];
+                    // Simple deduplication
+                    if (!houses.some(h => h.name === name)) {
+                        houses.push({ name, sigil });
+                    }
+                }
+                state.cityHouses[index] = houses;
+            }
+
+            let localHouses = [...state.cityHouses[index]];
+
+            // Inject PC House if applicable
+            // Logic: If PC is noble (state.house exists) and this city (index) is the location of their primary holding
+            if (state.house && state.house.holdings && state.house.holdings.length > 0) {
+                if (state.house.holdings[0].locationIndex === index) {
+                    // Avoid duplicates if the random generator picked the same name
+                    if (!localHouses.some(h => h.name === state.house.name)) {
+                        localHouses.unshift({ name: state.house.name, sigil: state.house.sigil, isPC: true });
+                    } else {
+                        // If it exists, mark it as PC
+                        const h = localHouses.find(h => h.name === state.house.name);
+                        if(h) h.isPC = true;
+                    }
+                }
+            }
+
+            const houseListHtml = localHouses.map(h => {
+                const pcStyle = h.isPC ? 'border-amber-600 bg-amber-100 font-bold text-amber-900 ring-1 ring-amber-200 shadow-sm' : '';
+                return `<span class="inline-block bg-white/50 border border-black/10 rounded px-1.5 py-0.5 text-[10px] mr-1 mb-1 ${pcStyle}" title="House ${h.name}">${h.sigil} ${h.name}</span>`;
+            }).join('');
             
             return `
                 <div class="city-card ${extraClass}">
                     <div>
                         <div class="font-bold text-lg">${city.name}</div>
                         <div class="text-xs font-bold text-royal">${city.ruler}</div>
-                        <div class="text-xs italic opacity-80">${city.desc}</div>
+                        <div class="text-xs italic opacity-80 mb-2">${city.desc}</div>
+                        <div class="mt-2 pt-2 border-t border-black/5">
+                            <div class="text-[9px] uppercase font-bold opacity-50 mb-1">Lesser Houses</div>
+                            <div class="flex flex-wrap">${houseListHtml}</div>
+                        </div>
                     </div>
-                    <div>${action}</div>
+                    <div class="pl-2 border-l border-black/5 flex items-center">
+                        ${action}
+                    </div>
                 </div>
             `;
         }).join('');
@@ -6554,6 +6779,16 @@ Elder: [
         // Determine Display Name using new helper
         const displayName = getNPCName(r);
 
+        // --- CALC NPC ARMOR CLASS ---
+        const npcDexMod = getModifier(r.stats.dex || 10);
+        let npcAC = 10 + npcDexMod;
+        // Abstract AC Bonus for combat professions (since inventory items aren't equipped)
+        if (r.occupation && (r.occupation.includes('Knight') || r.occupation.includes('Guard') || r.occupation.includes('Soldier') || r.occupation.includes('Mercenary'))) {
+            npcAC += 4; // Equivalent to Chain Shirt / Scale
+        } else if (r.rank.includes('Noble') || r.rank.includes('Lord') || r.rank.includes('Lady')) {
+            npcAC += 1; // Fine clothes/minor protection
+        }
+
         // --- SUCCESSION & CLASS LOGIC ---
         let successionDisplay = '<span class="opacity-50 text-xs italic">N/A</span>';
         let socialClassDisplay = r.rank; // Default to stored rank
@@ -6575,7 +6810,7 @@ Elder: [
 
                 // If this NPC IS the ruler
                 if (ruler && ruler.id === r.id) {
-                    successionDisplay = `<span class="text-purple-900 font-bold">👑 Reigning Head</span>`;
+                    successionDisplay = `<span class="text-purple-900 font-bold">👑 Reigning Patriarch</span>`;
                 } else {
                     // Calculate Line
                     const line = calculateSuccession(ruler);
@@ -6710,6 +6945,7 @@ Elder: [
                 </div>
                 <div>
                     <p><strong>Health:</strong> ${hpDisplay}</p>
+                    <p><strong>Armor Class:</strong> <span class="text-blue-900 font-bold">${npcAC}</span></p>
                     ${deathInfo}
                     <p><strong>Relation:</strong> ${r.relation}</p>
                     <p><strong>Class:</strong> ${socialClassDisplay}</p>
@@ -6803,7 +7039,7 @@ Elder: [
             if (isAdult || isTeen) {
                 let choices = [];
                 choices.push({ text: 'Woo & Romance', type: 'check', stat: 'cha', dc: 10, success: `Sparks fly! (+Romance, +2 SP)`, fail: `It falls flat.`, onSuccess: () => { modRel(id, 15, 20); modSanity(2); }, onFail: () => modRel(id, 0, -2) });
-                choices.push({ text: 'Deep Conversation', type: 'check', stat: 'wis', dc: 8, success: `You bond over shared dreams. (+Friendship)`, fail: `You argue instead.`, onSuccess: () => { modRel(id, 20); modSanity(1); }, onFail: () => { modRel(id, -10); } });
+                choices.push({ text: 'Deep Conversation', type: 'check', stat: 'wis', dc: 8, success: `You bond over shared dreams. (+Rel)`, fail: `You argue instead.`, onSuccess: () => { modRel(id, 20); modSanity(1); }, onFail: () => { modRel(id, -10); } });
                 
                 if (!isSpouse && isLover && state.age >= 16) {
                     choices.push({ 
@@ -7325,7 +7561,14 @@ Elder: [
             if (state.gold >= amt) {
                 state.gold -= amt;
                 state.house.treasury += amt;
-                log(`You donated ${amt}g to House ${state.house.name}.`);
+                
+                // NEW: Reputation & Styling for Donation
+                const renownGain = Math.ceil(amt / 100);
+                const honorGain = Math.ceil(amt / 50);
+                if (renownGain > 0) modRep('renown', renownGain);
+                if (honorGain > 0) modRep('honor', honorGain);
+                
+                log(`<strong style="color:var(--royal)">HOUSE EVENT:</strong> You donated ${amt}g to House ${state.house.name}. The treasury grows.`);
             } else {
                 showMsg("Insufficient Funds", "You do not have that much gold.");
             }
@@ -7333,7 +7576,12 @@ Elder: [
             if (state.house.treasury >= amt) {
                 state.house.treasury -= amt;
                 state.gold += amt;
-                log(`You withdrew ${amt}g from the treasury.`);
+                
+                // NEW: Infamy for withdrawal (using family funds for self)
+                const infamyGain = Math.ceil(amt / 100);
+                if (infamyGain > 0) modRep('infamy', infamyGain);
+
+                log(`<strong style="color:var(--royal)">HOUSE EVENT:</strong> You withdrew ${amt}g from the treasury for personal use.`);
             } else {
                 showMsg("Treasury Low", "The House coffers cannot afford that.");
             }
@@ -7640,7 +7888,7 @@ Elder: [
                     
                     <div class="mt-4 mb-4 flex justify-between items-center bg-amber-50 p-2 rounded border border-amber-100">
                         <div class="text-left">
-                             <div class="text-xs uppercase font-bold text-amber-800">Treasury</div>
+                             <div class="text-xs uppercase font-bold text-amber-800">Gold</div>
                              <div class="text-xl font-bold text-amber-900">${h.treasury.toLocaleString()} Gold</div>
                         </div>
                         <div class="flex gap-2">
@@ -8055,8 +8303,8 @@ Elder: [
         });
     }
 
-    // UPDATED: Now accepts effect parameter and dr parameter
-    function addItem(name, rarity, desc, value, effect = null, dr = 0) {
+    // UPDATED: Now accepts effect parameter, dr parameter, AND weapon object
+    function addItem(name, rarity, desc, value, effect = null, dr = 0, weapon = null) {
         // --- INVENTORY LIMIT CHECK ---
         const maxSlots = 10 + getModifier(state.stats.str);
         if (state.inventory.length >= maxSlots) {
@@ -8065,7 +8313,7 @@ Elder: [
         }
 
         state.inventory.push({ 
-            name, rarity, desc, value, effect, dr,
+            name, rarity, desc, value, effect, dr, weapon,
             id: Math.random().toString(36).substr(2, 9) 
         });
         log(`<strong style="color:var(--gold)">ITEM GET:</strong> Found <span class="item-rarity-${rarity}">${name}</span>!`);
@@ -8362,7 +8610,7 @@ Elder: [
             document.getElementById('location-display').innerText = CITIES[state.location].name;
             document.getElementById('header-hp').innerText = `${state.health} / ${state.maxHealth} HP`;
             document.getElementById('hp-display').innerText = `${state.health} / ${state.maxHealth}`;
-            document.getElementById('armor-display').innerText = getPlayerArmor(); // Armor Update
+            document.getElementById('armor-display').innerText = getPlayerAC(); 
             document.getElementById('header-sp').innerText = `${state.sanity} / ${state.maxSanity} SP`;
             document.getElementById('sp-display').innerText = `${state.sanity} / ${state.maxSanity}`;
             document.getElementById('sex-display').innerText = state.gender;
