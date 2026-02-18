@@ -1258,6 +1258,9 @@
     { name: "Iron Stomach", rarity: "Rare", desc: "Can digest almost anything without sickness. (+2 CON)", stats: { con: 2 } },
     { name: "Adrenaline Glands", rarity: "Rare", desc: "Bursts of incredible speed in danger. (+2 DEX)", stats: { dex: 2 } },
     { name: "Eidetic Memory", rarity: "Rare", desc: "Perfect recall of visual information. (+2 INT)", stats: { int: 2 } },
+    { name: "Venom Glands", rarity: "Rare", desc: "Saliva is mildly toxic. (+1 CON, Poison Spit)", stats: { con: 1 }, combatAbility: 'poison_spit' },
+    { name: "Gills", rarity: "Rare", desc: "Slits on the neck allow water breathing. (+2 CON)", stats: { con: 2 } },
+    { name: "Chameleon Skin", rarity: "Rare", desc: "Skin shifts color with mood. (+2 DEX)", stats: { dex: 2 } },
 
     // ===== EPIC (Unnatural, Major Stats) =====
     { name: "Scales", rarity: "Epic", desc: "Patches of hardened, scaled skin. (+2 AC, +1 CON)", stats: { ac: 2, con: 1 } }, 
@@ -1266,12 +1269,16 @@
     { name: "Horns", rarity: "Epic", desc: "Bony protrusions on the forehead. (+2 STR, +1 CON)", stats: { str: 2, con: 1 } },
     { name: "Giant Blood", rarity: "Epic", desc: "Massive stature, towering over others. (+3 STR, +1 CON, -1 DEX)", stats: { str: 3, con: 1, dex: -1 } },
     { name: "Regeneration", rarity: "Epic", desc: "Wounds close visibly fast. (+3 CON)", stats: { con: 3 } },
+    { name: "Obsidian Skin", rarity: "Epic", desc: "Skin hard and black as volcanic glass. (+3 AC)", stats: { ac: 3 } },
+    { name: "Wings", rarity: "Epic", desc: "Vestigial feathered wings. (+3 DEX)", stats: { dex: 3 } },
 
     // ===== LEGENDARY (Myth-tier, Abilities) =====
     { name: "Seer", rarity: "Legendary", desc: "Innate ability to perceive time. (+4 WIS, Psychic Blast)", stats: { wis: 4 }, combatAbility: 'psychic' },
     { name: "Fire Blood", rarity: "Legendary", desc: "Dragon ancestry. Exhale flames. (+2 STR, +2 CHA, Fire Breath)", stats: { str: 2, cha: 2 }, combatAbility: 'firebreath' },
-    { name: "Titan's Strength", rarity: "Legendary", desc: "Muscles like steel cables. (+5 STR)", stats: { str: 5 } },
-    { name: "Shadow Soul", rarity: "Legendary", desc: "One with the darkness. (+5 DEX)", stats: { dex: 5 } },
+    { name: "Titan's Strength", rarity: "Legendary", desc: "Muscles like steel cables. (+5 STR, Earth Smash)", stats: { str: 5 }, combatAbility: 'titan_smash' },
+    { name: "Shadow Soul", rarity: "Legendary", desc: "One with the darkness. (+5 DEX, Life Drain)", stats: { dex: 5 }, combatAbility: 'shadow_drain' },
+    { name: "Stormbringer", rarity: "Legendary", desc: "Lightning courses through your veins. (+2 INT, +2 DEX, Lightning Bolt)", stats: { int: 2, dex: 2 }, combatAbility: 'lightning_bolt' },
+    { name: "Vampiric Grace", rarity: "Legendary", desc: "Ageless and predatory. (+3 DEX, +3 CHA, Life Drain)", stats: { dex: 3, cha: 3 }, combatAbility: 'shadow_drain' },
 
     // ===== DEFECTS (Inbreeding/Bad Luck) =====
     { name: "Habsburg Jaw", rarity: "Defect", desc: "A painfully prominent underbite. (-2 CHA)", stats: { cha: -2 } },
@@ -2600,7 +2607,7 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             tiers: [
                 { title: "Thug", hp: 12, ac: 11, atk: 3, dmg: 5, xp: 15, gold: 5 },
                 { title: "Highwayman", hp: 22, ac: 13, atk: 5, dmg: 7, xp: 40, gold: 15 },
-                { title: "Bandit King", hp: 50, ac: 15, atk: 7, dmg: 10, xp: 150, gold: 100 }
+                { title: "Bandit Boss", hp: 50, ac: 15, atk: 7, dmg: 10, xp: 150, gold: 100 }
             ],
             skills: ["Dirty Fighting", "Intimidate"]
         },
@@ -2612,6 +2619,15 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 { title: "Dire Wolf", hp: 45, ac: 14, atk: 7, dmg: 10, xp: 120, gold: 0 }
             ],
             skills: ["Pack Tactics", "Howl"]
+        },
+        'bear': {
+            name: "Bear", icon: "🐻",
+            tiers: [
+                { title: "Black Bear", hp: 25, ac: 12, atk: 4, dmg: 6, xp: 50, gold: 0 },
+                { title: "Grizzly Bear", hp: 45, ac: 13, atk: 6, dmg: 9, xp: 150, gold: 0 },
+                { title: "Dire Bear", hp: 80, ac: 15, atk: 8, dmg: 12, xp: 400, gold: 0 }
+            ],
+            skills: ["Maul", "Roar"]
         },
         'troll': {
             name: "Troll", icon: "🧟",
@@ -2689,6 +2705,7 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
         turn: 'player', 
         callbacks: { onWin: null, onLose: null },
         modifiers: { playerDefending: false },
+        menuState: 'main', // NEW: Navigation State
 
         flavorText: {
             playerHit: ["You lunge forward with a precision strike!", "Your blade finds a gap in their guard!", "A solid hit! The enemy winces in pain.", "You drive your weapon home!"],
@@ -2699,14 +2716,11 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
 
         // NEW: Dynamic Enemy Generator
         generateEnemy: function(tier) {
-            // Updated to use BESTIARY for variety if tier is simple number
             const types = ['bandit', 'wolf', 'goblin'];
             const type = types[Math.floor(Math.random() * types.length)];
-            // Map generic tier 1-10 to Bestiary Tiers 0-2 and Quality
             const bTier = Math.min(2, Math.floor(tier / 3));
             let quality = 'Standard';
             if (tier % 3 === 2) quality = 'Elite';
-            
             return generateCreature(type, bTier, quality);
         },
 
@@ -2714,14 +2728,13 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             this.active = true;
             this.round = 1;
             this.turn = 'player';
+            this.menuState = 'main'; // Reset menu
             this.callbacks = { onWin, onLose };
             this.logHistory = [];
             this.modifiers = { playerDefending: false, enemyStunned: false };
 
             const pArmor = getPlayerArmor();
             
-            // --- WEAPON LOGIC UPDATE ---
-            // Check equipped main hand, fallback to Unarmed
             let weapon = WEAPON_LIBRARY.unarmed;
             if (state.equipped.mainHand && state.equipped.mainHand.weapon) {
                 weapon = state.equipped.mainHand.weapon;
@@ -2730,16 +2743,14 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             const pStr = getModifier(state.stats.str);
             const pDex = getModifier(state.stats.dex);
             
-            // Determine Hit/Dmg Mod based on weapon type
-            let combatMod = pStr; // Default Strength
+            let combatMod = pStr;
             if (weapon.type === 'finesse') {
-                combatMod = Math.max(pStr, pDex); // Finesse uses higher of STR/DEX
+                combatMod = Math.max(pStr, pDex);
             }
 
             const atkBonus = combatMod;
             const dmgBonus = combatMod;
 
-            // Check for Mutation Armor (Scales)
             let natArmor = 0;
             if (state.appearance.mutations) {
                 state.appearance.mutations.forEach(m => {
@@ -2754,11 +2765,10 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 ac: 10 + pDex + pArmor + natArmor,
                 atk: atkBonus,
                 dmgMod: dmgBonus,
-                dmgDie: weapon.dmg, // Use weapon die (e.g. 8 for d8)
+                dmgDie: weapon.dmg,
                 weaponName: weapon.name
             };
 
-            // Support both Manual Object and Tier Integer
             if (typeof enemyData === 'number') {
                 this.enemy = this.generateEnemy(enemyData);
             } else {
@@ -2777,7 +2787,7 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             }
 
             document.getElementById('combat-modal').classList.remove('hidden');
-            document.getElementById('combat-log-area').innerHTML = ""; // Clear log
+            document.getElementById('combat-log-area').innerHTML = ""; 
             this.log(`<strong>Battle Commences!</strong> You face ${this.enemy.name}.`);
             this.log(`<em>Wielding: ${this.player.weaponName} (1d${this.player.dmgDie}${formatMod(this.player.dmgMod)})</em>`, 'miss');
             
@@ -2785,49 +2795,135 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             this.render();
         },
 
-        // New Helper to switch control schemes
+        // NEW: Navigation
+        navigate: function(menu) {
+            this.menuState = menu;
+            this.renderControls('combat');
+        },
+
+        // NEW: Item Usage Logic
+        useCombatItem: function(idx) {
+            const item = state.inventory[idx];
+            if (!item) return;
+
+            // Logic replicated from useItem but adapted for combat loop
+            let used = false;
+            
+            if (item.effect) {
+                if (item.effect.hp) {
+                    this.player.hp = Math.min(this.player.maxHp, this.player.hp + item.effect.hp);
+                    state.health = this.player.hp;
+                    this.log(`You used <strong>${item.name}</strong>. (+${item.effect.hp} HP)`, 'heal');
+                    used = true;
+                }
+                if (item.effect.sp) {
+                    modSanity(item.effect.sp); // Updates global state directly
+                    this.log(`You used <strong>${item.name}</strong>. (+${item.effect.sp} SP)`, 'heal');
+                    used = true;
+                }
+            }
+
+            if (used) {
+                state.inventory.splice(idx, 1); // Remove item
+                // Pass turn
+                if (this.active) {
+                    this.turn = 'enemy';
+                    this.render();
+                    // Reset to main menu for next turn
+                    this.menuState = 'main'; 
+                    this.renderControls('combat');
+                    setTimeout(() => this.enemyTurn(), 800);
+                }
+            } else {
+                this.log("That item has no combat effect.", 'miss');
+            }
+        },
+
         renderControls: function(mode) {
             const controls = document.getElementById('combat-controls');
+            controls.innerHTML = ''; 
+
             if (mode === 'combat') {
-                // Standard Controls
-                let abilityBtn = '';
-                const mutations = state.appearance.mutations || [];
-                
-                // SKILL BUTTONS
-                let skillBtns = '';
-                if (state.combatSkills.includes('precision_strike')) {
-                    skillBtns += `<button onclick="CombatEngine.playerAction('precision_strike')" class="choice-btn justify-center bg-sky-900 text-white border-sky-950 hover:bg-sky-800 text-sm">🎯 Precision</button>`;
-                }
-                if (state.combatSkills.includes('shield_bash')) {
-                    skillBtns += `<button onclick="CombatEngine.playerAction('shield_bash')" class="choice-btn justify-center bg-stone-700 text-white border-stone-900 hover:bg-stone-600 text-sm">🛡️ Bash</button>`;
-                }
+                if (this.menuState === 'main') {
+                    // MAIN MENU STRUCTURE
+                    controls.className = "grid grid-cols-3 gap-2 pt-2 border-t-2 border-red-900/30";
+                    controls.innerHTML = `
+                        <button onclick="CombatEngine.navigate('fight')" class="choice-btn justify-center bg-red-900 text-white border-red-950 hover:bg-red-800 text-lg font-bold">⚔️ Fight</button>
+                        <button onclick="CombatEngine.navigate('satchel')" class="choice-btn justify-center bg-amber-700 text-white border-amber-900 hover:bg-amber-600 text-lg font-bold">🎒 Satchel</button>
+                        <button onclick="CombatEngine.playerAction('flee')" class="choice-btn justify-center opacity-80 hover:opacity-100 text-lg">🏃 Flee</button>
+                    `;
+                } 
+                else if (this.menuState === 'fight') {
+                    // FIGHT SUB-MENU
+                    controls.className = "grid grid-cols-2 gap-2 pt-2 border-t-2 border-red-900/30";
+                    
+                    let html = `<button onclick="CombatEngine.navigate('main')" class="choice-btn justify-center bg-gray-600 text-white text-xs col-span-2 py-1 h-8 min-h-0">↩ Back</button>`;
+                    
+                    // Basic Actions
+                    html += `<button onclick="CombatEngine.playerAction('attack')" class="choice-btn justify-center bg-red-900 text-white border-red-950 hover:bg-red-800 text-lg">⚔️ Strike</button>`;
+                    html += `<button onclick="CombatEngine.playerAction('defend')" class="choice-btn justify-center bg-blue-900 text-white border-blue-950 hover:bg-blue-800">🛡️ Defend</button>`;
 
-                // PSYCHIC ABILITY CHECK
-                if (mutations.some(m => m.combatAbility === 'psychic')) {
-                    abilityBtn += `<button onclick="CombatEngine.playerAction('psychic')" class="choice-btn justify-center bg-purple-900 text-white border-purple-950 hover:bg-purple-800 col-span-2 mt-1">🔮 Psychic Blast</button>`;
-                }
-                
-                // FIRE BREATH CHECK
-                if (mutations.some(m => m.combatAbility === 'firebreath')) {
-                    abilityBtn += `<button onclick="CombatEngine.playerAction('firebreath')" class="choice-btn justify-center bg-orange-700 text-white border-orange-900 hover:bg-orange-600 col-span-2 mt-1">🔥 Fire Breath</button>`;
-                }
+                    // Skills
+                    if (state.combatSkills.includes('precision_strike')) {
+                        html += `<button onclick="CombatEngine.playerAction('precision_strike')" class="choice-btn justify-center bg-sky-900 text-white border-sky-950 hover:bg-sky-800 text-sm">🎯 Precision</button>`;
+                    }
+                    if (state.combatSkills.includes('shield_bash')) {
+                        html += `<button onclick="CombatEngine.playerAction('shield_bash')" class="choice-btn justify-center bg-stone-700 text-white border-stone-900 hover:bg-stone-600 text-sm">🛡️ Bash</button>`;
+                    }
 
-                controls.innerHTML = `
-                    <button onclick="CombatEngine.playerAction('attack')" class="choice-btn justify-center bg-red-900 text-white border-red-950 hover:bg-red-800 text-lg">⚔️ Attack</button>
-                    <button onclick="CombatEngine.playerAction('defend')" class="choice-btn justify-center bg-blue-900 text-white border-blue-950 hover:bg-blue-800">🛡️ Defend</button>
-                    ${skillBtns}
-                    <button onclick="CombatEngine.playerAction('item')" class="choice-btn justify-center">🎒 Item</button>
-                    <button onclick="CombatEngine.playerAction('flee')" class="choice-btn justify-center opacity-80 hover:opacity-100">🏃 Flee</button>
-                    ${abilityBtn}
-                `;
+                    // Mutations
+                    const mutations = state.appearance.mutations || [];
+                    if (mutations.some(m => m.combatAbility === 'psychic')) {
+                        html += `<button onclick="CombatEngine.playerAction('psychic')" class="choice-btn justify-center bg-purple-900 text-white border-purple-950 hover:bg-purple-800 text-sm">🔮 Psychic Blast</button>`;
+                    }
+                    if (mutations.some(m => m.combatAbility === 'firebreath')) {
+                        html += `<button onclick="CombatEngine.playerAction('firebreath')" class="choice-btn justify-center bg-orange-700 text-white border-orange-900 hover:bg-orange-600 text-sm">🔥 Fire Breath</button>`;
+                    }
+                    if (mutations.some(m => m.combatAbility === 'titan_smash')) {
+                        html += `<button onclick="CombatEngine.playerAction('titan_smash')" class="choice-btn justify-center bg-stone-800 text-white border-stone-950 hover:bg-stone-700 text-sm">✊ Titan Smash</button>`;
+                    }
+                    if (mutations.some(m => m.combatAbility === 'shadow_drain')) {
+                        html += `<button onclick="CombatEngine.playerAction('shadow_drain')" class="choice-btn justify-center bg-gray-900 text-red-300 border-gray-950 hover:bg-black text-sm">🩸 Life Drain</button>`;
+                    }
+                    if (mutations.some(m => m.combatAbility === 'lightning_bolt')) {
+                        html += `<button onclick="CombatEngine.playerAction('lightning_bolt')" class="choice-btn justify-center bg-yellow-700 text-white border-yellow-900 hover:bg-yellow-600 text-sm">⚡ Lightning</button>`;
+                    }
+                    if (mutations.some(m => m.combatAbility === 'poison_spit')) {
+                        html += `<button onclick="CombatEngine.playerAction('poison_spit')" class="choice-btn justify-center bg-green-900 text-green-100 border-green-950 hover:bg-green-800 text-sm">🤢 Poison Spit</button>`;
+                    }
+                    controls.innerHTML = html;
+                }
+                else if (this.menuState === 'satchel') {
+                    // SATCHEL SUB-MENU
+                    controls.className = "grid grid-cols-2 gap-2 pt-2 border-t-2 border-red-900/30 max-h-32 overflow-y-auto";
+                    
+                    let html = `<button onclick="CombatEngine.navigate('main')" class="choice-btn justify-center bg-gray-600 text-white text-xs col-span-2 py-1 h-8 min-h-0 sticky top-0 z-10">↩ Back</button>`;
+                    
+                    // Filter Usable Items
+                    const consumables = state.inventory
+                        .map((item, idx) => ({ ...item, idx }))
+                        .filter(i => i.effect && (i.effect.hp || i.effect.sp));
+
+                    if (consumables.length === 0) {
+                        html += `<div class="col-span-2 text-center italic opacity-50 text-sm p-2">Empty.</div>`;
+                    } else {
+                        consumables.forEach(item => {
+                            html += `<button onclick="CombatEngine.useCombatItem(${item.idx})" class="choice-btn justify-center text-xs flex flex-col items-center p-1 h-auto bg-amber-50 border-amber-200 text-amber-900 hover:bg-amber-100">
+                                <span class="font-bold">${item.name}</span>
+                                <span class="text-[9px] opacity-70">${item.desc}</span>
+                            </button>`;
+                        });
+                    }
+                    controls.innerHTML = html;
+                }
             } else if (mode === 'victory') {
-                // Victory Phase Controls
+                controls.className = "grid grid-cols-2 gap-3 pt-2 border-t-2 border-red-900/30";
                 controls.innerHTML = `
                     <button onclick="CombatEngine.resolveVictory('finish')" class="choice-btn justify-center bg-red-900 text-white border-red-950 hover:bg-red-800 text-lg col-span-2">☠️ Finish Them (Loot & Glory)</button>
                     <button onclick="CombatEngine.resolveVictory('mercy')" class="choice-btn justify-center bg-blue-900 text-white border-blue-950 hover:bg-blue-800 text-lg col-span-2">🕊️ Show Mercy (Honor)</button>
                 `;
             } else if (mode === 'defeat') {
-                // Defeat Phase Controls
+                controls.className = "grid grid-cols-2 gap-3 pt-2 border-t-2 border-red-900/30";
                 controls.innerHTML = `
                     <button onclick="CombatEngine.resolveDefeat('honor')" class="choice-btn justify-center bg-red-900 text-white border-red-950 hover:bg-red-800 text-lg col-span-2">⚔️ Die with Honor</button>
                     <button onclick="CombatEngine.resolveDefeat('beg')" class="choice-btn justify-center bg-amber-700 text-white border-amber-900 text-lg">🙏 Beg for Mercy (CHA)</button>
@@ -2849,14 +2945,12 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
         },
 
         render: function() {
-            // Player Updates
             document.getElementById('combat-player-name').innerText = this.player.name;
             const ppct = (this.player.hp / this.player.maxHp) * 100;
             document.getElementById('combat-player-hp-bar').style.width = `${Math.max(0, ppct)}%`;
             document.getElementById('combat-player-hp-text').innerText = `${Math.ceil(this.player.hp)} / ${this.player.maxHp}`;
             document.getElementById('combat-player-stats').innerText = `AC: ${this.player.ac} | ATK: +${this.player.atk}`;
 
-            // Enemy Updates
             document.getElementById('combat-enemy-name').innerText = this.enemy.name;
             const epct = (this.enemy.hp / this.enemy.maxHp) * 100;
             document.getElementById('combat-enemy-hp-bar').style.width = `${Math.max(0, epct)}%`;
@@ -2865,9 +2959,8 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
 
             document.getElementById('combat-round').innerText = `Round ${this.round}`;
 
-            // Disable buttons if not player turn
-            // Note: We don't disable during resolution phases, handled by custom render
             if (this.active) {
+                // Disable controls during enemy turn
                 const btns = document.querySelectorAll('#combat-controls button');
                 btns.forEach(b => b.disabled = (this.turn !== 'player'));
             }
@@ -2902,47 +2995,69 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 this.render();
                 if (this.enemy.hp <= 0) { this.triggerPhase('victory'); return; }
             } else if (action === 'psychic') {
-                // Psychic Blast Logic
                 const wisMod = getModifier(state.stats.wis);
-                const dmg = Math.floor(Math.random() * 8) + 4 + wisMod; // 1d8 + 4 + WIS
-                
+                const dmg = Math.floor(Math.random() * 8) + 4 + wisMod; 
                 this.log(`<strong>${this.player.name}</strong> unleashes a wave of mental energy!`, 'crit');
-                document.getElementById('combat-enemy').classList.add('anim-shake'); // Corrected ID
+                document.getElementById('combat-enemy').classList.add('anim-shake');
                 setTimeout(() => document.getElementById('combat-enemy').classList.remove('anim-shake'), 300);
-                
                 this.enemy.hp -= dmg;
                 this.log(`The psychic blast strikes the enemy's mind for <strong>${dmg} DMG</strong>!`, 'hit');
-                
                 this.render();
-                
-                if (this.enemy.hp <= 0) {
-                    this.triggerPhase('victory');
-                    return;
-                }
+                if (this.enemy.hp <= 0) { this.triggerPhase('victory'); return; }
             } else if (action === 'firebreath') {
-                // Fire Breath Logic
                 const conMod = getModifier(state.stats.con);
-                const dmg = Math.floor(Math.random() * 10) + 5 + conMod; // 1d10 + 5 + CON
-                
+                const dmg = Math.floor(Math.random() * 10) + 5 + conMod;
                 this.log(`<strong>${this.player.name}</strong> exhales a torrent of searing flames!`, 'crit');
                 document.getElementById('combat-enemy').classList.add('anim-shake');
                 setTimeout(() => document.getElementById('combat-enemy').classList.remove('anim-shake'), 300);
-                
                 this.enemy.hp -= dmg;
                 this.log(`The fire engulfs the enemy for <strong>${dmg} DMG</strong>!`, 'hit');
-                
                 this.render();
-                
-                if (this.enemy.hp <= 0) {
-                    this.triggerPhase('victory');
-                    return;
-                }
+                if (this.enemy.hp <= 0) { this.triggerPhase('victory'); return; }
+            } else if (action === 'titan_smash') {
+                const strMod = getModifier(state.stats.str);
+                const dmg = Math.floor(Math.random() * 12) + 6 + (strMod * 2);
+                this.log(`<strong>${this.player.name}</strong> brings down a fist like a falling mountain!`, 'crit');
+                document.getElementById('combat-enemy').classList.add('anim-shake');
+                setTimeout(() => document.getElementById('combat-enemy').classList.remove('anim-shake'), 400);
+                this.enemy.hp -= dmg;
+                this.modifiers.enemyStunned = true; // Stun effect
+                this.log(`The earth shakes! <strong>${dmg} DMG</strong> and the enemy is Staggered!`, 'hit');
+                this.render();
+                if (this.enemy.hp <= 0) { this.triggerPhase('victory'); return; }
+            } else if (action === 'shadow_drain') {
+                const dexMod = getModifier(state.stats.dex);
+                const dmg = Math.floor(Math.random() * 6) + 4 + dexMod;
+                this.enemy.hp -= dmg;
+                const healAmt = Math.ceil(dmg / 2);
+                this.player.hp = Math.min(this.player.maxHp, this.player.hp + healAmt);
+                state.health = this.player.hp; // Sync global
+                this.log(`<strong>${this.player.name}</strong> siphons the enemy's life force!`, 'crit');
+                this.log(`Drained <strong>${dmg} HP</strong> and healed <strong>${healAmt} HP</strong>!`, 'heal');
+                this.render();
+                if (this.enemy.hp <= 0) { this.triggerPhase('victory'); return; }
+            } else if (action === 'lightning_bolt') {
+                const intMod = getModifier(state.stats.int);
+                const dmg = Math.floor(Math.random() * 20) + intMod; // High variance
+                this.log(`<strong>${this.player.name}</strong> calls down a bolt from the heavens!`, 'crit');
+                this.enemy.hp -= dmg;
+                this.log(`<strong>CRACK-BOOM!</strong> The bolt chars the enemy for <strong>${dmg} DMG</strong>!`, 'hit');
+                this.render();
+                if (this.enemy.hp <= 0) { this.triggerPhase('victory'); return; }
+            } else if (action === 'poison_spit') {
+                const conMod = getModifier(state.stats.con);
+                const dmg = Math.floor(Math.random() * 6) + 2 + conMod;
+                this.log(`<strong>${this.player.name}</strong> spits a glob of corrosive venom!`, 'crit');
+                this.enemy.hp -= dmg;
+                // Reduce Enemy AC temporarily? Simplified for now just dmg
+                this.log(`The venom burns the enemy's flesh for <strong>${dmg} DMG</strong>!`, 'hit');
+                this.render();
+                if (this.enemy.hp <= 0) { this.triggerPhase('victory'); return; }
             } else if (action === 'flee') {
                 const roll = Math.floor(Math.random() * 20) + 1;
                 const bonus = getModifier(state.stats.dex);
                 const total = roll + bonus;
                 const dc = 10 + Math.floor(this.enemy.atk / 2);
-                
                 this.log(`<em>Escape Roll: ${roll} + ${bonus} = ${total} (vs DC ${dc})</em>`);
                 if (total >= dc) {
                     this.log("You successfully retreat from the fray!", 'heal');
@@ -2951,22 +3066,14 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 } else {
                     this.log("The enemy blocks your path! You're cornered.", 'miss');
                 }
-            } else if (action === 'item') {
-                const potIdx = state.inventory.findIndex(i => i.name.toLowerCase().includes("potion") || i.name.toLowerCase().includes("salve"));
-                if (potIdx !== -1) {
-                    const item = state.inventory[potIdx];
-                    useItem(potIdx);
-                    this.player.hp = state.health; // Sync health
-                    this.log(`You quickly consume <strong>${item.name}</strong>.`, 'heal');
-                } else {
-                    this.log("You fumble for a potion but find none!", 'miss');
-                    return; 
-                }
             }
 
             if (this.active) {
                 this.turn = 'enemy';
                 this.render();
+                // Reset menu for next turn
+                this.menuState = 'main'; 
+                this.renderControls('combat');
                 setTimeout(() => this.enemyTurn(), 800);
             }
         },
@@ -2981,7 +3088,6 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 await this.performAttack(this.enemy, this.player, false);
             }
 
-            // Phase trigger handled inside performAttack
             if (this.player.hp > 0 && this.active) {
                 this.round++;
                 this.modifiers.playerDefending = false; 
@@ -2994,7 +3100,6 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             const divId = isPlayer ? 'combat-player' : 'combat-enemy';
             const targetId = isPlayer ? 'combat-enemy' : 'combat-player';
             
-            // Visual Lunge
             const div = document.getElementById(divId);
             if(div) {
                 div.style.transform = isPlayer ? 'translateX(20px)' : 'translateX(-20px)';
@@ -3012,12 +3117,9 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             const isFumble = d20 === 1;
             const isHit = (total >= targetAC || isCrit) && !isFumble;
 
-            // Roll Reporting
             this.log(`<em>${attacker.name} rolls: ${d20} + ${hitMod} = ${total} (vs AC ${targetAC})</em>`);
 
             if (isHit) {
-                // UPDATED DAMAGE CALCULATION
-                // Use attacker.dmgDie if available (Player), else fall back to 'dmg' property (Enemy)
                 const dieSize = attacker.dmgDie || attacker.dmg || 4; 
                 let baseDmg = Math.floor(Math.random() * dieSize) + 1;
                 
@@ -3032,7 +3134,6 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                     updateUI();
                 }
 
-                // Shake Target
                 const targetDiv = document.getElementById(targetId);
                 if(targetDiv) {
                     targetDiv.style.transform = `translate(${Math.random()*10-5}px, ${Math.random()*10-5}px)`;
@@ -3053,11 +3154,9 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
 
             if (defender.hp <= 0) {
                 if (isPlayer) {
-                    // Player won, trigger Victory Phase
                     await new Promise(r => setTimeout(r, 800));
                     this.triggerPhase('victory');
                 } else {
-                    // Enemy won (Player died), trigger Defeat Phase
                     await new Promise(r => setTimeout(r, 800));
                     this.triggerPhase('defeat');
                 }
@@ -3065,7 +3164,7 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
         },
 
         triggerPhase: function(phase) {
-            this.active = false; // Stop turns
+            this.active = false; 
             if (phase === 'victory') {
                 this.log(`<strong>${this.enemy.name}</strong> falls to their knees! Their fate is in your hands.`, 'crit');
                 this.renderControls('victory');
@@ -3095,7 +3194,7 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 setTimeout(() => this.endCombat(false, false), 1000);
             } else if (choice === 'beg') {
                 const cha = getModifier(state.stats.cha);
-                const dc = 12; // Base DC
+                const dc = 12; 
                 const roll = Math.floor(Math.random()*20)+1 + cha;
                 this.log(`Begging (CHA): ${roll} vs DC ${dc}`);
                 
@@ -3103,8 +3202,8 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                     this.log(`The enemy spits on you but leaves you alive. You lose your dignity.`, 'miss');
                     modRep('renown', -20);
                     modRep('infamy', 10);
-                    state.health = 1; // Survive with 1 HP
-                    this.endCombat(false, true); // Treat as fleeing
+                    state.health = 1; 
+                    this.endCombat(false, true); 
                 } else {
                     this.log(`They laugh and strike.`, 'hit');
                     setTimeout(() => this.endCombat(false, false), 1000);
@@ -3117,9 +3216,9 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 
                 if (roll >= dc) {
                     this.log(`You drag yourself into the shadows.`, 'heal');
-                    state.health = 1; // Survive with 1 HP
+                    state.health = 1; 
                     addTrait('Limp'); 
-                    this.endCombat(false, true); // Treat as fleeing
+                    this.endCombat(false, true); 
                 } else {
                     this.log(`You are caught.`, 'hit');
                     setTimeout(() => this.endCombat(false, false), 1000);
@@ -3134,7 +3233,6 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             if (fled) {
                 log("You live to fight another day.");
             } else if (victory) {
-                // Rewards handled in resolveVictory now
                 if (this.callbacks.onWin) this.callbacks.onWin();
             } else {
                 log(`<strong style="color:red">DEFEAT!</strong> You fell in battle.`);
@@ -3742,7 +3840,7 @@ Elder: [
             createEvent('canon_goblin', 'The Goblin Raid', 'Screeches echo in the night. Goblins are raiding the granary!', [
                 { 
                     text: 'Slay them all (Combat)', type: 'combat', 
-                    enemy: { name: 'Goblin Raiders', hp: 12, ac: 11, atk: 2, dmg: 4 },
+                    enemy: generateCreature('goblin', 1),
                     success: 'Green blood soaks the earth. You stand victorious.', 
                     fail: 'They swarm you. You are dragged away injured.', 
                     onSuccess: () => { addHonorific('Goblin-Slayer'); modRep('renown', 20); state.gold+=50; }, 
@@ -3755,7 +3853,7 @@ Elder: [
             createEvent('canon_troll', 'The Bridge Troll', 'A massive troll demands a toll to cross the river.', [
                 { 
                     text: 'Fight (Combat)', type: 'combat', 
-                    enemy: { name: 'River Troll', hp: 30, ac: 13, atk: 4, dmg: 8 },
+                    enemy: generateCreature('troll', 0),
                     success: 'You chopped off its head!', 
                     fail: 'It smashed you into the mud.', 
                     onSuccess: () => { addHonorific('Trollsbane'); modRep('renown', 30); }, 
@@ -3768,7 +3866,7 @@ Elder: [
                     onSuccess: () => { addHonorific('Silver-Tongue'); }, 
                     onFail: () => {
                         CombatEngine.start(
-                            { name: 'Enraged Troll', hp: 40, ac: 14, atk: 5, dmg: 10 },
+                            generateCreature('troll', 0, 'Elite'),
                             () => { log("You survived the enraged beast!"); addHonorific('Trollsbane'); },
                             () => { log("The troll feasted upon your bones."); }
                         );
@@ -3790,6 +3888,14 @@ Elder: [
             ]),
 
             createEvent('canon_bear', 'The Great Bear', 'A bear the size of a wagon attacks the camp.', [
+                { 
+                    text: 'Fight (Combat)', type: 'combat', 
+                    enemy: generateCreature('bear', 2), // Dire Bear
+                    success: 'You slew the beast!', 
+                    fail: 'It mauled you.', 
+                    onSuccess: () => { addHonorific('Bear-Slayer'); modRep('renown', 30); }, 
+                    onFail: () => takeDamage(10) 
+                },
                 { text: 'Wrestle (STR)', type: 'check', stat: 'str', dc: 18, success: 'You pinned the bear!', fail: 'It mauled you.', onSuccess: () => { addHonorific('Bear-Wrestler'); modRep('renown', 40); }, onFail: () => takeDamage(15) },
                 { text: 'Shoot (DEX)', type: 'check', stat: 'dex', dc: 14, success: 'Clean shot between the eyes.', fail: 'You missed.', onSuccess: () => { addHonorific('Deadeye'); state.gold+=20; }, onFail: () => takeDamage(10) },
                 { text: 'Play Dead', type: 'check', stat: 'con', dc: 12, success: 'It sniffed you and left.', fail: 'It took a bite.', onSuccess: () => { addHonorific('The Survivor'); }, onFail: () => takeDamage(8) }
@@ -3801,10 +3907,10 @@ Elder: [
                 { text: 'Endure', type: 'flavor', effect: () => { log("It wears off in a year."); } }
             ]),
 
-            createEvent('canon_bandit', 'The Bandit King', 'The notorious Bandit King challenges you to a duel.', [
+            createEvent('canon_bandit', 'The Bandit Boss', 'The notorious Bandit Boss challenges you to a duel.', [
                 { 
                     text: 'Accept Duel (Combat)', type: 'combat', 
-                    enemy: { name: 'Bandit King', hp: 25, ac: 14, atk: 5, dmg: 6 },
+                    enemy: generateCreature('bandit', 2), // Boss
                     success: 'You ended his reign of terror.', 
                     fail: 'He thrashed you and took your gold.', 
                     onSuccess: () => { addHonorific('Justicar'); state.gold+=100; modRep('honor', 30); }, 
@@ -9357,6 +9463,7 @@ Elder: [
             const lootedClass = r.graveRobbed ? "opacity-50 grayscale" : "";
             const lootedText = r.graveRobbed ? `<span class="text-red-800 font-bold block mt-2 text-xs">DESECRATED</span>` : "";
             const hasInteracted = state.interactions[r.id];
+            const cause = r.deathCause || "passed away";
             
             return `
             <div class="grave-card ${lootedClass}">
@@ -9365,6 +9472,7 @@ Elder: [
                     <div class="font-bold text-xs uppercase">${r.name}</div>
                     <div class="text-[10px] italic">${r.relation}</div>
                     <div class="text-[10px] mt-1">Died Age ${r.age}</div>
+                    <div class="text-[9px] opacity-80 italic mt-1 px-2 leading-tight">${cause}</div>
                 </div>
                 ${lootedText}
                 <div class="flex justify-center gap-2 mt-4">
