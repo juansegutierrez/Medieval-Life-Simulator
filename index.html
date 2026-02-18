@@ -1007,8 +1007,8 @@
             <p class="text-xs opacity-70 font-bold text-amber-900" id="display-class">Commoner</p>
         </div>
         <div class="text-center flex flex-col justify-center">
-            <span id="header-hp" class="text-red-900 font-bold text-lg drop-shadow-md" title="Health Points">10/10 HP</span>
-            <span id="header-sp" class="text-purple-800 font-bold text-xs drop-shadow-md" title="Sanity Points">8/8 SP</span>
+            <span id="header-hp" class="text-red-900 font-bold text-lg drop-shadow-md" title="Health Points">10/10 Health Points</span>
+            <span id="header-sp" class="text-purple-800 font-bold text-xs drop-shadow-md" title="Sanity Points">8/8 Sanity Points</span>
         </div>
         <div class="text-right">
             <h2 class="text-2xl font-bold text-amber-900" id="year-display">Year 0</h2>
@@ -2584,6 +2584,102 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
     
     // (WEAPON LIBRARY REMOVED - MOVED UP TO TOP)
 
+    /* --- ARCANE BESTIARY & MONSTER MANUAL --- */
+    const BESTIARY = {
+        'goblin': {
+            name: "Goblin", icon: "👺",
+            tiers: [
+                { title: "Scavenger", hp: 8, ac: 12, atk: 2, dmg: 4, xp: 10, gold: 2 },
+                { title: "Raider", hp: 15, ac: 13, atk: 4, dmg: 6, xp: 25, gold: 5 },
+                { title: "Warlord", hp: 35, ac: 15, atk: 6, dmg: 8, xp: 100, gold: 30 }
+            ],
+            skills: ["Ambush", "Pack Tactics"]
+        },
+        'bandit': {
+            name: "Bandit", icon: "🥷",
+            tiers: [
+                { title: "Thug", hp: 12, ac: 11, atk: 3, dmg: 5, xp: 15, gold: 5 },
+                { title: "Highwayman", hp: 22, ac: 13, atk: 5, dmg: 7, xp: 40, gold: 15 },
+                { title: "Bandit King", hp: 50, ac: 15, atk: 7, dmg: 10, xp: 150, gold: 100 }
+            ],
+            skills: ["Dirty Fighting", "Intimidate"]
+        },
+        'wolf': {
+            name: "Wolf", icon: "🐺",
+            tiers: [
+                { title: "Stray", hp: 10, ac: 12, atk: 3, dmg: 4, xp: 10, gold: 0 },
+                { title: "Timber Wolf", hp: 20, ac: 13, atk: 5, dmg: 6, xp: 30, gold: 0 },
+                { title: "Dire Wolf", hp: 45, ac: 14, atk: 7, dmg: 10, xp: 120, gold: 0 }
+            ],
+            skills: ["Pack Tactics", "Howl"]
+        },
+        'troll': {
+            name: "Troll", icon: "🧟",
+            tiers: [
+                { title: "River Troll", hp: 30, ac: 13, atk: 5, dmg: 8, xp: 100, gold: 10 },
+                { title: "Cave Troll", hp: 60, ac: 15, atk: 7, dmg: 12, xp: 300, gold: 40 },
+                { title: "Mountain Troll", hp: 100, ac: 17, atk: 9, dmg: 16, xp: 1000, gold: 200 }
+            ],
+            skills: ["Regeneration", "Crush"]
+        },
+        'knight': {
+            name: "Knight", icon: "🛡️",
+            tiers: [
+                { title: "Hedge Knight", hp: 25, ac: 15, atk: 4, dmg: 7, xp: 100, gold: 20 },
+                { title: "Sworn Sword", hp: 50, ac: 17, atk: 6, dmg: 9, xp: 300, gold: 60 },
+                { title: "Champion", hp: 90, ac: 19, atk: 9, dmg: 12, xp: 1000, gold: 250 }
+            ],
+            skills: ["Parry", "Riposte", "Honor"]
+        }
+    };
+
+    const QUALITY_MODS = {
+        'Poor': { hp: 0.8, atk: -1, prefix: "Starving" },
+        'Standard': { hp: 1.0, atk: 0, prefix: "" },
+        'Elite': { hp: 1.2, atk: +1, prefix: "Veteran" },
+        'Legendary': { hp: 1.5, atk: +2, prefix: "Legendary" }
+    };
+
+    function generateCreature(key, tierIndex = 0, quality = 'Standard') {
+        const template = BESTIARY[key];
+        if (!template) {
+            console.error("Creature key not found:", key);
+            return null;
+        }
+        
+        // Tier Clamp
+        tierIndex = Math.max(0, Math.min(tierIndex, template.tiers.length - 1));
+        const tierData = template.tiers[tierIndex];
+        const qMod = QUALITY_MODS[quality] || QUALITY_MODS['Standard'];
+
+        // Generate final stats
+        const maxHp = Math.floor(tierData.hp * qMod.hp);
+        const finalAtk = tierData.atk + qMod.atk;
+        const name = qMod.prefix ? `${qMod.prefix} ${tierData.title}` : tierData.title;
+
+        // Flavor name generation for Knights/Bandits
+        let displayName = name;
+        if (key === 'knight' || key === 'bandit') {
+            const gender = Math.random() > 0.5 ? 'Male' : 'Female';
+            const rndName = getRandomName(gender);
+            displayName = `${name} ${rndName}`;
+        }
+
+        return {
+            id: `enemy_${key}_${Date.now()}_${Math.random()}`,
+            name: displayName,
+            maxHp: maxHp,
+            hp: maxHp,
+            ac: tierData.ac,
+            atk: finalAtk,
+            dmg: tierData.dmg,
+            icon: template.icon,
+            gold: Math.floor(tierData.gold * qMod.hp),
+            xp: Math.floor(tierData.xp * qMod.hp),
+            skills: template.skills
+        };
+    }
+
     const CombatEngine = {
         active: false,
         player: null,
@@ -2603,43 +2699,15 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
 
         // NEW: Dynamic Enemy Generator
         generateEnemy: function(tier) {
-            const types = ['Bandit', 'Wolf', 'Guard', 'Mercenary', 'Cultist', 'Knight', 'Berserker', 'Assassin'];
+            // Updated to use BESTIARY for variety if tier is simple number
+            const types = ['bandit', 'wolf', 'goblin'];
             const type = types[Math.floor(Math.random() * types.length)];
+            // Map generic tier 1-10 to Bestiary Tiers 0-2 and Quality
+            const bTier = Math.min(2, Math.floor(tier / 3));
+            let quality = 'Standard';
+            if (tier % 3 === 2) quality = 'Elite';
             
-            // Base Stats (8 + random + tier)
-            const rollStat = () => 8 + Math.floor(Math.random() * 6) + tier;
-            const str = rollStat();
-            const dex = rollStat();
-            const con = rollStat();
-            
-            const strMod = Math.floor((str - 10) / 2);
-            const dexMod = Math.floor((dex - 10) / 2);
-            const conMod = Math.floor((con - 10) / 2);
-            
-            // HP: Base 10 + (Tier * 5) + ConMod
-            const hp = 10 + (tier * 5) + (conMod * tier);
-            
-            // AC: 10 + DexMod + (Tier-based Armor)
-            const ac = 10 + dexMod + Math.floor(tier * 1.5);
-            
-            // Atk: Proficiency (Tier) + Main Stat (Max of Str/Dex)
-            const atk = Math.max(strMod, dexMod) + Math.floor(tier / 2);
-            
-            // Dmg: Weapon Die (4) + Tier + StrMod
-            const dmg = Math.max(1, 4 + tier + strMod);
-
-            return {
-                id: 'enemy_' + Math.random().toString(36).substr(2,9),
-                name: `${type} (Tier ${tier})`,
-                maxHp: hp,
-                hp: hp,
-                ac: ac,
-                atk: atk,
-                dmg: dmg,
-                stats: { str, dex, con },
-                tier: tier,
-                gold: Math.floor(Math.random() * 10 * tier) + 5
-            };
+            return generateCreature(type, bTier, quality);
         },
 
         start: function(enemyData, onWin, onLose) {
@@ -5092,8 +5160,8 @@ Elder: [
         const isLover = person.romance > 30;
 
         // 10% Chance for Financial Request if Friend/Family
-        // UPDATED: Age check added (12+)
-        if ((isFriend || person.isFamily) && person.age >= 12 && Math.random() < 0.10) {
+        // UPDATED: Age check added (Player 12+, NPC 12+)
+        if (state.age >= 12 && (isFriend || person.isFamily) && person.age >= 12 && Math.random() < 0.10) {
             return POOLS.Financial[0](person);
         }
 
@@ -6136,8 +6204,8 @@ Elder: [
                         log(`<strong style="color:var(--gold)">Marriage:</strong> Your ${r.relation} ${r.name} married ${spouseName}.`);
                         
                         // NEW: Wedding Invitation Event
-                        // If player is close enough or family, they get invited
-                        if (r.friendship > 30 || r.isFamily) {
+                        // If player is close enough or family, they get invited. Age Check: 10+
+                        if (state.age >= 10 && (r.friendship > 30 || r.isFamily)) {
                             state.eventQueue.push({
                                 id: `wedding_invite_${r.id}`,
                                 title: 'Wedding Invitation',
@@ -6181,57 +6249,57 @@ Elder: [
                 
                 // 1. Give Birth (if pregnant from previous year)
                 if (r.isPregnant) {
-                    r.isPregnant = false;
+                    // ARCANE UPDATE: Defer House Births to simulateHouseAI for Dynastic Events
+                    const isHouseMember = state.house && state.house.members && state.house.members.some(m => m.id === r.id);
                     
-                    // MULTIPLE BIRTH CHECK FOR NPCs
-                    const numBirths = getBirthCount();
-                    const birthLogNames = [];
+                    if (!isHouseMember) {
+                        r.isPregnant = false;
+                        
+                        // MULTIPLE BIRTH CHECK FOR NPCs
+                        const numBirths = getBirthCount();
+                        const birthLogNames = [];
 
-                    for(let i=0; i<numBirths; i++) {
-                        let childRel = 'Relative';
-                        if (r.relation === 'Sibling') childRel = Math.random() > 0.5 ? 'Nephew' : 'Niece';
-                        else if (r.relation === 'Son' || r.relation === 'Daughter' || r.relation === 'Daughter-in-Law') childRel = Math.random() > 0.5 ? 'Grandson' : 'Granddaughter';
-                        else if (r.relation === 'Spouse') childRel = Math.random() > 0.5 ? 'Son' : 'Daughter';
-                        else if (r.relation === 'Mother') childRel = 'Sibling'; // NEW: Mother has another child -> Sibling
+                        for(let i=0; i<numBirths; i++) {
+                            let childRel = 'Relative';
+                            if (r.relation === 'Sibling') childRel = Math.random() > 0.5 ? 'Nephew' : 'Niece';
+                            else if (r.relation === 'Son' || r.relation === 'Daughter' || r.relation === 'Daughter-in-Law') childRel = Math.random() > 0.5 ? 'Grandson' : 'Granddaughter';
+                            else if (r.relation === 'Spouse') childRel = Math.random() > 0.5 ? 'Son' : 'Daughter';
+                            else if (r.relation === 'Mother') childRel = 'Sibling'; // NEW: Mother has another child -> Sibling
 
-                        const gender = (childRel === 'Nephew' || childRel === 'Grandson' || childRel === 'Son' || (childRel === 'Sibling' && Math.random()>0.5)) ? 'Male' : 'Female';
-                        // Fix for generic Sibling label gender match logic is handled by display logic mostly, but let's be safe
-                        
-                        const childName = getRandomName(gender);
-                        birthLogNames.push(childName);
-                        
-                        // Create the child
-                        const child = addRelationship(childName, childRel, 50, gender, "House Member", r.locationIndex, true, true, 0);
-                        
-                        // Link Parents
-                        child.motherId = r.id;
-                        child.fatherId = r.pregnancyFatherId || r.spouseId; // Prioritize tracked father
-                        
-                        // Genetics
-                        // Father might be player if spouse gave birth
-                        let fatherObj = null;
-                        if (child.fatherId === 'PLAYER') {
-                            fatherObj = { appearance: state.appearance, id: 'PLAYER' };
-                        } else {
-                            fatherObj = state.relationships.find(x => x.id === child.fatherId);
+                            const gender = (childRel === 'Nephew' || childRel === 'Grandson' || childRel === 'Son' || (childRel === 'Sibling' && Math.random()>0.5)) ? 'Male' : 'Female';
+                            // Fix for generic Sibling label gender match logic is handled by display logic mostly, but let's be safe
+                            
+                            const childName = getRandomName(gender);
+                            birthLogNames.push(childName);
+                            
+                            // Create the child
+                            const child = addRelationship(childName, childRel, 50, gender, "Commoner", r.locationIndex, true, true, 0);
+                            
+                            // Link Parents
+                            child.motherId = r.id;
+                            child.fatherId = r.pregnancyFatherId || r.spouseId; // Prioritize tracked father
+                            
+                            // Genetics
+                            // Father might be player if spouse gave birth
+                            let fatherObj = null;
+                            if (child.fatherId === 'PLAYER') {
+                                fatherObj = { appearance: state.appearance, id: 'PLAYER' };
+                            } else {
+                                fatherObj = state.relationships.find(x => x.id === child.fatherId);
+                            }
+                            
+                            const pFather = fatherObj || { appearance: GeneticEngine.generate() };
+                            child.appearance = GeneticEngine.mix(pFather, r); // r is Mother
                         }
                         
-                        const pFather = fatherObj || { appearance: GeneticEngine.generate() };
-                        child.appearance = GeneticEngine.mix(pFather, r); // r is Mother
-
-                        // Add to house members if applicable
-                        if (state.house) {
-                            addHouseMember(childName, gender, "House Member", r.locationIndex, child.id);
-                        }
-                    }
-                    
-                    if (r.isKnown) {
-                        const typeText = numBirths > 1 ? (numBirths === 2 ? 'Twins' : (numBirths === 3 ? 'Triplets' : 'Quadruplets')) : 'baby';
-                        
-                        if (r.relation === 'Mother') {
-                             log(`<strong style="color:var(--gold)">Family:</strong> Your mother gave birth to ${typeText}: ${birthLogNames.join(', ')}. You have new siblings!`);
-                        } else {
-                             log(`<strong style="color:var(--gold)">Family:</strong> ${r.name} gave birth to ${typeText}: ${birthLogNames.join(', ')}.`);
+                        if (r.isKnown) {
+                            const typeText = numBirths > 1 ? (numBirths === 2 ? 'Twins' : (numBirths === 3 ? 'Triplets' : 'Quadruplets')) : 'baby';
+                            
+                            if (r.relation === 'Mother') {
+                                log(`<strong style="color:var(--gold)">Family:</strong> Your mother gave birth to ${typeText}: ${birthLogNames.join(', ')}. You have new siblings!`);
+                            } else {
+                                log(`<strong style="color:var(--gold)">Family:</strong> ${r.name} gave birth to ${typeText}: ${birthLogNames.join(', ')}.`);
+                            }
                         }
                     }
                 }
@@ -6263,6 +6331,74 @@ Elder: [
     function simulateHouseAI() {
         if (!state.house || state.socialClass !== 'House') return;
         
+        // --- ARCANE UPDATE: DYNASTIC GROWTH (House Births) ---
+        // Process births for House Members here to frame them as major events
+        state.house.members.forEach(m => {
+            if (m.id === 'PLAYER') return;
+            const r = state.relationships.find(x => x.id === m.id);
+            
+            if (r && r.isPregnant) {
+                r.isPregnant = false;
+                
+                // MULTIPLE BIRTH CHECK
+                const numBirths = getBirthCount();
+                const birthLogNames = [];
+
+                for(let i=0; i<numBirths; i++) {
+                    let childRel = 'Kinsman';
+                    // Determine relation to PLAYER
+                    if (r.relation === 'Sibling') childRel = Math.random() > 0.5 ? 'Nephew' : 'Niece';
+                    else if (r.relation === 'Son' || r.relation === 'Daughter' || r.relation === 'Daughter-in-Law') childRel = Math.random() > 0.5 ? 'Grandson' : 'Granddaughter';
+                    else if (r.relation === 'Spouse') childRel = Math.random() > 0.5 ? 'Son' : 'Daughter';
+                    else if (r.relation === 'Mother') childRel = 'Sibling';
+
+                    const gender = (childRel === 'Nephew' || childRel === 'Grandson' || childRel === 'Son' || (childRel === 'Sibling' && Math.random()>0.5)) ? 'Male' : 'Female';
+                    
+                    const childName = getRandomName(gender);
+                    birthLogNames.push(childName);
+                    
+                    // Create the child
+                    const child = addRelationship(childName, childRel, 50, gender, "House Member", r.locationIndex, true, true, 0);
+                    
+                    // Link Parents
+                    child.motherId = r.id;
+                    child.fatherId = r.pregnancyFatherId || r.spouseId;
+                    
+                    // Genetics
+                    let fatherObj = null;
+                    if (child.fatherId === 'PLAYER') {
+                        fatherObj = { appearance: state.appearance, id: 'PLAYER' };
+                    } else {
+                        fatherObj = state.relationships.find(x => x.id === child.fatherId);
+                    }
+                    
+                    const pFather = fatherObj || { appearance: GeneticEngine.generate() };
+                    child.appearance = GeneticEngine.mix(pFather, r); 
+
+                    // Add to House
+                    addHouseMember(childName, gender, "House Member", r.locationIndex, child.id);
+                }
+                
+                // HOUSE EVENT LOGGING & FLAVOR
+                const typeText = numBirths > 1 ? (numBirths === 2 ? 'Twins' : 'Triplets') : 'a child';
+                
+                // Significant Event if close family
+                if (['Sibling', 'Spouse', 'Daughter', 'Son', 'Mother'].includes(r.relation)) {
+                     state.eventQueue.push({
+                        id: `house_birth_${r.id}`,
+                        title: 'The Line Continues',
+                        text: `Joyous news rings through the halls of House ${state.house.name}! Your ${r.relation} <strong>${r.name}</strong> has given birth to ${typeText}: <strong>${birthLogNames.join(', ')}</strong>.<br><br>The dynasty is secure.`,
+                        choices: [
+                            { text: 'Celebrate', type: 'flavor', effect: () => { modSanity(5); log(`You celebrated the new life in your House.`); } }
+                        ]
+                    });
+                } else {
+                    // Standard House Log
+                    log(`<strong style="color:var(--royal)">HOUSE EVENT:</strong> ${r.name} gave birth to ${birthLogNames.join(', ')}. The House grows stronger.`);
+                }
+            }
+        });
+
         // --- NEW: SPOUSE HEIR REQUEST ---
         const spouse = state.relationships.find(r => r.relation === 'Spouse' && r.health !== 'Deceased');
         if (spouse && state.gender !== spouse.gender && !state.flags.isPregnant && !spouse.isPregnant) {
@@ -6590,8 +6726,8 @@ Elder: [
                     log(`<strong style="color:var(--royal)">HOUSE:</strong> Your ${rulerNPC.relation} ${rulerNPC.name} arranged a humble marriage between your ${targetNPC.relation} ${targetNPC.name} and ${spouseName}.`);
                 }
                 
-                // Trigger invite for player if they know the NPC
-                if (targetNPC.isKnown && (targetNPC.friendship > 20 || targetNPC.isFamily)) {
+                // Trigger invite for player if they know the NPC. Age Check: 10+
+                if (state.age >= 10 && targetNPC.isKnown && (targetNPC.friendship > 20 || targetNPC.isFamily)) {
                      state.eventQueue.push({
                         id: `wedding_invite_npc_${targetNPC.id}`,
                         title: 'Wedding Invitation',
@@ -6618,6 +6754,11 @@ Elder: [
 
         // 4. Member Contributions
         // NPCs with sufficient personal wealth may donate to the treasury
+        
+        // ARCANE UPDATE: Aggregation Variables
+        let totalContributed = 0;
+        let contributorNames = [];
+
         state.house.members.forEach(m => {
             if (m.id === 'PLAYER') return; // Player donates manually
             const npc = state.relationships.find(r => r.id === m.id);
@@ -6632,9 +6773,14 @@ Elder: [
                 if (donation > 0) {
                     npc.gold -= donation;
                     state.house.treasury += donation;
-                    // Log relevant contributions
+                    
+                    // ARCANE UPDATE: Aggregate instead of log immediately
                     if (donation >= 10) {
-                        log(`<strong style="color:var(--royal)">HOUSE:</strong> Your ${npc.relation} ${npc.name} donated ${donation}g to the House treasury.`);
+                        totalContributed += donation;
+                        // Avoid duplicates in name list if same person somehow triggers twice (unlikely but safe)
+                        if (!contributorNames.includes(npc.name)) {
+                            contributorNames.push(npc.name);
+                        }
                     }
                 }
             }
@@ -6692,6 +6838,20 @@ Elder: [
                 }
             }
         });
+
+        // ARCANE UPDATE: Log Consolidated Contributions
+        if (totalContributed > 0) {
+            let namesStr = "";
+            if (contributorNames.length === 1) {
+                namesStr = contributorNames[0];
+            } else if (contributorNames.length === 2) {
+                namesStr = `${contributorNames[0]} and ${contributorNames[1]}`;
+            } else {
+                const last = contributorNames.pop();
+                namesStr = `${contributorNames.join(", ")}, and ${last}`;
+            }
+            log(`<strong style="color:var(--royal)">HOUSE:</strong> ${namesStr} contributed a total of ${totalContributed}g to the treasury.`);
+        }
 
         // 5. FORCED SQUIRING (PC & NPC)
         const potentialSquires = state.house.members.filter(m => {
@@ -6895,28 +7055,11 @@ Elder: [
             return;
         }
 
-        // Dynamic Enemy Generator
-        const generateFighter = (tier) => {
-            const gender = Math.random() > 0.5 ? 'Male' : 'Female';
-            const name = getRandomName(gender);
-            const title = gender === 'Male' ? 'Ser' : 'Dame'; // ARCANE UPDATE: Knightly Titles
-            const epithets = ['the Bold', 'the Swift', 'Iron-Arm', 'of the Vale', 'the Cruel', 'Hammer-Hand', 'Lionheart', 'Stormborn'];
-            const epithet = epithets[Math.floor(Math.random() * epithets.length)];
-            
-            let hp = 15, ac = 12, atk = 2, dmg = 6;
-            
-            if (tier === 2) { // Semi-Final
-                hp = 25; ac = 14; atk = 4; dmg = 8;
-            } else if (tier === 3) { // Champion
-                hp = 40; ac = 16; atk = 6; dmg = 10;
-            }
-            
-            return { name: `${title} ${name} ${epithet}`, hp, ac, atk, dmg };
-        };
-
-        const e1 = generateFighter(1);
-        const e2 = generateFighter(2);
-        const e3 = generateFighter(3);
+        // ARCANE UPDATE: USE BESTIARY FOR TOURNAMENT
+        // Tier 1 (Hedge), Tier 2 (Sworn/Elite), Tier 3 (Champion/Legendary)
+        const e1 = generateCreature('knight', 0, 'Standard');
+        const e2 = generateCreature('knight', 1, 'Elite');
+        const e3 = generateCreature('knight', 2, 'Legendary');
 
         // Round 3 (Final)
         const round3 = createEvent('tourney_r3', 'Tournament: The Final', `The Champion steps forward: <strong>${e3.name}</strong>. The crowd goes silent.`, [
@@ -9627,10 +9770,10 @@ Elder: [
 
             document.getElementById('display-class').innerText = state.class;
             document.getElementById('location-display').innerText = CITIES[state.location].name;
-            document.getElementById('header-hp').innerText = `${state.health} / ${state.maxHealth} HP`;
+            document.getElementById('header-hp').innerText = `${state.health} / ${state.maxHealth} Health Points`;
             document.getElementById('hp-display').innerText = `${state.health} / ${state.maxHealth}`;
             document.getElementById('armor-display').innerText = getPlayerAC(); 
-            document.getElementById('header-sp').innerText = `${state.sanity} / ${state.maxSanity} SP`;
+            document.getElementById('header-sp').innerText = `${state.sanity} / ${state.maxSanity} Sanity Points`;
             document.getElementById('sp-display').innerText = `${state.sanity} / ${state.maxSanity}`;
             document.getElementById('sex-display').innerText = state.gender;
             document.getElementById('align-display').innerText = "True Neutral"; 
