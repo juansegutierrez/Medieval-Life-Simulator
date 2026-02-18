@@ -1954,8 +1954,8 @@
                     assignedMasterName = getNPCName(k);
                     logKnight(`<strong style="color:var(--royal)">ACCEPTED:</strong> ${npc.name} nods approvingly. "You shall serve our House. I assign you to <strong>${assignedMasterName}</strong> for training."`);
                 } else {
-                    // No knights exist, Lord appoints a Champion (Generation via becomeSquire(null))
-                    logKnight(`<strong style="color:var(--royal)">ACCEPTED:</strong> ${npc.name} nods. "Our ranks are thin. I shall appoint a Household Champion to train you."`);
+                    // No knights exist, Lord appoints a Sworn Knight (Generation via becomeSquire(null))
+                    logKnight(`<strong style="color:var(--royal)">ACCEPTED:</strong> ${npc.name} nods. "Our ranks are thin. I shall summon a Sworn Knight to train you."`);
                     assignedMasterId = null; // Triggers generation
                 }
                 
@@ -6815,12 +6815,21 @@ Elder: [
         if(!checkAge(16)) return;
         if(!checkActLimit('tournament', 1, "There are no active tournaments in the city right now.")) return;
 
+        // ARCANE UPDATE: RESTRICT TO KNIGHTS
+        // Must have 'knight' occupation AND be Rank 1 (Hedge Knight) or higher. Squires (Rank 0) cannot enter main lists.
+        if (!state.occupation || state.occupation.id !== 'knight' || state.occupation.rankIndex < 1) {
+            log(`<strong style="color:var(--royal)">Entry Denied:</strong> The Tournament Master blocks your path. "The lists are for anointed Knights only. Squires and Commoners may watch from the stands."`);
+            switchTab('log');
+            return;
+        }
+
         // Dynamic Enemy Generator
         const generateFighter = (tier) => {
             const gender = Math.random() > 0.5 ? 'Male' : 'Female';
             const name = getRandomName(gender);
-            const titles = ['the Bold', 'the Swift', 'Iron-Arm', 'of the Vale', 'the Cruel', 'Hammer-Hand'];
-            const title = titles[Math.floor(Math.random() * titles.length)];
+            const title = gender === 'Male' ? 'Ser' : 'Dame'; // ARCANE UPDATE: Knightly Titles
+            const epithets = ['the Bold', 'the Swift', 'Iron-Arm', 'of the Vale', 'the Cruel', 'Hammer-Hand', 'Lionheart', 'Stormborn'];
+            const epithet = epithets[Math.floor(Math.random() * epithets.length)];
             
             let hp = 15, ac = 12, atk = 2, dmg = 6;
             
@@ -6830,7 +6839,7 @@ Elder: [
                 hp = 40; ac = 16; atk = 6; dmg = 10;
             }
             
-            return { name: `${name} ${title}`, hp, ac, atk, dmg };
+            return { name: `${title} ${name} ${epithet}`, hp, ac, atk, dmg };
         };
 
         const e1 = generateFighter(1);
@@ -7098,7 +7107,23 @@ Elder: [
                 }
             }
 
-            const houseListHtml = localHouses.map(h => {
+            // ARCANE UPDATE: INJECT RULING GREATER/ROYAL HOUSE AT START
+            let rulingBadge = '';
+            if (city.ruler.includes('House')) {
+                // Extract House Name from string like "Greater House Valdoria" or "Royal House Chep"
+                const parts = city.ruler.split(' House ');
+                if (parts.length > 1) {
+                    const rulerName = parts[1];
+                    const gHouse = GREATER_HOUSES_INFO[rulerName];
+                    if (gHouse) {
+                        // Clean Sigil (remove selection tags if present from copy-paste artifacts, though raw data should be clean)
+                        const cleanSigil = gHouse.sigil.replace(/<[^>]*>/g, ''); 
+                        rulingBadge = `<span class="inline-block bg-purple-100 border border-purple-300 text-purple-900 font-bold rounded px-1.5 py-0.5 text-[10px] mr-1 mb-1 shadow-sm" title="Ruling House">${cleanSigil} ${rulerName}</span>`;
+                    }
+                }
+            }
+
+            const houseListHtml = rulingBadge + localHouses.map(h => {
                 const pcStyle = h.isPC ? 'border-amber-600 bg-amber-100 font-bold text-amber-900 ring-1 ring-amber-200 shadow-sm' : '';
                 return `<span class="inline-block bg-white/50 border border-black/10 rounded px-1.5 py-0.5 text-[10px] mr-1 mb-1 ${pcStyle}" title="House ${h.name}">${h.sigil} ${h.name}</span>`;
             }).join('');
@@ -7110,7 +7135,7 @@ Elder: [
                         <div class="text-xs font-bold text-royal">${city.ruler}</div>
                         <div class="text-xs italic opacity-80 mb-2">${city.desc}</div>
                         <div class="mt-2 pt-2 border-t border-black/5">
-                            <div class="text-[9px] uppercase font-bold opacity-50 mb-1">Lesser Houses</div>
+                            <div class="text-[9px] uppercase font-bold opacity-50 mb-1">Noble Houses</div>
                             <div class="flex flex-wrap">${houseListHtml}</div>
                         </div>
                     </div>
@@ -7956,6 +7981,9 @@ Elder: [
             if (historyIds.length > 0) {
                 html += `<h4 class="font-bold border-b border-black/10 mb-2">Resume Career</h4>`;
                 historyIds.forEach(hid => {
+                    // Skip knighthood in resume history (cannot just "resume" vows without ceremony/interaction)
+                    if (hid === 'knight') return;
+                    
                     const hist = state.jobHistory[hid];
                     const c = CAREERS[hid];
                     html += `<button onclick="joinJob('${hid}')" class="choice-btn text-sm mb-2 border-l-4 border-amber-600"><span>Resume: ${c.ranks[hist.rankIndex].title}</span></button>`;
@@ -7963,6 +7991,9 @@ Elder: [
                 html += `<h4 class="font-bold border-b border-black/10 mb-2 mt-4">New Career</h4>`;
             }
             for (let id in CAREERS) {
+                // ARCANE UPDATE: Knighthood is not a job board listing.
+                if (id === 'knight') continue;
+
                 const c = CAREERS[id];
                 let canJoin = true;
                 if (c.req.age && state.age < c.req.age) canJoin = false;
@@ -8565,20 +8596,17 @@ Elder: [
                 let soldiers = 0, servants = 0, knights = 0, commoners = 0;
                 const pop = prop.population;
 
+                // Preliminary calculation for soldiers/servants (Knights will be overridden by actuals)
                 if (prop.type === 'Keep') {
                     soldiers = Math.floor(pop * 0.20);
                     servants = Math.floor(pop * 0.10);
-                    knights = Math.max(1, Math.floor(pop / 200));
                 } else if (prop.type === 'Manor') {
                     soldiers = Math.floor(pop * 0.05);
                     servants = Math.floor(pop * 0.25);
-                    knights = Math.floor(pop / 500);
                 } else { // Farm
                     soldiers = Math.floor(pop * 0.01); // Militia
                     servants = Math.floor(pop * 0.05);
-                    knights = 0;
                 }
-                commoners = pop - (soldiers + servants + knights);
 
                 ensureAvailableRetainers(idx);
 
@@ -8594,6 +8622,10 @@ Elder: [
                     r.id !== 'PLAYER' &&
                     (r.assignedHolding === idx || (r.assignedHolding === undefined && r.locationIndex === prop.locationIndex))
                 );
+
+                // ARCANE UPDATE: Sync Demographic Count to Actual Entities
+                knights = stationedKnights.length;
+                commoners = Math.max(0, pop - (soldiers + servants + knights));
 
                 let availableHtml = '';
                 if (availableHere.length > 0 && isLord) {
@@ -8624,10 +8656,9 @@ Elder: [
                         <div class="text-[9px] uppercase font-bold opacity-60 mb-1">Stationed Swords (${stationedKnights.length})</div>
                         <div class="space-y-1">
                             ${stationedKnights.map(k => {
-                                const goldVal = (k.gold || 0);
+                                // ARCANE UPDATE: Removed Gold Display
                                 return `<div class="npc-card" onclick="openNPC('${k.id}')">
                                     <div><span class="font-bold text-sm">🛡️ ${k.name}</span></div>
-                                    <span class="text-xs text-amber-900 font-bold">${goldVal}g</span>
                                 </div>`;
                             }).join('')}
                         </div>
@@ -8636,7 +8667,6 @@ Elder: [
                     knightsHtml = `<div class="mt-2 pt-2 border-t border-black/5 text-[10px] italic opacity-50">No knights currently stationed here.</div>`;
                 }
 
-                knights = Math.max(knights, stationedKnights.length);
                 const demogHtml = `
                 <div class="mt-2 pt-2 border-t border-black/10 text-[10px] grid grid-cols-4 gap-1 text-center opacity-80">
                     <div>🌾 Common Folk: ${commoners.toLocaleString()}</div>
