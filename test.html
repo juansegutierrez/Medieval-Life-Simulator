@@ -2600,7 +2600,7 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
             tiers: [
                 { title: "Thug", hp: 12, ac: 11, atk: 3, dmg: 5, xp: 15, gold: 5 },
                 { title: "Highwayman", hp: 22, ac: 13, atk: 5, dmg: 7, xp: 40, gold: 15 },
-                { title: "Bandit King", hp: 50, ac: 15, atk: 7, dmg: 10, xp: 150, gold: 100 }
+                { title: "Bandit Boss", hp: 50, ac: 15, atk: 7, dmg: 10, xp: 150, gold: 100 }
             ],
             skills: ["Dirty Fighting", "Intimidate"]
         },
@@ -2612,6 +2612,15 @@ f: ["Aalis", "Adelaide", "Adelina", "Aelith", "Alfhild", "Althea", "Amalind", "A
                 { title: "Dire Wolf", hp: 45, ac: 14, atk: 7, dmg: 10, xp: 120, gold: 0 }
             ],
             skills: ["Pack Tactics", "Howl"]
+        },
+        'bear': {
+            name: "Bear", icon: "🐻",
+            tiers: [
+                { title: "Black Bear", hp: 25, ac: 12, atk: 4, dmg: 6, xp: 50, gold: 0 },
+                { title: "Grizzly Bear", hp: 45, ac: 13, atk: 6, dmg: 9, xp: 150, gold: 0 },
+                { title: "Dire Bear", hp: 80, ac: 15, atk: 8, dmg: 12, xp: 400, gold: 0 }
+            ],
+            skills: ["Maul", "Roar"]
         },
         'troll': {
             name: "Troll", icon: "🧟",
@@ -3773,7 +3782,7 @@ Elder: [
             createEvent('canon_goblin', 'The Goblin Raid', 'Screeches echo in the night. Goblins are raiding the granary!', [
                 { 
                     text: 'Slay them all (Combat)', type: 'combat', 
-                    enemy: { name: 'Goblin Raiders', hp: 12, ac: 11, atk: 2, dmg: 4 },
+                    enemy: generateCreature('goblin', 1),
                     success: 'Green blood soaks the earth. You stand victorious.', 
                     fail: 'They swarm you. You are dragged away injured.', 
                     onSuccess: () => { addHonorific('Goblin-Slayer'); modRep('renown', 20); state.gold+=50; }, 
@@ -3786,7 +3795,7 @@ Elder: [
             createEvent('canon_troll', 'The Bridge Troll', 'A massive troll demands a toll to cross the river.', [
                 { 
                     text: 'Fight (Combat)', type: 'combat', 
-                    enemy: { name: 'River Troll', hp: 30, ac: 13, atk: 4, dmg: 8 },
+                    enemy: generateCreature('troll', 0),
                     success: 'You chopped off its head!', 
                     fail: 'It smashed you into the mud.', 
                     onSuccess: () => { addHonorific('Trollsbane'); modRep('renown', 30); }, 
@@ -3799,7 +3808,7 @@ Elder: [
                     onSuccess: () => { addHonorific('Silver-Tongue'); }, 
                     onFail: () => {
                         CombatEngine.start(
-                            { name: 'Enraged Troll', hp: 40, ac: 14, atk: 5, dmg: 10 },
+                            generateCreature('troll', 0, 'Elite'),
                             () => { log("You survived the enraged beast!"); addHonorific('Trollsbane'); },
                             () => { log("The troll feasted upon your bones."); }
                         );
@@ -3821,6 +3830,14 @@ Elder: [
             ]),
 
             createEvent('canon_bear', 'The Great Bear', 'A bear the size of a wagon attacks the camp.', [
+                { 
+                    text: 'Fight (Combat)', type: 'combat', 
+                    enemy: generateCreature('bear', 2), // Dire Bear
+                    success: 'You slew the beast!', 
+                    fail: 'It mauled you.', 
+                    onSuccess: () => { addHonorific('Bear-Slayer'); modRep('renown', 30); }, 
+                    onFail: () => takeDamage(10) 
+                },
                 { text: 'Wrestle (STR)', type: 'check', stat: 'str', dc: 18, success: 'You pinned the bear!', fail: 'It mauled you.', onSuccess: () => { addHonorific('Bear-Wrestler'); modRep('renown', 40); }, onFail: () => takeDamage(15) },
                 { text: 'Shoot (DEX)', type: 'check', stat: 'dex', dc: 14, success: 'Clean shot between the eyes.', fail: 'You missed.', onSuccess: () => { addHonorific('Deadeye'); state.gold+=20; }, onFail: () => takeDamage(10) },
                 { text: 'Play Dead', type: 'check', stat: 'con', dc: 12, success: 'It sniffed you and left.', fail: 'It took a bite.', onSuccess: () => { addHonorific('The Survivor'); }, onFail: () => takeDamage(8) }
@@ -3832,10 +3849,10 @@ Elder: [
                 { text: 'Endure', type: 'flavor', effect: () => { log("It wears off in a year."); } }
             ]),
 
-            createEvent('canon_bandit', 'The Bandit King', 'The notorious Bandit King challenges you to a duel.', [
+            createEvent('canon_bandit', 'The Bandit Boss', 'The notorious Bandit Boss challenges you to a duel.', [
                 { 
                     text: 'Accept Duel (Combat)', type: 'combat', 
-                    enemy: { name: 'Bandit King', hp: 25, ac: 14, atk: 5, dmg: 6 },
+                    enemy: generateCreature('bandit', 2), // Boss
                     success: 'You ended his reign of terror.', 
                     fail: 'He thrashed you and took your gold.', 
                     onSuccess: () => { addHonorific('Justicar'); state.gold+=100; modRep('honor', 30); }, 
@@ -9388,6 +9405,7 @@ Elder: [
             const lootedClass = r.graveRobbed ? "opacity-50 grayscale" : "";
             const lootedText = r.graveRobbed ? `<span class="text-red-800 font-bold block mt-2 text-xs">DESECRATED</span>` : "";
             const hasInteracted = state.interactions[r.id];
+            const cause = r.deathCause || "passed away";
             
             return `
             <div class="grave-card ${lootedClass}">
@@ -9396,6 +9414,7 @@ Elder: [
                     <div class="font-bold text-xs uppercase">${r.name}</div>
                     <div class="text-[10px] italic">${r.relation}</div>
                     <div class="text-[10px] mt-1">Died Age ${r.age}</div>
+                    <div class="text-[9px] opacity-80 italic mt-1 px-2 leading-tight">${cause}</div>
                 </div>
                 ${lootedText}
                 <div class="flex justify-center gap-2 mt-4">
